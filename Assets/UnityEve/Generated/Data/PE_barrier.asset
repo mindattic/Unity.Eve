@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c3b8e0c17de03174195d436dab164793, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEve.Runtime::UnityEve.Data.AbilityDefinition
+  Stats:
+    Id: barrier
+    DisplayName: Barrier
+    Description: Incoming damage is halved for 20 s.
+    Effect: 4
+    PeCost: 30
+    Power: 0
+    DurationSeconds: 20
+    Range: 9
+  Tint: {r: 0.6, g: 0.9, b: 1, a: 1}

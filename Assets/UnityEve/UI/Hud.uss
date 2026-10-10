@@ -1,0 +1,166 @@
+/* Unity Eve HUD. Colours follow the PS1 Parasite Eve palette: deep navy panels, amber cursor. */
+
+.hud-root {
+    flex-grow: 1;
+    background-color: rgb(0, 0, 0);
+    color: rgb(230, 226, 214);
+    font-size: 26px;
+}
+
+.screen {
+    position: absolute;
+    -unity-background-scale-mode: stretch-to-fill;
+    overflow: hidden;
+}
+
+.overlay {
+    position: absolute;
+    left: 0; top: 0; right: 0; bottom: 0;
+}
+
+/* ---- status (top left) ---- */
+.status {
+    position: absolute;
+    left: 2.5%; top: 9%;
+    width: 36%;
+    padding: 6px 10px;
+    background-color: rgba(4, 8, 14, 0.62);
+    border-width: 1px;
+    border-color: rgb(47, 68, 80);
+}
+.level { color: rgb(255, 221, 85); font-size: 22px; }
+.ammo { font-size: 20px; color: rgb(180, 190, 196); }
+
+.bar-row { flex-direction: row; align-items: center; height: 24px; }
+.bar-label { width: 34px; font-size: 22px; color: rgb(160, 176, 186); }
+.bar-value { width: 74px; font-size: 22px; -unity-text-align: middle-right; }
+.bar-track {
+    flex-grow: 1;
+    height: 9px;
+    background-color: rgb(14, 20, 26);
+    border-width: 1px;
+    border-color: rgb(47, 68, 80);
+}
+.bar-fill { height: 100%; width: 0%; }
+.fill-hp { background-color: rgb(200, 65, 47); }
+.fill-pe { background-color: rgb(64, 112, 192); }
+.fill-atb { background-color: rgb(63, 143, 208); }
+.fill-atb-full { background-color: rgb(140, 220, 255); }
+.fill-progress { background-color: rgb(216, 178, 58); }
+.fill-focus { background-color: rgb(120, 255, 210); }
+
+/* ---- target (top centre) ---- */
+.target {
+    position: absolute;
+    left: 55%; top: 9%;
+    width: 38%;
+    padding: 4px 10px 8px 10px;
+    background-color: rgba(4, 8, 14, 0.62);
+    border-width: 1px;
+    border-color: rgb(74, 106, 122);
+}
+.target-name { color: rgb(255, 221, 85); font-size: 22px; }
+
+/* ---- command menu (bottom left, PE-style) ---- */
+.menu {
+    position: absolute;
+    left: 2.5%; bottom: 10%;
+    min-width: 34%;
+    padding: 6px 14px 10px 14px;
+    background-color: rgba(4, 8, 14, 0.88);
+    border-width: 2px;
+    border-color: rgb(74, 106, 122);
+}
+.menu-title { color: rgb(140, 170, 186); font-size: 20px; margin-bottom: 4px; }
+.menu-item { font-size: 28px; }
+.menu-item-selected { color: rgb(255, 221, 85); }
+.menu-item-disabled { color: rgb(106, 115, 123); }
+.menu-detail { font-size: 20px; color: rgb(180, 190, 196); white-space: normal; max-width: 420px; margin-top: 6px; }
+
+/* ---- prompts and messages ---- */
+.prompt {
+    position: absolute;
+    left: 0; right: 0; bottom: 12%;
+    -unity-text-align: middle-center;
+    font-size: 26px;
+    color: rgb(255, 255, 255);
+    text-shadow: 2px 2px 0 rgb(0, 0, 0);
+}
+.message {
+    position: absolute;
+    left: 5%; right: 5%; bottom: 19%;
+    -unity-text-align: middle-center;
+    font-size: 28px;
+    white-space: normal;
+    text-shadow: 2px 2px 0 rgb(0, 0, 0);
+}
+.banner {
+    position: absolute;
+    left: 0; right: 0; top: 36%;
+    -unity-text-align: middle-center;
+    font-size: 64px;
+    color: rgb(230, 60, 40);
+    text-shadow: 3px 3px 0 rgb(0, 0, 0);
+}
+.sub-banner {
+    position: absolute;
+    left: 0; right: 0; top: 50%;
+    -unity-text-align: middle-center;
+    font-size: 28px;
+    white-space: normal;
+    text-shadow: 2px 2px 0 rgb(0, 0, 0);
+}
+
+.progress {
+    position: absolute;
+    left: 35%; right: 35%; top: 62%;
+}
+
+/* ---- Focus (perfect-dodge slow motion) ---- */
+.focus-tint {
+    position: absolute;
+    left: 0; top: 0; right: 0; bottom: 0;
+    background-color: rgba(40, 120, 140, 0.18);
+}
+.focus {
+    position: absolute;
+    left: 25%; right: 25%; top: 24%;
+    padding: 8px 12px;
+    align-items: center;
+    background-color: rgba(4, 20, 24, 0.75);
+    border-width: 2px;
+    border-color: rgb(120, 255, 210);
+}
+.focus-title { font-size: 40px; color: rgb(120, 255, 210); letter-spacing: 8px; }
+.focus-moves { flex-direction: column; align-items: center; margin: 4px 0 8px 0; }
+.focus-move { font-size: 26px; }
+
+/* ---- full-screen effects ---- */
+.letterbox-top, .letterbox-bottom {
+    position: absolute;
+    left: 0; right: 0; height: 0;
+    background-color: rgb(0, 0, 0);
+}
+.letterbox-top { top: 0; }
+.letterbox-bottom { bottom: 0; }
+
+.hurt {
+    position: absolute;
+    left: 0; top: 0; right: 0; bottom: 0;
+    opacity: 0;
+    border-width: 60px;
+    border-color: rgba(160, 0, 0, 0.8);
+}
+
+.fade {
+    position: absolute;
+    left: 0; top: 0; right: 0; bottom: 0;
+    background-color: rgb(0, 0, 0);
+}
+
+.popup {
+    position: absolute;
+    font-size: 30px;
+    text-shadow: 2px 2px 0 rgb(0, 0, 0);
+}
+.popup-big { font-size: 40px; }

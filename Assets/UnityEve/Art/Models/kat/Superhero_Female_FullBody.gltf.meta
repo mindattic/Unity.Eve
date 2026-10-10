@@ -1,0 +1,52 @@
+fileFormatVersion: 2
+guid: 4c79831e948ab864a98a66ac088e8b31
+ScriptedImporter:
+  internalIDToNameTable: []
+  externalObjects: {}
+  serializedVersion: 2
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+  script: {fileID: 11500000, guid: 715df9372183c47e389bb6e19fbc3b52, type: 3}
+  editorImportSettings:
+    generateSecondaryUVSet: 0
+  importSettings:
+    nodeNameMethod: 1
+    animationMethod: 2
+    generateMipMaps: 1
+    texturesReadable: 0
+    defaultMinFilterMode: 9729
+    defaultMagFilterMode: 9729
+    anisotropicFilterLevel: 1
+  instantiationSettings:
+    mask: -1
+    layer: 0
+    skinUpdateWhenOffscreen: 1
+    lightIntensityFactor: 1
+    sceneObjectCreation: 2
+  assetDependencies:
+  - type: 0
+    originalUri: Assets\UnityEve\Art\Models\kat\Superhero_Female_FullBody.bin
+    assetPath: Assets\UnityEve\Art\Models\kat\Superhero_Female_FullBody.bin
+  - type: 1
+    originalUri: Assets\UnityEve\Art\Models\kat\T_Hair_2_Normal.png
+    assetPath: Assets\UnityEve\Art\Models\kat\T_Hair_2_Normal.png
+  - type: 1
+    originalUri: Assets\UnityEve\Art\Models\kat\T_Hair_2_BaseColor.png
+    assetPath: Assets\UnityEve\Art\Models\kat\T_Hair_2_BaseColor.png
+  - type: 1
+    originalUri: Assets\UnityEve\Art\Models\kat\T_Eye_Normal_png.png
+    assetPath: Assets\UnityEve\Art\Models\kat\T_Eye_Normal_png.png
+  - type: 1
+    originalUri: Assets\UnityEve\Art\Models\kat\T_Eye_Brown.png
+    assetPath: Assets\UnityEve\Art\Models\kat\T_Eye_Brown.png
+  - type: 1
+    originalUri: Assets\UnityEve\Art\Models\kat\T_Superhero_Female_Normal.png
+    assetPath: Assets\UnityEve\Art\Models\kat\T_Superhero_Female_Normal.png
+  - type: 1
+    originalUri: Assets\UnityEve\Art\Models\kat\T_Superhero_Female_Dark_BaseColor.png
+    assetPath: Assets\UnityEve\Art\Models\kat\T_Superhero_Female_Dark_BaseColor.png
+  - type: 1
+    originalUri: Assets\UnityEve\Art\Models\kat\T_Superhero_Female_Roughness.png
+    assetPath: Assets\UnityEve\Art\Models\kat\T_Superhero_Female_Roughness.png
+  reportItems: []

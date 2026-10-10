@@ -1,0 +1,46 @@
+using System;
+using System.Collections.Generic;
+using UnityEve.Core.Util;
+
+namespace UnityEve.Core.Items
+{
+    [Serializable]
+    public sealed class LootEntry
+    {
+        public string ItemId = "";
+        public int MinCount = 1;
+        public int MaxCount = 1;
+        /// <summary>Relative weight; an entry with an empty ItemId is a "nothing" roll.</summary>
+        public float Weight = 1f;
+    }
+
+    /// <summary>What rummaging a container can produce. One weighted roll per pull.</summary>
+    [Serializable]
+    public sealed class LootTable
+    {
+        public List<LootEntry> Entries = new List<LootEntry>();
+        public int Pulls = 1;
+
+        public List<(string itemId, int count)> Roll(Rng rng)
+        {
+            var result = new List<(string, int)>();
+            var total = 0f;
+            foreach (var e in Entries) total += Math.Max(0f, e.Weight);
+            if (total <= 0f) return result;
+
+            for (var p = 0; p < Pulls; p++)
+            {
+                var pick = rng.NextFloat() * total;
+                foreach (var e in Entries)
+                {
+                    pick -= Math.Max(0f, e.Weight);
+                    if (pick > 0f) continue;
+                    if (!string.IsNullOrEmpty(e.ItemId))
+                        result.Add((e.ItemId, rng.Range(e.MinCount, e.MaxCount + 1)));
+                    break;
+                }
+            }
+            return result;
+        }
+    }
+}

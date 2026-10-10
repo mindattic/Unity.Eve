@@ -1,0 +1,25 @@
+* text=auto
+
+*.cs      text diff=csharp
+*.uxml    text
+*.uss     text
+*.shader  text
+*.hlsl    text
+*.md      text
+
+# Unity YAML: merge as text, never normalize away the trailing newline Unity writes.
+*.unity   text merge=unityyamlmerge eol=lf
+*.prefab  text merge=unityyamlmerge eol=lf
+*.asset   text merge=unityyamlmerge eol=lf
+*.mat     text merge=unityyamlmerge eol=lf
+*.anim    text merge=unityyamlmerge eol=lf
+*.controller text merge=unityyamlmerge eol=lf
+*.meta    text eol=lf
+
+*.glb     binary
+*.bin     binary
+*.png     binary
+*.jpg     binary
+*.wav     binary
+*.ogg     binary
+*.ttf     binary

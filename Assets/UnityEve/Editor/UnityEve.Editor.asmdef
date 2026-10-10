@@ -1,0 +1,24 @@
+{
+    "name": "UnityEve.Editor",
+    "rootNamespace": "UnityEve.Editor",
+    "references": [
+        "UnityEve.Runtime",
+        "UnityEve.Core",
+        "Unity.RenderPipelines.Universal.Runtime",
+        "Unity.RenderPipelines.Core.Runtime",
+        "Unity.InputSystem",
+        "glTFast",
+        "glTFast.Editor"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
