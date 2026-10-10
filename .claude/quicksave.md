@@ -9,6 +9,18 @@ quicksave is a manual backfill of the crash-recovery convention (`quicksave`/`qu
 below as the reasoned continuation of the project from its last real commit, not as something
 already underway.
 
+## What the original build session said needs the owner (verbatim from its final report)
+Session: Launcher tab, transcript `25f43b50-ad41-4aa4-8ee5-419fc0547e4e` (scratch copy in
+`D:\Projects\MindAttic\_recovery\launcher-unityeve-25f43b50`). It finished and pushed before the crash.
+- **Hands-on play:** never played with a real gamepad. Autoplay opens Focus through a shortcut,
+  not a human-timed dodge, so dodge timing and controller feel need the owner to try them.
+- **Locked shed:** key and lock are built, but autoplay doesn't test them.
+- **Shotgun model:** the shotgun on the workbench is an axe model standing in.
+- **Look and scope:** no PS1 vertex-wobble yet, no saves, no music; enemies chase directly (no pathfinding).
+- Research: no open-source recreation of Parasite Eve's battle system exists in any engine;
+  "Mutant Eve" was read as Parasite Mutant, whose segmented gauge was left out as asked.
+On resume, ask the owner how it played with a controller before picking the next item.
+
 ## Decisions locked this session
 - The crash-recovery convention (`.claude\commands\quicksave.md`, `.claude\commands\quickload.md`,
   `.claude\hooks\quickload-on-do.ps1`, `.claude\settings.json` registering the `UserPromptSubmit`
