@@ -1,4 +1,4 @@
-// The weapon range dome: a semi-transparent shell of hexagon cells (Parasite Eve / Parasite Mutant style).
+// The weapon range dome: a faint wireframe shell of hexagon cells (Parasite Eve / Parasite Mutant style).
 // The lattice is laid out in spherical coordinates on the unit sphere primitive with cells a fixed size in
 // metres; a fresnel edge outlines the silhouette, a scan band sweeps up and a few cells twinkle. Shell
 // close to the lens fades out so a fixed camera near the dome is not curtained, and a second, faint pass
@@ -9,12 +9,12 @@ Shader "UnityEve/HexDome"
     Properties
     {
         _BaseColor ("Colour", Color) = (0.33, 1, 0.73, 1)
-        _FillAlpha ("Fill alpha", Range(0, 1)) = 0.025
-        _LineAlpha ("Line alpha", Range(0, 1)) = 0.3
-        _RimAlpha ("Fresnel alpha", Range(0, 1)) = 0.3
-        _HiddenAlpha ("Behind-wall strength", Range(0, 1)) = 0.35
-        _CellSize ("Hex size (m)", Float) = 0.8
-        _LineWidth ("Line width", Range(0.01, 0.3)) = 0.045
+        _FillAlpha ("Fill alpha", Range(0, 1)) = 0
+        _LineAlpha ("Line alpha", Range(0, 1)) = 0.22
+        _RimAlpha ("Fresnel alpha", Range(0, 1)) = 0.06
+        _HiddenAlpha ("Behind-wall strength", Range(0, 1)) = 0.3
+        _CellSize ("Hex size (m)", Float) = 0.9
+        _LinePixels ("Line width (screen px)", Range(0.5, 4)) = 1.3
     }
 
     SubShader
@@ -31,7 +31,7 @@ Shader "UnityEve/HexDome"
             half _RimAlpha;
             half _HiddenAlpha;
             float _CellSize;
-            half _LineWidth;
+            half _LinePixels;
         CBUFFER_END
 
         float _UnscaledTime;
@@ -90,13 +90,14 @@ Shader "UnityEve/HexDome"
             float4 cell = HexCell(uv);
             float2 g = abs(cell.xy);
             float edge = 0.5 - max(dot(g, normalize(float2(1.0, 1.7320508))), g.x);
-            float aa = max(fwidth(edge), 1e-4);
-            float lattice = 1.0 - smoothstep(_LineWidth - aa, _LineWidth + aa, edge);
+            // Wire: a constant on-screen width, however near or far the cell is.
+            float px = max(fwidth(edge), 1e-5);
+            float lattice = 1.0 - smoothstep(px * (_LinePixels - 0.5), px * (_LinePixels + 0.5), edge);
             // Cells fade out toward the cap, where the lattice pinches.
             lattice *= saturate((1.0 - d.y) * 3.0);
 
             float t = _UnscaledTime;
-            float twinkle = step(0.93, Hash(cell.zw + floor(t * 2.0))) * 0.15;
+            float twinkle = step(0.95, Hash(cell.zw + floor(t * 2.0)));
             float scan = saturate(1.0 - abs(frac(t * 0.45) - saturate(d.y)) * 9.0);
 
             float3 n = normalize(i.normalWS);
@@ -108,10 +109,11 @@ Shader "UnityEve/HexDome"
             float inside = step(distance(_WorldSpaceCameraPos, centre), radius);
             fresnel *= 1.0 - inside;
 
-            float alpha = _FillAlpha + twinkle * 0.2 + lattice * _LineAlpha * (0.6 + 0.4 * scan) + fresnel * _RimAlpha + scan * 0.04;
+            // Wireframe: only the lattice draws (a few edges flare, the scan brightens a band of them).
+            float alpha = _FillAlpha + lattice * _LineAlpha * (0.75 + 0.9 * scan + 0.8 * twinkle) + fresnel * _RimAlpha;
             // Hide the lower half (the dome sits on the ground) and shell right in front of the lens.
             alpha *= step(-0.02, d.y) * lerp(1.0, 0.6, inside);
-            alpha *= saturate((distance(_WorldSpaceCameraPos, i.positionWS) - 1.0) / 3.0);
+            alpha *= saturate((distance(_WorldSpaceCameraPos, i.positionWS) - 1.5) / 6.0);
             half3 colour = _BaseColor.rgb * (1.0 + lattice * 0.6 + scan * 0.5);
             return half4(colour, saturate(alpha * strength));
         }

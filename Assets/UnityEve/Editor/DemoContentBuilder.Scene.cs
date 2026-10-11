@@ -612,8 +612,8 @@ namespace UnityEve.Editor
                 var a = i / 64f * Mathf.PI * 2f;
                 ring.SetPosition(i, new Vector3(Mathf.Cos(a) * 0.5f, 0.005f, Mathf.Sin(a) * 0.5f));
             }
-            ring.widthMultiplier = 0.06f;
-            ring.startColor = ring.endColor = new Color(0.33f, 1f, 0.73f, 0.9f);
+            ring.widthMultiplier = 0.035f;
+            ring.startColor = ring.endColor = new Color(0.33f, 1f, 0.73f, 0.45f);
             ring.sharedMaterial = TransparentMaterial("RangeRing", Color.white, additive: true, particles: true, twoSided: true);
             ring.shadowCastingMode = ShadowCastingMode.Off;
             var rangeDome = dome.AddComponent<RangeDome>();

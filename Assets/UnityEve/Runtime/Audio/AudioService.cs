@@ -40,6 +40,7 @@ namespace UnityEve
         EnemyBuff,
         KatanaSlash,
         KatanaRush,
+        EnemyCharge,
     }
 
     /// <summary>Pooled 2D one-shot player. Sounds ignore time scale so menus stay responsive while paused.</summary>

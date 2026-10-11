@@ -21,7 +21,7 @@ This is the Unity port of [ExperimentEve](https://github.com/mindattic/Experimen
 - **No screen transition.** Walking into an encounter zone makes the creatures materialize where you stand and seals the area with invisible walls.
 - **Active Time Bar.** The gauge fills in real time while you move and dodge, using PE1's formula `(50 + ActiveTime) x gun multiplier` (pistol 1.0, shotgun 0.8, melee 2.0).
 - **World pause.** With a full gauge, Confirm stops time and opens **Attack / PE / Item / Equip / Escape**.
-- **Range dome.** Choosing Attack raises a translucent shell of hexagons sized to the weapon's range. Only enemies inside it can be targeted. In rooms smaller than the range, the shell shows faintly through the walls.
+- **Range dome.** Choosing Attack raises a faint wireframe shell of hexagons sized to the weapon's range. Only enemies inside it can be targeted. In rooms smaller than the range, the shell shows faintly through the walls.
 - **Katana.** Kat carries a katana alongside her gun. The **Blade** command offers two arts:
   - *Slash:* a heavy cut that hits the target and anything beside it in a 110° arc, within 2.4 m.
   - *Rush (12 PE):* she dashes through a target up to 8 m away, cutting every creature along the line. She is untouchable mid-dash.
@@ -35,7 +35,7 @@ This is the Unity port of [ExperimentEve](https://github.com/mindattic/Experimen
   - *Flash grenade:* stuns everything within 3.5 m.
   - *Medicine, Cola and Mito Tonic:* restore HP or PE.
 - **Readable enemy attacks** (from ExperimentEve). Each enemy cycles close → windup → strike → recover. During the windup it glows, and the pause freezes it mid-telegraph. At most two enemies commit to an attack at once.
-- **Creatures that think.** Between attacks a creature stops, then picks what to do from its temperament and what it sees: press in, flank toward Kat's back and strike from her blind side, hang back and idle, glow violet and enrage itself (harder hits, faster tempo), or retreat when hurt. Rats swarm; spiders and serpents flank; the Drain Coil buffs and hangs back.
+- **Creatures that take turns.** The pack shares attack tokens, so one creature engages at a time (two in big packs), with a breather between turns. The engaged one stalks in or flanks toward Kat's back, rears up with a growl and a red glow, charges at a burst of speed, strikes, then retreats and hands the turn on. The rest keep to a ring around her: idling, pacing, glowing violet to enrage themselves (harder hits, faster tempo), or backing off if she gets close. Temperament shapes it: rats are eager, spiders and serpents flank, the Drain Coil hangs back and buffs.
 - **Escape** succeeds more often against weaker packs. EXP, level-ups and Bonus Points feed Active Time, so the gauge fills faster as you grow.
 
 ![The paused command menu over the Mercer kitchen fight](docs/images/battle-command-menu.png)
@@ -62,7 +62,7 @@ This is the Unity port of [ExperimentEve](https://github.com/mindattic/Experimen
 ![The alley, watched by a CCTV camera that pans to follow Kat](docs/images/camera-alley-cctv.png)
 
 ### Presentation
-- **Cel-shaded, inked render** (Borderlands / Parasite Mutant). Light falls in flat, anti-aliased bands and hard-edged pools, with comic hatching where it falls away. A full-screen ink pass draws brush-like outlines from depth and normals: heavier close to the camera, thinner with distance, and sinking into the fog. The world renders at full window resolution with 4x MSAA, and the HUD uses comic panels and Bangers lettering. Hard cuts, fog and flickering bulbs complete the mood.
+- **Cel-shaded, inked render** (Borderlands / Parasite Mutant). Light falls in flat, anti-aliased bands and hard-edged pools, and tiled textures are flattened toward painted colour. A full-screen ink pass draws clean, even outlines at silhouettes and creases. Floors seen at a grazing angle never streak, and lines thin with distance and sink into the fog. The world renders at full window resolution with 4x MSAA, and the HUD uses comic panels and Bangers lettering. Hard cuts, fog and flickering bulbs complete the mood.
 - **Kat** is a Quaternius Universal Base Character on the Universal Animation Library skeleton. Both share the same 65-joint rig, so the meshes are rebound by bone name with no retargeting. Her jeans, boots and tank top are painted into her albedo by a C# port of ExperimentEve's outfit painter.
 - **Feel and sound.** Every event has a sound. Hits, crits, dodges and explosions add gamepad rumble and camera shake.
 

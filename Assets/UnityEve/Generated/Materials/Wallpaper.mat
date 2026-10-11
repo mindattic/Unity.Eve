@@ -30,8 +30,7 @@ Material:
     m_Ints: []
     m_Floats:
     - _Bands: 3
-    - _HatchDensity: 150
-    - _HatchStrength: 0.55
+    - _Detail: 0.25
     - _Smoothness: 0.1
     m_Colors:
     - _BaseColor: {r: 0.55, g: 0.48, b: 0.38, a: 1}

@@ -78,10 +78,10 @@ namespace UnityEve.Editor
             }
             material.shader = Shader.Find("UnityEve/InkOutline");
             material.SetColor("_InkColor", new Color(0.03f, 0.025f, 0.04f, 1f));
-            material.SetFloat("_Thickness", 3.4f);
-            material.SetFloat("_DepthThreshold", 0.06f);
-            material.SetFloat("_NormalThreshold", 0.3f);
-            material.SetFloat("_Wobble", 0.45f);
+            material.SetFloat("_Thickness", 2.2f);
+            material.SetFloat("_DepthThreshold", 0.04f);
+            material.SetFloat("_NormalThreshold", 0.35f);
+            material.SetFloat("_FadeDistance", 40f);
             EditorUtility.SetDirty(material);
 
             var feature = renderer.rendererFeatures.OfType<FullScreenPassRendererFeature>().FirstOrDefault(f => f.name == "InkOutline");

@@ -76,6 +76,8 @@ namespace UnityEve.Editor
             m.SetColor("_BaseColor", color);
             m.SetTexture("_BaseMap", texture);
             m.SetFloat("_Smoothness", smoothness);
+            // Tiled photo textures are flattened toward painted colour; a hint of grain stays.
+            m.SetFloat("_Detail", texture != null ? 0.25f : 1f);
             if (emissive)
             {
                 m.EnableKeyword("_EMISSION");
@@ -249,11 +251,14 @@ namespace UnityEve.Editor
             var sm = ac.layers[0].stateMachine;
 
             var idleClip = flier ? Find("Flying") : Find("Idle");
-            var moveClip = flier ? idleClip : Find("Walk", "Run", "Jump") ?? idleClip;
+            var walkClip = flier ? idleClip : Find("Walk", "Run", "Jump") ?? idleClip;
+            var runClip = flier ? idleClip : Find("Run", "Jump") ?? walkClip;
+            // Idle while lurking, walk while circling or stalking, run when charging or retreating.
             var tree = new BlendTree { name = "Move", blendParameter = "Speed", useAutomaticThresholds = false };
             AssetDatabase.AddObjectToAsset(tree, ac);
             tree.AddChild(idleClip, 0f);
-            tree.AddChild(moveClip, 1.5f);
+            tree.AddChild(walkClip, 1.2f);
+            tree.AddChild(runClip, 4f);
             var move = AddState(sm, "Move", tree, new Vector3(300, 0));
             sm.defaultState = move;
             TriggerFromAny(sm, AddState(sm, "Attack", Find("Attack"), new Vector3(600, 0)), "Attack", move, 0.9f);
@@ -304,7 +309,7 @@ namespace UnityEve.Editor
                 EditorUtility.SetDirty(mat);
             }
 
-            Rim(rig, new Color(0.55f, 0.78f, 1f, 0.45f));
+            Rim(rig, new Color(0.6f, 0.82f, 1f, 0.8f));
 
             var animator = rig.GetComponent<Animator>() ?? rig.AddComponent<Animator>();
             animator.runtimeAnimatorController = PlayerAnimator();

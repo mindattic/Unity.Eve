@@ -7,15 +7,19 @@ namespace UnityEve.Core.Battle
     {
         /// <summary>A beat of stillness between decisions: it stops, watches, then chooses.</summary>
         Think,
-        /// <summary>Close to reach and look for an opening to strike.</summary>
-        Approach,
-        /// <summary>Work around toward the player's back for a better angle, then strike.</summary>
-        Flank,
-        /// <summary>Hang back and idle at range, waiting its turn.</summary>
-        Hold,
+        /// <summary>Hang back on its ring around the player and idle.</summary>
+        Lurk,
+        /// <summary>Pace slowly around the player at a distance.</summary>
+        Circle,
         /// <summary>Stand still and power up (glows); afterwards it hits harder and moves faster.</summary>
         Buff,
-        /// <summary>Back off when hurt or crowded.</summary>
+        /// <summary>Token holder: close in at a prowl to charging distance.</summary>
+        Stalk,
+        /// <summary>Token holder: work round toward the player's back first.</summary>
+        Flank,
+        /// <summary>Token holder: rear up for a beat, then charge in at a burst of speed and strike.</summary>
+        Charge,
+        /// <summary>Back off to its ring: after a strike, when crowding the player, or when hurt.</summary>
         Retreat,
     }
 
@@ -26,8 +30,6 @@ namespace UnityEve.Core.Battle
         public float HealthFraction;
         /// <summary>Cosine between the player's facing and the direction to this enemy: 1 = in front of her gun, -1 = behind her.</summary>
         public float PlayerFacing;
-        /// <summary>The pack's committed-attacker limit has room.</summary>
-        public bool AttackSlotFree;
         public int PackAlive;
     }
 
@@ -36,7 +38,7 @@ namespace UnityEve.Core.Battle
     {
         /// <summary>Distance from the player to settle at, in metres; negative means "stay where you are".</summary>
         public readonly float RingDistance;
-        /// <summary>Fraction of the creature's move speed.</summary>
+        /// <summary>Multiple of the creature's move speed (above 1 for a charge).</summary>
         public readonly float Speed;
         /// <summary>0..1 weight of sideways movement around the player.</summary>
         public readonly float Orbit;
@@ -55,23 +57,32 @@ namespace UnityEve.Core.Battle
     }
 
     /// <summary>
-    /// The creature's tactical brain, layered over <see cref="EnemyAttackCycle"/>. Between attacks it
-    /// stops to think, then picks an intent by weighted utility from its temperament (Aggression,
-    /// Caution) and what it senses: press the attack, flank for a better angle, hold back, buff itself,
-    /// or retreat. The attack cycle may only commit while the mind allows it. All rolls use the seeded Rng.
+    /// The creature's tactical brain, layered over <see cref="EnemyAttackCycle"/>. Creatures take turns
+    /// through the pack's <see cref="AttackTokens"/>: the one holding a token stalks or flanks in, rears up,
+    /// charges, strikes and retreats, then gives the token back. Everyone else keeps to a ring around the
+    /// player and lurks, circles or powers up, backing off if crowded. Every intent ends in a short pause
+    /// to think. Temperament (Aggression, Caution) weights the choices; all rolls use the seeded Rng.
     /// </summary>
     public sealed class EnemyMind
     {
         private readonly EnemyStats _stats;
         private readonly Rng _rng;
+        private readonly Func<bool> _takeToken;
+        private readonly Action _releaseToken;
         private float _timer;
+        private float _chargeAnticipation;
 
         public EnemyIntent Intent { get; private set; } = EnemyIntent.Think;
+        public bool HasToken { get; private set; }
+        /// <summary>This creature's preferred distance from the player while it waits its turn.</summary>
+        public float RingRadius { get; }
         public float BuffRemaining { get; private set; }
         public float BuffCooldown { get; private set; }
         public bool Buffed => BuffRemaining > 0f;
         public float DamageMultiplier => Buffed ? BattleConfig.EnemyBuffDamageMultiplier : 1f;
         public float Tempo => Buffed ? BattleConfig.EnemyBuffTempo : 1f;
+        /// <summary>True during the beat a charging creature rears up before it runs.</summary>
+        public bool RearingUp => Intent == EnemyIntent.Charge && _chargeAnticipation > 0f;
 
         /// <summary>0..1 through the buff cast, for the charge-up glow.</summary>
         public float BuffCastProgress =>
@@ -80,104 +91,136 @@ namespace UnityEve.Core.Battle
         public event Action<EnemyIntent> IntentChosen;
         public event Action BuffApplied;
 
-        public EnemyMind(EnemyStats stats, Rng rng, float firstThinkSeconds = 0f)
+        /// <param name="takeToken">Asks the pack for an attack token; null means always granted (tests, lone creatures).</param>
+        /// <param name="releaseToken">Gives the token back.</param>
+        public EnemyMind(EnemyStats stats, Rng rng, float firstThinkSeconds = 0f, Func<bool> takeToken = null, Action releaseToken = null)
         {
             _stats = stats;
             _rng = rng;
             _timer = firstThinkSeconds;
+            _takeToken = takeToken ?? (() => true);
+            _releaseToken = releaseToken ?? (() => { });
+            RingRadius = Math.Max(_rng.Range(BattleConfig.EnemyRingMinRadius, BattleConfig.EnemyRingMaxRadius), stats.Reach * 2.6f);
         }
 
         /// <param name="deltaSeconds">Scaled time: zero while the world is paused.</param>
-        public void Tick(float deltaSeconds, in EnemySenses senses)
+        public void Tick(float deltaSeconds, in EnemySenses s)
         {
             if (deltaSeconds <= 0f) return;
             BuffRemaining = Math.Max(0f, BuffRemaining - deltaSeconds);
             BuffCooldown = Math.Max(0f, BuffCooldown - deltaSeconds);
             _timer -= deltaSeconds;
-
-            // A flanker that reaches the player's blind side seizes the opening at once.
-            if (Intent == EnemyIntent.Flank && senses.PlayerFacing < BattleConfig.EnemyFlankOpeningFacing && senses.AttackSlotFree)
-            {
-                Choose(EnemyIntent.Approach, _rng.Range(1.5f, 2.5f));
-                return;
-            }
-
-            if (_timer > 0f) return;
-            if (Intent == EnemyIntent.Buff)
-            {
-                BuffRemaining = BattleConfig.EnemyBuffSeconds;
-                BuffCooldown = BattleConfig.EnemyBuffCooldownSeconds;
-                BuffApplied?.Invoke();
-            }
-
-            if (Intent == EnemyIntent.Think) Choose(Decide(senses));
-            else Pause();
-        }
-
-        /// <summary>After a strike, a stagger or a stun: stop and think again.</summary>
-        public void Reconsider() => Pause();
-
-        /// <summary>The attack cycle may wind up only while this is true.</summary>
-        public bool MayAttack(in EnemySenses senses)
-        {
-            switch (Intent)
-            {
-                case EnemyIntent.Approach: return true;
-                case EnemyIntent.Flank: return senses.PlayerFacing < BattleConfig.EnemyFlankOpeningFacing;
-                // An idling creature still snaps at a player who walks right up to it.
-                case EnemyIntent.Hold: return senses.Distance <= _stats.Reach * 0.8f;
-                default: return false;
-            }
-        }
-
-        public EnemySteering Steer(in EnemySenses senses)
-        {
             var reach = _stats.Reach;
+
             switch (Intent)
             {
-                case EnemyIntent.Approach: return new EnemySteering(reach * 0.92f, 1f, 0.25f, false);
-                case EnemyIntent.Flank: return new EnemySteering(Math.Max(reach * 1.6f, 1.6f), 0.95f, 1f, true);
-                case EnemyIntent.Hold: return new EnemySteering(-1f, 0f, 0f, false);
-                case EnemyIntent.Retreat: return new EnemySteering(Math.Max(reach * 3.2f, 3.5f), 0.85f, 0.3f, false);
+                case EnemyIntent.Stalk:
+                    if (s.Distance <= ChargeDistance) { Choose(EnemyIntent.Charge); return; }
+                    if (_timer <= 0f) { Choose(EnemyIntent.Charge); return; }
+                    break;
+                case EnemyIntent.Flank:
+                    if (s.PlayerFacing < BattleConfig.EnemyFlankOpeningFacing || _timer <= 0f) { Choose(EnemyIntent.Charge); return; }
+                    break;
+                case EnemyIntent.Charge:
+                    _chargeAnticipation -= deltaSeconds;
+                    // Missed its chance (the player kept away): give up the turn and fall back.
+                    if (_timer <= 0f) { GiveBackToken(); Choose(EnemyIntent.Retreat); }
+                    return;
+                case EnemyIntent.Retreat:
+                    if (s.Distance >= RingRadius * 0.9f || _timer <= 0f) Pause();
+                    return;
+                case EnemyIntent.Buff:
+                    if (_timer <= 0f)
+                    {
+                        BuffRemaining = BattleConfig.EnemyBuffSeconds;
+                        BuffCooldown = BattleConfig.EnemyBuffCooldownSeconds;
+                        BuffApplied?.Invoke();
+                        Pause();
+                    }
+                    return;
+                default: // Think, Lurk, Circle
+                    // A waiting creature crowding the player backs off to its ring.
+                    if (Intent != EnemyIntent.Think && s.Distance < Math.Max(reach * 1.4f, RingRadius * 0.55f)) { Choose(EnemyIntent.Retreat); return; }
+                    if (_timer > 0f) return;
+                    if (Intent == EnemyIntent.Think) Choose(Decide(s));
+                    else Pause();
+                    return;
+            }
+        }
+
+        private float ChargeDistance => Math.Max(_stats.Reach * 2.4f, 2.4f);
+
+        /// <summary>The strike landed (hit, whiff or evaded): give the turn back and fall back to the ring.</summary>
+        public void Struck()
+        {
+            GiveBackToken();
+            Choose(EnemyIntent.Retreat);
+        }
+
+        /// <summary>Stunned or staggered: lose the turn and think again.</summary>
+        public void Reconsider()
+        {
+            GiveBackToken();
+            Pause();
+        }
+
+        /// <summary>Dead or removed: make sure the pack gets its token back.</summary>
+        public void Leave() => GiveBackToken();
+
+        /// <summary>The attack cycle may wind up only while this is true: a charging token holder.</summary>
+        public bool MayAttack(in EnemySenses s) => HasToken && Intent == EnemyIntent.Charge && !RearingUp;
+
+        public EnemySteering Steer(in EnemySenses s)
+        {
+            switch (Intent)
+            {
+                case EnemyIntent.Lurk: return new EnemySteering(RingRadius, 0.4f, 0.1f, false);
+                case EnemyIntent.Circle: return new EnemySteering(RingRadius, 0.45f, 1f, false);
+                case EnemyIntent.Stalk: return new EnemySteering(ChargeDistance * 0.9f, 0.7f, 0.15f, false);
+                case EnemyIntent.Flank: return new EnemySteering(Math.Max(ChargeDistance, RingRadius * 0.6f), 0.95f, 1f, true);
+                case EnemyIntent.Charge:
+                    return RearingUp
+                        ? new EnemySteering(-1f, 0f, 0f, false)
+                        : new EnemySteering(_stats.Reach * 0.8f, BattleConfig.EnemyChargeSpeed, 0f, false);
+                case EnemyIntent.Retreat: return new EnemySteering(RingRadius, BattleConfig.EnemyRetreatSpeed, 0.25f, false);
                 default: return new EnemySteering(-1f, 0f, 0f, false); // Think, Buff: stand still
             }
         }
 
-        /// <summary>Weighted utility pick. Exposed for tests.</summary>
+        /// <summary>The next intent for a creature that is free to choose. Exposed for tests.</summary>
         public EnemyIntent Decide(in EnemySenses s)
         {
-            var reach = _stats.Reach;
             var aggression = Clamp01(_stats.Aggression);
             var caution = Clamp01(_stats.Caution);
             var hurt = s.HealthFraction < 0.4f;
-            var far = s.Distance > reach * 3f;
 
-            var approach = 0.6f + 1.6f * aggression + (Buffed ? 1f : 0f);
-            if (!s.AttackSlotFree) approach *= 0.25f;
-            if (hurt) approach *= 1f - 0.6f * caution;
-
-            var flank = (s.PlayerFacing > 0.3f ? 0.9f : 0.25f) + 0.6f * caution;
-            if (far) flank *= 0.4f;
-
-            var hold = 0.25f + 0.7f * caution + (s.AttackSlotFree ? 0f : 0.9f) + (s.PackAlive >= 3 ? 0.3f : 0f);
-
-            var buff = 0f;
-            if (!Buffed && BuffCooldown <= 0f && s.Distance > reach * 1.6f)
-                buff = 0.25f + 0.6f * caution + (hurt ? 0.5f : 0f) + (s.PackAlive > 1 ? 0.2f : 0f);
-
-            var retreat = hurt ? 1.4f * caution : (s.Distance < reach * 0.7f ? 0.3f * caution : 0f);
-
-            var weights = new[] { approach, flank, hold, buff, retreat };
-            var intents = new[] { EnemyIntent.Approach, EnemyIntent.Flank, EnemyIntent.Hold, EnemyIntent.Buff, EnemyIntent.Retreat };
-            var total = 0f;
-            foreach (var w in weights) total += w;
-            var roll = _rng.NextFloat() * total;
-            for (var i = 0; i < weights.Length; i++)
+            // Try for a turn to attack.
+            var eagerness = 0.3f + 0.55f * aggression + (Buffed ? 0.3f : 0f) - (hurt ? 0.35f * caution : 0f);
+            if (_rng.Chance(Clamp01(eagerness)) && _takeToken())
             {
-                roll -= weights[i];
-                if (roll < 0f) return intents[i];
+                HasToken = true;
+                if (s.Distance <= ChargeDistance) return EnemyIntent.Charge;
+                return s.PlayerFacing > 0.3f && _rng.Chance(0.2f + 0.5f * caution) ? EnemyIntent.Flank : EnemyIntent.Stalk;
             }
-            return EnemyIntent.Approach;
+
+            // Waiting its turn.
+            var lurk = 0.5f + 0.7f * caution;
+            var circle = 0.7f;
+            var buff = !Buffed && BuffCooldown <= 0f ? 0.15f + 0.5f * caution + (hurt ? 0.4f : 0f) : 0f;
+            var retreat = hurt ? 1.2f * caution : 0f;
+            var total = lurk + circle + buff + retreat;
+            var roll = _rng.NextFloat() * total;
+            if ((roll -= lurk) < 0f) return EnemyIntent.Lurk;
+            if ((roll -= circle) < 0f) return EnemyIntent.Circle;
+            if ((roll -= buff) < 0f) return EnemyIntent.Buff;
+            return EnemyIntent.Retreat;
+        }
+
+        private void GiveBackToken()
+        {
+            if (!HasToken) return;
+            HasToken = false;
+            _releaseToken();
         }
 
         private void Pause() => Choose(EnemyIntent.Think, _rng.Range(BattleConfig.EnemyThinkMinSeconds, BattleConfig.EnemyThinkMaxSeconds));
@@ -187,11 +230,16 @@ namespace UnityEve.Core.Battle
             float seconds;
             switch (intent)
             {
-                case EnemyIntent.Approach: seconds = _rng.Range(2.2f, 4f); break;
-                case EnemyIntent.Flank: seconds = _rng.Range(1.6f, 3f); break;
-                case EnemyIntent.Hold: seconds = _rng.Range(0.8f, 1.8f); break;
+                case EnemyIntent.Lurk: seconds = _rng.Range(1.5f, 3.2f); break;
+                case EnemyIntent.Circle: seconds = _rng.Range(1.8f, 3.5f); break;
                 case EnemyIntent.Buff: seconds = BattleConfig.EnemyBuffCastSeconds; break;
-                case EnemyIntent.Retreat: seconds = _rng.Range(1f, 1.8f); break;
+                case EnemyIntent.Stalk: seconds = _rng.Range(2.5f, 4f); break;
+                case EnemyIntent.Flank: seconds = _rng.Range(2f, 3.2f); break;
+                case EnemyIntent.Charge:
+                    _chargeAnticipation = BattleConfig.EnemyChargeAnticipationSeconds;
+                    seconds = BattleConfig.EnemyChargeAnticipationSeconds + BattleConfig.EnemyChargeMaxSeconds;
+                    break;
+                case EnemyIntent.Retreat: seconds = _rng.Range(1.2f, 2f); break;
                 default: seconds = _rng.Range(BattleConfig.EnemyThinkMinSeconds, BattleConfig.EnemyThinkMaxSeconds); break;
             }
             Choose(intent, seconds);

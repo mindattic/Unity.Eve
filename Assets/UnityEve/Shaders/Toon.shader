@@ -1,6 +1,6 @@
 // Unity Eve cel shader (Borderlands / Parasite Mutant direction): banded light from the moon and every
-// point light with anti-aliased band edges, a flat ambient fill, a thin rim, and comic hatching where the
-// light falls away. Ink lines come from the full-screen InkOutline pass, fed by this shader's
+// point light with anti-aliased band edges, a flat ambient fill, a rim, and tiled surface textures flattened
+// toward their average colour so walls and floors read as painted. Ink lines come from the full-screen InkOutline pass, fed by this shader's
 // DepthNormals pass. Keeps URP Lit's property names (_BaseMap, _BaseColor, _EmissionColor, _Smoothness) so the
 // content builder and the enemy telegraph glow (a MaterialPropertyBlock on _EmissionColor) work unchanged.
 Shader "UnityEve/Toon"
@@ -13,8 +13,7 @@ Shader "UnityEve/Toon"
         _Smoothness ("Smoothness (hard specular above 0.3)", Range(0, 1)) = 0.1
         _Bands ("Light bands", Range(1, 6)) = 3
         _RimColor ("Rim (alpha = strength)", Color) = (0.35, 0.4, 0.55, 0.1)
-        _HatchStrength ("Shadow hatching", Range(0, 1)) = 0.55
-        _HatchDensity ("Hatch lines per screen height", Float) = 150
+        _Detail ("Texture detail kept (0 = flat painted colour)", Range(0, 1)) = 1
     }
 
     SubShader
@@ -31,8 +30,7 @@ Shader "UnityEve/Toon"
             half _Smoothness;
             half _Bands;
             half4 _RimColor;
-            half _HatchStrength;
-            float _HatchDensity;
+            half _Detail;
         CBUFFER_END
 
         TEXTURE2D(_BaseMap);
@@ -115,7 +113,10 @@ Shader "UnityEve/Toon"
             half4 Frag(Varyings i) : SV_Target
             {
                 UNITY_SETUP_INSTANCE_ID(i);
-                half4 albedo = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, i.uv) * _BaseColor;
+                // Painted, not photographic: pull the texture toward its own average colour (a deep mip).
+                half4 texel = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, i.uv);
+                half4 flat = SAMPLE_TEXTURE2D_LOD(_BaseMap, sampler_BaseMap, i.uv, 9);
+                half4 albedo = lerp(flat, texel, _Detail) * _BaseColor;
                 half3 n = normalize(i.normalWS);
                 half3 v = GetWorldSpaceNormalizeViewDir(i.positionWS);
 
@@ -143,15 +144,6 @@ Shader "UnityEve/Toon"
 
                 // Thin rim so silhouettes read against the night.
                 half rim = step(0.72h, 1.0h - saturate(dot(n, v)));
-                // Comic hatching where the light falls away: diagonal screen-space strokes (cameras are fixed,
-                // so they hold still), denser and darker the darker the surface.
-                half lum = dot(light, half3(0.299h, 0.587h, 0.114h));
-                float2 sp = i.positionCS.xy / _ScreenParams.y * _HatchDensity;
-                float stroke = abs(frac((sp.x + sp.y) * 0.7071) - 0.5) * 2.0;
-                float coverage = saturate(0.55 - lum * 1.6);
-                float aaH = max(fwidth(stroke), 1e-3);
-                float hatch = (1.0 - smoothstep(coverage - aaH, coverage + aaH, stroke)) * step(0.02, coverage);
-                light *= 1.0h - (half)(hatch * _HatchStrength * 0.6);
 
                 half3 colour = albedo.rgb * light + _RimColor.rgb * rim * _RimColor.a + _EmissionColor.rgb;
                 colour = MixFog(colour, i.fogFactor);

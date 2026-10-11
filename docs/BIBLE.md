@@ -19,17 +19,18 @@ fight with Parasite Eve's real-time/pause Active Time Battle.
   - The gauge fills while you move in real time.
   - The world stops when you act.
   - The weapon's range dome, a translucent shell of hexagons, decides what you can hit.
-  - Creatures fight with intent: between attacks they stop to think, then press in, flank toward your
-    back, hang back, enrage themselves, or retreat when hurt. It keeps the JRPG command-battle feel;
+  - Creatures take turns like enemies in most action games (attack tokens): one engages at a time,
+    stalking or flanking in, rearing up, charging, striking and retreating; the rest lurk, circle,
+    enrage themselves or back off on a ring around Kat. It keeps the JRPG command-battle feel;
     Parasite Mutant is the reference for the action's pace, not its gauge.
   - Kat carries a katana with her gun: Slash cuts an arc in front, Rush dashes through a line of
     creatures. Both are menu commands, so the JRPG turn rhythm holds.
   - PE abilities and items round out the turn.
 - It looks like Borderlands meets Parasite Mutant (owner direction 2026-10-11; the PS1 look is retired):
-  - Every surface is cel-shaded (`UnityEve/Toon`): light arrives in flat, anti-aliased bands and pools,
-    with comic hatching where it falls away.
-  - Ink lines are drawn like ink, not pixels: a full-screen pass (`UnityEve/InkOutline`) over depth and
-    normals, with brush-varied width, heavier close up and fading into the fog.
+  - Every surface is cel-shaded (`UnityEve/Toon`): light arrives in flat, anti-aliased bands and pools;
+    tiled textures are flattened toward painted colour. Clean is the bar (owner, 2026-10-11).
+  - Ink lines are drawn like ink, not pixels: a full-screen pass (`UnityEve/InkOutline`) inks silhouettes
+    (curvature of 1/depth, zero on any plane, so floors never streak) and creases, at an even width.
   - Full window resolution, 4x MSAA, 16:9; comic HUD panels in Bangers.
   - Fixed and CCTV cameras hard-cut between shots.
   - Nights are foggy.
@@ -68,7 +69,7 @@ fight with Parasite Eve's real-time/pause Active Time Battle.
 - **Verbs:**
   - `BattleDirector.Begin/OpenCommandMenu/Execute`
   - `EnemyAttackCycle.Tick/Resolve`
-  - `EnemyMind.Tick/Decide/Steer` (tactics layered over the attack cycle)
+  - `EnemyMind.Tick/Decide/Steer` + `AttackTokens.TryTake/Release` (turn-taking tactics over the attack cycle)
   - `BladeArts.InSlashArc/RushEnd/OnRushPath` (katana)
   - `FocusWindow.Open/TryUse`
   - `Inventory.Add/TryRemove`
@@ -106,7 +107,7 @@ Every third-party file is CC0 or OFL and listed in CREDITS.md. Missing sounds ar
 Edit `DemoContentBuilder`, then re-run it. A hand edit to `Generated/` or `Demo.unity` is lost on the next build.
 
 ## 6. Verified state {#UE-§6}
-- `dotnet test Tests/Core.Tests`: 42 passing.
+- `dotnet test Tests/Core.Tests`: 46 passing.
 - Unity 6000.4.3f1 batch-mode compile: clean.
 - `UnityEve.exe -batchmode -autoplay`: PASS, with 46-47 screenshots (the enemy-buff shot appears when a
   creature happens to power up) covering:

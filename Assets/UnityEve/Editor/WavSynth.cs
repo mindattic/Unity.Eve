@@ -32,6 +32,7 @@ namespace UnityEve.Editor
             Write(folder, "enemy_buff_charge", Sweep(70f, 260f, 1.1f, 0.45f, noise: 0.25f));
             Write(folder, "enemy_buff", Chord(new[] { 98f, 103.8f, 146.8f }, 0.6f));
             Write(folder, "katana_slash", Mix(Whoosh(0.24f), Sweep(2400f, 1800f, 0.24f, 0.18f)));
+            Write(folder, "enemy_charge", Growl(0.35f));
             Write(folder, "katana_rush", Mix(Whoosh(0.4f), Sweep(900f, 3200f, 0.4f, 0.22f, noise: 0.2f)));
         }
 

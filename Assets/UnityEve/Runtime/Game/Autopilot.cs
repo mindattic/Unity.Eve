@@ -298,6 +298,7 @@ namespace UnityEve.Game
             var turn = 0;
             var focusShown = false;
             var buffShown = false;
+            var chargeShown = false;
             var intents = new System.Collections.Generic.HashSet<EnemyIntent>();
             var timeout = Time.realtimeSinceStartup + 90f;
             while (battle.InBattle && battle.Phase != BattlePhase.Victory && Time.realtimeSinceStartup < timeout)
@@ -306,6 +307,13 @@ namespace UnityEve.Game
                 if (_player.Health.Fraction < 0.5f) _player.Heal(999);
 
                 foreach (var e in battle.Enemies.Where(e => e.IsAlive)) intents.Add(e.Intent);
+                if (!chargeShown && battle.Phase == BattlePhase.Active && battle.Enemies.Any(e => e.IsAlive && e.RearingUp))
+                {
+                    chargeShown = true;
+                    yield return Shot($"{tag}_enemy_rears_up");
+                    yield return Real(0.45f);
+                    yield return Shot($"{tag}_enemy_charges");
+                }
                 if (!buffShown && battle.Phase == BattlePhase.Active && battle.Enemies.Any(e => e.IsAlive && e.Intent == EnemyIntent.Buff))
                 {
                     buffShown = true;

@@ -9,9 +9,9 @@ using UnityEve.UI;
 namespace UnityEve.Enemies
 {
     /// <summary>
-    /// A creature in battle. Real-time behaviour on scaled time. Between attacks its <see cref="EnemyMind"/>
-    /// stops to think and chooses what to do: press in, flank toward the player's back, idle at range,
-    /// buff itself, or retreat. When it commits it telegraphs (glows) during its windup, lunges at where
+    /// A creature in battle. Real-time behaviour on scaled time. Its <see cref="EnemyMind"/> takes turns with
+    /// the pack through attack tokens: with a token it stalks or flanks in, rears up, charges, strikes and
+    /// retreats; without one it lurks, circles or powers up on a ring around the player. When it commits it telegraphs (glows) during its windup, lunges at where
     /// the player was, then recovers. Because it runs on scaled time, the world-pause freezes it mid-telegraph.
     /// </summary>
     public sealed class EnemyActor : MonoBehaviour
@@ -48,6 +48,7 @@ namespace UnityEve.Enemies
         public bool IsCommitted => _cycle != null && _cycle.IsCommitted;
         public EnemyIntent Intent => _mind != null ? _mind.Intent : EnemyIntent.Think;
         public bool Buffed => _mind != null && _mind.Buffed;
+        public bool RearingUp => _mind != null && _mind.RearingUp;
         /// <summary>Strike damage multiplier (an enraged creature hits harder).</summary>
         public float DamageMultiplier => _mind != null ? _mind.DamageMultiplier : 1f;
         public float BodyRadius => _bodyRadius;
@@ -74,12 +75,14 @@ namespace UnityEve.Enemies
         }
 
         /// <summary>Called by the encounter when the creature materializes.</summary>
-        public void Begin(Transform target, Func<bool> mayCommit, float initialCooldown, uint seed, Bounds arena, Func<int> packAlive)
+        public void Begin(Transform target, Func<bool> mayCommit, float initialCooldown, uint seed, Bounds arena, Func<int> packAlive, AttackTokens tokens)
         {
             _arena = arena;
             _packAlive = packAlive;
             var rng = new Rng(seed);
-            _mind = new EnemyMind(Stats, rng, rng.Range(0.3f, 0.9f));
+            _mind = new EnemyMind(Stats, rng, rng.Range(0.4f, 1.2f),
+                tokens != null ? () => tokens.TryTake(this) : (Func<bool>)null,
+                tokens != null ? () => tokens.Release(this) : (Action)null);
             _mind.IntentChosen += OnIntent;
             _mind.BuffApplied += OnBuffApplied;
             Health = new Health(Stats.MaxHp);
@@ -90,7 +93,7 @@ namespace UnityEve.Enemies
             _cycle.StrikeLanded += () =>
             {
                 Struck?.Invoke(this);
-                _mind.Reconsider();
+                _mind.Struck();
             };
             _circleSign = rng.Chance(0.5f) ? -1f : 1f;
             _spawnTime = Time.time;
@@ -107,6 +110,7 @@ namespace UnityEve.Enemies
         private void OnIntent(EnemyIntent intent)
         {
             if (intent == EnemyIntent.Buff) AudioService.Play(SoundId.EnemyBuffCharge, 0.6f);
+            if (intent == EnemyIntent.Charge) AudioService.Play(SoundId.EnemyCharge, 0.8f);
         }
 
         private void OnBuffApplied()
@@ -148,6 +152,7 @@ namespace UnityEve.Enemies
                 _deathTime = Time.time;
                 if (_animator != null) _animator.SetTrigger(AnimParams.Die);
                 AudioService.Play(SoundId.EnemyDeath);
+                _mind?.Leave();
                 Died?.Invoke(this);
             }
             return dealt;
@@ -197,6 +202,7 @@ namespace UnityEve.Enemies
             }
 
             var stunned = Time.time < _stunnedUntil;
+            var before = transform.position;
             var tempo = Time.time < _slowUntil ? 0.5f : 1f;
             var toPlayer = _target.position - transform.position;
             toPlayer.y = 0f;
@@ -210,7 +216,6 @@ namespace UnityEve.Enemies
                 Distance = dist,
                 HealthFraction = Health.Fraction,
                 PlayerFacing = facing.sqrMagnitude > 0.0001f ? Vector3.Dot(facing.normalized, -dir) : 0f,
-                AttackSlotFree = _mayCommit == null || _mayCommit(),
                 PackAlive = _packAlive != null ? _packAlive() : 1,
             };
             tempo *= _mind.Tempo;
@@ -218,15 +223,26 @@ namespace UnityEve.Enemies
             if (!stunned && grow >= 1f)
             {
                 if (_cycle.Phase == AttackPhase.Close) _mind.Tick(dt, senses);
-                _cycle.Tick(dt, dist, senses.AttackSlotFree && _mind.MayAttack(senses), tempo);
+                // Tokens decide whose turn it is; the commit limit stays as a safety net.
+                _cycle.Tick(dt, dist, (_mayCommit == null || _mayCommit()) && _mind.MayAttack(senses), tempo);
                 Move(dt, dir, dist, tempo, _mind.Steer(senses), facing);
             }
 
-            var speed = stunned || _cycle.Phase != AttackPhase.Close ? 0f : Stats.MoveSpeed * tempo * _mind.Steer(senses).Speed;
+            // Locomotion follows how fast it actually moved: idle when still, walk, run when charging.
+            var moved = transform.position - before;
+            moved.y = 0f;
+            var speed = dt > 0f ? moved.magnitude / dt : 0f;
             if (_animator != null)
             {
-                _animator.SetFloat(AnimParams.Speed, speed);
+                _animator.SetFloat(AnimParams.Speed, speed, 0.08f, Mathf.Max(dt, 1e-4f));
                 _animator.speed = stunned ? 0.2f : tempo;
+            }
+
+            // Rearing up before a charge: a quick crouch-and-swell the player can read.
+            if (_mind.RearingUp && _deathTime < 0f)
+            {
+                var k = Mathf.Sin(Time.time * 18f) * 0.06f;
+                transform.localScale = new Vector3(_baseScale.x * (1.08f + k), _baseScale.y * (0.86f - k), _baseScale.z * (1.08f + k));
             }
 
             var y = Stats.HoverHeight > 0f
@@ -307,6 +323,8 @@ namespace UnityEve.Enemies
             }
             else if (stunned)
                 c = new Color(0.2f, 0.2f, 0.35f);
+            else if (_mind.RearingUp)
+                c = new Color(0.5f, 0.12f, 0.02f) * (0.6f + 0.4f * Mathf.Sin(Time.time * 40f));
             else if (_mind.Intent == EnemyIntent.Buff)
             {
                 // Charging up: a throbbing violet that builds toward the release.

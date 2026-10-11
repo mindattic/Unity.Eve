@@ -34,8 +34,19 @@ namespace UnityEve.Core.Battle
         public const float StrikeWhiffSlack = 0.35f;
 
         // --- Enemy tactics (EnemyMind) ------------------------------------------------------
-        public const float EnemyThinkMinSeconds = 0.3f;
-        public const float EnemyThinkMaxSeconds = 0.75f;
+        public const float EnemyThinkMinSeconds = 0.4f;
+        public const float EnemyThinkMaxSeconds = 1.0f;
+        /// <summary>Waiting creatures keep to a ring this far from the player (each picks its own radius).</summary>
+        public const float EnemyRingMinRadius = 3.6f;
+        public const float EnemyRingMaxRadius = 5.4f;
+        /// <summary>Seconds a charging creature rears up (growls, holds still) before it runs.</summary>
+        public const float EnemyChargeAnticipationSeconds = 0.4f;
+        public const float EnemyChargeMaxSeconds = 2.2f;
+        public const float EnemyChargeSpeed = 2.4f;
+        public const float EnemyRetreatSpeed = 1.3f;
+        /// <summary>Breather after an attack token comes back before the next creature may take it.</summary>
+        public const float TokenBreatherMinSeconds = 0.6f;
+        public const float TokenBreatherMaxSeconds = 1.5f;
         /// <summary>A flanker strikes once the player's facing to it drops below this cosine (~78 degrees off her aim).</summary>
         public const float EnemyFlankOpeningFacing = 0.2f;
         public const float EnemyBuffCastSeconds = 1.1f;

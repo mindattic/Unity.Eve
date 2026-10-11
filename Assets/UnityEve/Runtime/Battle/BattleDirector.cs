@@ -50,6 +50,7 @@ namespace UnityEve.Battle
         private readonly FocusWindow _focus = new FocusWindow();
         private Rng _rng;
         private EncounterZone _zone;
+        private AttackTokens _tokens;
         private MenuModel _menu;
         private readonly Stack<MenuModel> _menuStack = new Stack<MenuModel>();
         private int _targetIndex;
@@ -114,6 +115,8 @@ namespace UnityEve.Battle
             _player.Pe.BeginBattle();
             NudgeInside(zone);
 
+            // Attack tokens: the pack takes turns engaging Kat instead of mobbing her.
+            _tokens = new AttackTokens(AttackTokens.CapacityFor(zone.Spawns.Count(sp => sp.Enemy != null)), new Rng(_rng.NextUInt()), firstDelay: 1.2f);
             var i = 0;
             foreach (var spawn in zone.Spawns)
             {
@@ -122,7 +125,7 @@ namespace UnityEve.Battle
                 go.transform.LookAt(new Vector3(_player.transform.position.x, go.transform.position.y, _player.transform.position.z));
                 var actor = go.GetComponent<EnemyActor>();
                 actor.Begin(_player.transform, MayCommit, 0.6f + _rng.Range(0f, 0.8f) + i * 0.25f, _rng.NextUInt(), zone.Bounds,
-                    () => _enemies.Count(e => e.IsAlive));
+                    () => _enemies.Count(e => e.IsAlive), _tokens);
                 actor.Struck += OnEnemyStrike;
                 actor.Died += OnEnemyDied;
                 _enemies.Add(actor);
@@ -185,6 +188,7 @@ namespace UnityEve.Battle
             switch (Phase)
             {
                 case BattlePhase.Active:
+                    _tokens?.Tick(Time.deltaTime);
                     TickRealtime(Time.deltaTime);
                     if (_focus.IsOpen) HandleFocusInput(input);
                     else if (input != null && input.ConfirmPressed && _atb.IsFull && _player.Controller.CanAct) OpenCommandMenu();

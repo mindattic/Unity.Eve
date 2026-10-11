@@ -25,9 +25,10 @@ Material:
     m_TexEnvs: []
     m_Ints: []
     m_Floats:
-    - _DepthThreshold: 0.06
-    - _NormalThreshold: 0.3
-    - _Thickness: 3.4
+    - _DepthThreshold: 0.04
+    - _FadeDistance: 40
+    - _NormalThreshold: 0.35
+    - _Thickness: 2.2
     - _Wobble: 0.45
     m_Colors:
     - _InkColor: {r: 0.03, g: 0.025, b: 0.04, a: 1}
