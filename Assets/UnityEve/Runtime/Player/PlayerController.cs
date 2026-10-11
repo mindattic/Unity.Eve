@@ -61,6 +61,9 @@ namespace UnityEve.Player
 
         public void Root(float seconds) => _rootedUntil = Mathf.Max(_rootedUntil, Time.time + seconds);
 
+        /// <summary>Invulnerability frames outside a dodge (the katana rush).</summary>
+        public void GrantInvulnerability(float seconds) => _invulnerableUntil = Mathf.Max(_invulnerableUntil, Time.time + seconds);
+
         public void FaceTowards(Vector3 point)
         {
             var d = point - transform.position;

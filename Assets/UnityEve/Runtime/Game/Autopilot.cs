@@ -54,7 +54,8 @@ namespace UnityEve.Game
         {
             var doc = FindAnyObjectByType<UnityEngine.UIElements.UIDocument>();
             if (doc == null) return;
-            _offscreen = new RenderTexture(1024, 768, 24, RenderTextureFormat.ARGB32);
+            _offscreen = new RenderTexture(1600, 900, 24, RenderTextureFormat.ARGB32);
+            if (UI.GameHud.Instance != null) UI.GameHud.Instance.RenderSizeOverride = new Vector2Int(1600, 900);
             var panel = Instantiate(doc.panelSettings);
             panel.targetTexture = _offscreen;
             panel.clearColor = true;
@@ -349,6 +350,46 @@ namespace UnityEve.Game
                     else
                     {
                         battle.AutoCancel(); // nothing within throwing range
+                    }
+                }
+                else if (turn == 2 && _player.Pe.CanAfford(BattleConfig.KatanaRushPeCost))
+                {
+                    // Katana Rush: dash through a target, cutting everything on the way.
+                    battle.AutoChoose("Blade");
+                    yield return Real(0.2f);
+                    yield return Shot($"{tag}_blade_menu");
+                    battle.AutoChoose("Rush");
+                    yield return Real(0.3f);
+                    if (battle.Phase == BattlePhase.Targeting)
+                    {
+                        yield return Shot($"{tag}_rush_dome");
+                        battle.AutoConfirmTarget();
+                        yield return Real(0.12f);
+                        yield return Shot($"{tag}_rush");
+                        yield return Real(0.5f);
+                    }
+                }
+                else if (turn == 3)
+                {
+                    // Katana Slash: step up to the nearest creature and cut.
+                    var nearest = battle.Enemies.Where(e => e.IsAlive)
+                        .OrderBy(e => (e.transform.position - _player.transform.position).sqrMagnitude).FirstOrDefault();
+                    if (nearest != null)
+                    {
+                        var to = nearest.transform.position - _player.transform.position;
+                        to.y = 0f;
+                        _player.Controller.Teleport(nearest.transform.position - to.normalized * 1.3f, Quaternion.LookRotation(to.sqrMagnitude > 0.01f ? to : Vector3.forward));
+                    }
+                    battle.AutoChoose("Blade");
+                    yield return Real(0.15f);
+                    battle.AutoChoose("Slash");
+                    yield return Real(0.25f);
+                    if (battle.Phase == BattlePhase.Targeting)
+                    {
+                        battle.AutoConfirmTarget();
+                        yield return Real(0.22f);
+                        yield return Shot($"{tag}_slash");
+                        yield return Real(0.4f);
                     }
                 }
                 else if (_player.NeedsReload)

@@ -53,7 +53,8 @@ namespace UnityEve.Editor
             var player = (GameObject)PrefabUtility.InstantiatePrefab(content.PlayerPrefab);
             player.transform.SetPositionAndRotation(spawn.position, spawn.rotation);
             var character = player.GetComponent<PlayerCharacter>();
-            character.Configure(content.Database, new[] { content.Weapons["pistol"], content.Weapons["pipe"] }, content.Abilities.ToArray());
+            // The pistol is the gun; the katana (always carried) replaces the old steel pipe as her melee.
+            character.Configure(content.Database, new[] { content.Weapons["pistol"] }, content.Abilities.ToArray());
 
             BuildSystems(k, character, spawn, spawnShot);
 
@@ -88,12 +89,13 @@ namespace UnityEve.Editor
         private static void SetupLighting(SceneKit k)
         {
             RenderSettings.ambientMode = AmbientMode.Trilight;
-            RenderSettings.ambientSkyColor = new Color(0.24f, 0.27f, 0.4f);
-            RenderSettings.ambientEquatorColor = new Color(0.15f, 0.15f, 0.2f);
-            RenderSettings.ambientGroundColor = new Color(0.05f, 0.05f, 0.06f);
+            // A readable comic-book night: strong blue moonlight and fill, so the cel bands carry the form.
+            RenderSettings.ambientSkyColor = new Color(0.4f, 0.45f, 0.64f);
+            RenderSettings.ambientEquatorColor = new Color(0.27f, 0.27f, 0.36f);
+            RenderSettings.ambientGroundColor = new Color(0.13f, 0.12f, 0.14f);
             RenderSettings.fog = true;
             RenderSettings.fogMode = FogMode.ExponentialSquared;
-            RenderSettings.fogDensity = 0.035f;
+            RenderSettings.fogDensity = 0.024f;
             RenderSettings.fogColor = new Color(0.04f, 0.05f, 0.09f);
             RenderSettings.skybox = null;
 
@@ -102,7 +104,7 @@ namespace UnityEve.Editor
             moon.type = LightType.Directional;
             moon.transform.rotation = Quaternion.Euler(48f, -35f, 0f);
             moon.color = new Color(0.55f, 0.65f, 1f);
-            moon.intensity = 0.6f;
+            moon.intensity = 1.05f;
             moon.shadows = LightShadows.Soft;
         }
 
@@ -556,19 +558,12 @@ namespace UnityEve.Editor
         {
             var c = k.Content;
 
-            // PS1 render target: 400x300, point-filtered, letterboxed to 4:3 by the HUD.
-            var rtPath = $"{Gen}/PsxScreen.renderTexture";
-            var rt = AssetDatabase.LoadAssetAtPath<RenderTexture>(rtPath);
-            if (rt == null)
-            {
-                rt = new RenderTexture(400, 300, 24, RenderTextureFormat.ARGB32) { filterMode = FilterMode.Point, antiAliasing = 1, name = "PsxScreen" };
-                AssetDatabase.CreateAsset(rt, rtPath);
-            }
+            // The HUD gives the camera a full-resolution target sized to the window at runtime.
+            AssetDatabase.DeleteAsset($"{Gen}/PsxScreen.renderTexture");
 
             var camGo = new GameObject("Main Camera");
             camGo.tag = "MainCamera";
             var cam = camGo.AddComponent<Camera>();
-            cam.targetTexture = rt;
             cam.clearFlags = CameraClearFlags.SolidColor;
             cam.backgroundColor = new Color(0.02f, 0.025f, 0.05f);
             cam.nearClipPlane = 0.1f;
@@ -644,7 +639,7 @@ namespace UnityEve.Editor
             }
             panel.themeStyleSheet = AssetDatabase.LoadAssetAtPath<ThemeStyleSheet>(themePath);
             panel.scaleMode = PanelScaleMode.ScaleWithScreenSize;
-            panel.referenceResolution = new Vector2Int(960, 720);
+            panel.referenceResolution = new Vector2Int(1280, 720);
             panel.screenMatchMode = PanelScreenMatchMode.MatchWidthOrHeight;
             panel.match = 1f;
             EditorUtility.SetDirty(panel);
@@ -654,7 +649,7 @@ namespace UnityEve.Editor
             doc.panelSettings = panel;
             var hud = hudGo.AddComponent<GameHud>();
             hud.Configure(AssetDatabase.LoadAssetAtPath<StyleSheet>($"{Root}/UI/Hud.uss"),
-                AssetDatabase.LoadAssetAtPath<Font>($"{Art}/Fonts/VT323-Regular.ttf"), rt);
+                AssetDatabase.LoadAssetAtPath<Font>($"{Art}/Fonts/Bangers-Regular.ttf"));
         }
     }
 }

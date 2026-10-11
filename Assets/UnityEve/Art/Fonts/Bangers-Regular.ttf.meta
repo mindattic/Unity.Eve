@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: f552d290559cee64e8be1e50b78e5562
+guid: 4f43cfe5892981f4bb07b5953a48dbae
 TrueTypeFontImporter:
   externalObjects: {}
   serializedVersion: 4
@@ -9,7 +9,7 @@ TrueTypeFontImporter:
   characterPadding: 1
   includeFontData: 1
   fontNames:
-  - VT323
+  - Bangers
   fallbackFontReferences: []
   customCharacters: 
   fontRenderingMode: 0

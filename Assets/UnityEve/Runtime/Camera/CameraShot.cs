@@ -104,7 +104,7 @@ namespace UnityEve.Cameras
         {
             Gizmos.color = _mode == ShotMode.Cctv ? Color.red : _mode == ShotMode.Rail ? Color.cyan : Color.yellow;
             Gizmos.matrix = transform.localToWorldMatrix;
-            Gizmos.DrawFrustum(Vector3.zero, _fieldOfView, 4f, 0.2f, 4f / 3f);
+            Gizmos.DrawFrustum(Vector3.zero, _fieldOfView, 4f, 0.2f, 16f / 9f);
             Gizmos.matrix = Matrix4x4.identity;
             if (_mode == ShotMode.Rail)
             {

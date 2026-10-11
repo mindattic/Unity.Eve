@@ -25,8 +25,8 @@ namespace UnityEve.Editor
             if (File.Exists(versionFile)) PlayerSettings.bundleVersion = File.ReadAllText(versionFile).Trim();
 
             PlayerSettings.fullScreenMode = FullScreenMode.Windowed;
-            PlayerSettings.defaultScreenWidth = 1280;
-            PlayerSettings.defaultScreenHeight = 960;
+            PlayerSettings.defaultScreenWidth = 1600;
+            PlayerSettings.defaultScreenHeight = 900;
             PlayerSettings.resizableWindow = true;
             PlayerSettings.runInBackground = true;
             PlayerSettings.SplashScreen.show = false;

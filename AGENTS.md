@@ -6,7 +6,7 @@ command folder.
 
 ## What this is
 
-Unity Eve is a Unity 6 proof of concept for a PS1-style survival-horror RPG with Parasite Eve's
+Unity Eve is a Unity 6 proof of concept for a cel-shaded, inked (Borderlands / Parasite Mutant) survival-horror RPG with Parasite Eve's
 ATB battle, built from free assets. Read `docs/BIBLE.md` for what it is, what it is not, and its laws.
 
 ## Laws (do not break)
@@ -33,6 +33,8 @@ ATB battle, built from free assets. Read `docs/BIBLE.md` for what it is, what it
 | `Runtime/Battle/BattleDirector*.cs` | Battle phases, menus, range dome targeting, actions |
 | `Runtime/Camera/*` | Fixed / CCTV / rail shots, zones, hard cuts, shake |
 | `Runtime/Interaction/*` | Doors, rummage containers, pickups, readables |
-| `Runtime/UI/GameHud.cs` + `UI/Hud.uss` | Whole screen on UI Toolkit, PS1 render target |
+| `Runtime/UI/GameHud.cs` + `UI/Hud.uss` | Whole screen on UI Toolkit; owns the full-resolution world render target |
+| `Shaders/Toon.shader`, `InkOutline.shader`, `HexDome.shader` | Cel shading + hatching, full-screen ink lines, hexagon range dome |
+| `Core/Battle/EnemyMind.cs`, `BladeArts.cs` | Enemy tactics; katana Slash / Rush rules |
 | `Runtime/Game/Autopilot.cs` | `-autoplay` self-play verification |
 | `Editor/DemoContentBuilder*.cs` | Generates all content and the level |

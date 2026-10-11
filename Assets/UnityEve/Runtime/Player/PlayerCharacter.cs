@@ -33,6 +33,8 @@ namespace UnityEve.Player
         public AbilityDefinition[] Abilities => _abilities;
         public int RoundsInClip { get; private set; }
         public PlayerController Controller { get; private set; }
+        /// <summary>The katana she carries alongside whichever gun is equipped.</summary>
+        public Katana Katana { get; private set; }
 
         public bool Hasted => Time.time < _hasteUntil;
         public bool Barrier => Time.time < _barrierUntil;
@@ -54,6 +56,7 @@ namespace UnityEve.Player
         private void Awake()
         {
             Controller = GetComponent<PlayerController>();
+            Katana = GetComponent<Katana>();
             Health = new Health(Progression.MaxHpForLevel);
             Pe = new ParasiteEnergy(Progression.MaxPeForLevel);
             Bag = new Inventory(_bagCapacity, id => _items != null ? _items.MaxStack(id) : 9);

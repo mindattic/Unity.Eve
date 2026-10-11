@@ -96,6 +96,16 @@ MonoBehaviour:
     - {fileID: 8300000, guid: 62aaf31ed24e7954e89f1cdb9378af5d, type: 3}
     Volume: 0.7
     PitchRange: {x: 0.95, y: 1.05}
+  - Id: 32
+    Clips:
+    - {fileID: 8300000, guid: f46fad826dd2cfc4bbda60ef4375c4ac, type: 3}
+    Volume: 0.8
+    PitchRange: {x: 0.95, y: 1.05}
+  - Id: 33
+    Clips:
+    - {fileID: 8300000, guid: 7168ce35321a82c44ac094be2ad91ad0, type: 3}
+    Volume: 0.85
+    PitchRange: {x: 0.95, y: 1.05}
   - Id: 15
     Clips:
     - {fileID: 8300000, guid: 65790214321377241971d8dd4e0a3b3f, type: 3}

@@ -12,7 +12,7 @@ since Adobe's terms forbid redistributing its raw files.
 | Furniture Kit (house interiors) | Kenney, https://kenney.nl/assets/furniture-kit | CC0 1.0 | `Assets/UnityEve/Art/Models/furniture/` |
 | Survival Kit (crates, barrels, chest, workbench) | Kenney, https://kenney.nl/assets/survival-kit | CC0 1.0 | `Assets/UnityEve/Art/Models/survival/` |
 | Impact Sounds, Interface Sounds | Kenney | CC0 1.0 | `Assets/UnityEve/Art/Audio/` |
-| VT323 font | Peter Hull, Google Fonts | SIL OFL 1.1 | `Assets/UnityEve/Art/Fonts/` |
+| Bangers font | The Bangers Project Authors (Vernon Adams), Google Fonts | SIL OFL 1.1 | `Assets/UnityEve/Art/Fonts/` |
 
 Generated in this repo, so original work with no third-party license:
 

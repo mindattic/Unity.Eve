@@ -16,5 +16,7 @@ namespace UnityEve
         public static readonly int Die = Animator.StringToHash("Die");
         public static readonly int Revive = Animator.StringToHash("Revive");
         public static readonly int Attack = Animator.StringToHash("Attack");
+        public static readonly int Slash = Animator.StringToHash("Slash");
+        public static readonly int Rush = Animator.StringToHash("Rush");
     }
 }

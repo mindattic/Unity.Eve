@@ -1,4 +1,7 @@
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using System.Reflection;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -33,12 +36,13 @@ namespace UnityEve.Editor
                 AssetDatabase.CreateAsset(pipeline, PipelinePath);
             }
 
-            // PS1-era look: no MSAA, no HDR bloom, hard shadows from a few lights.
-            pipeline.msaaSampleCount = 1;
+            // Cel-shaded, inked look (Borderlands / Parasite Mutant): full resolution, smooth edges, no bloom.
+            pipeline.msaaSampleCount = 4;
             pipeline.supportsHDR = false;
             pipeline.shadowDistance = 30f;
             pipeline.maxAdditionalLightsCount = 8;
             EditorUtility.SetDirty(pipeline);
+            ConfigureInk(AssetDatabase.LoadAssetAtPath<UniversalRendererData>(RendererPath));
 
             GraphicsSettings.defaultRenderPipeline = pipeline;
             var currentQuality = QualitySettings.GetQualityLevel();
@@ -55,6 +59,51 @@ namespace UnityEve.Editor
 
             AssetDatabase.SaveAssets();
             Debug.Log("[UnityEve] Project configured: URP assigned to Graphics and all Quality levels.");
+        }
+
+        private const string InkMaterialPath = SettingsFolder + "/InkOutline.mat";
+
+        /// <summary>
+        /// The ink lines: a Full Screen Pass Renderer Feature running UnityEve/InkOutline over the depth and
+        /// normals textures, before transparents so the range dome, effects and popups stay un-inked.
+        /// </summary>
+        private static void ConfigureInk(UniversalRendererData renderer)
+        {
+            if (renderer == null) return;
+            var material = AssetDatabase.LoadAssetAtPath<Material>(InkMaterialPath);
+            if (material == null)
+            {
+                material = new Material(Shader.Find("UnityEve/InkOutline"));
+                AssetDatabase.CreateAsset(material, InkMaterialPath);
+            }
+            material.shader = Shader.Find("UnityEve/InkOutline");
+            material.SetColor("_InkColor", new Color(0.03f, 0.025f, 0.04f, 1f));
+            material.SetFloat("_Thickness", 3.4f);
+            material.SetFloat("_DepthThreshold", 0.06f);
+            material.SetFloat("_NormalThreshold", 0.3f);
+            material.SetFloat("_Wobble", 0.45f);
+            EditorUtility.SetDirty(material);
+
+            var feature = renderer.rendererFeatures.OfType<FullScreenPassRendererFeature>().FirstOrDefault(f => f.name == "InkOutline");
+            if (feature == null)
+            {
+                feature = ScriptableObject.CreateInstance<FullScreenPassRendererFeature>();
+                feature.name = "InkOutline";
+                AssetDatabase.AddObjectToAsset(feature, renderer);
+                renderer.rendererFeatures.Add(feature);
+                // The renderer keeps a parallel list of the features' local file ids; keep it in step.
+                AssetDatabase.TryGetGUIDAndLocalFileIdentifier(feature, out _, out long localId);
+                var mapField = typeof(ScriptableRendererData).GetField("m_RendererFeatureMap", BindingFlags.NonPublic | BindingFlags.Instance);
+                if (mapField?.GetValue(renderer) is List<long> map) map.Add(localId);
+            }
+            feature.passMaterial = material;
+            feature.passIndex = 0;
+            feature.injectionPoint = FullScreenPassRendererFeature.InjectionPoint.BeforeRenderingTransparents;
+            feature.requirements = ScriptableRenderPassInput.Depth | ScriptableRenderPassInput.Normal;
+            feature.fetchColorBuffer = true;
+            feature.SetActive(true);
+            EditorUtility.SetDirty(feature);
+            EditorUtility.SetDirty(renderer);
         }
     }
 }

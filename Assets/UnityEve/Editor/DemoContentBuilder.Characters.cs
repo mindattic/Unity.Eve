@@ -53,6 +53,16 @@ namespace UnityEve.Editor
                 r.sharedMaterials = r.sharedMaterials.Select(m => ToUrp(m, folder, tintFor?.Invoke(m))).ToArray();
         }
 
+        /// <summary>A strong rim so a character's silhouette reads against the night (alpha = strength).</summary>
+        private static void Rim(GameObject root, Color rim)
+        {
+            foreach (var m in root.GetComponentsInChildren<Renderer>(true).SelectMany(r => r.sharedMaterials).Where(m => m != null).Distinct())
+            {
+                m.SetColor("_RimColor", rim);
+                EditorUtility.SetDirty(m);
+            }
+        }
+
         private static Material SimpleMaterial(string name, Color color, Texture texture = null, float smoothness = 0.1f, bool emissive = false)
         {
             var path = $"{MatDir}/{name}.mat";
@@ -171,7 +181,7 @@ namespace UnityEve.Editor
             var ac = AnimatorController.CreateAnimatorControllerAtPath(path);
             foreach (var p in new[] { "Speed" }) ac.AddParameter(p, AnimatorControllerParameterType.Float);
             foreach (var p in new[] { "InBattle", "Searching" }) ac.AddParameter(p, AnimatorControllerParameterType.Bool);
-            foreach (var p in new[] { "Shoot", "Hit", "Dodge", "Cast", "Throw", "Die", "Revive" }) ac.AddParameter(p, AnimatorControllerParameterType.Trigger);
+            foreach (var p in new[] { "Shoot", "Hit", "Dodge", "Cast", "Throw", "Die", "Revive", "Slash", "Rush" }) ac.AddParameter(p, AnimatorControllerParameterType.Trigger);
 
             var sm = ac.layers[0].stateMachine;
             BlendTree Locomotion(string name, AnimationClip idle)
@@ -206,6 +216,8 @@ namespace UnityEve.Editor
             TriggerFromAny(sm, AddState(sm, "Dodge", C("Roll", false), new Vector3(600, 120), 3.4f), "Dodge", battle, 0.9f);
             TriggerFromAny(sm, AddState(sm, "Cast", C("Spell_Simple_Shoot", false), new Vector3(600, 180)), "Cast", battle);
             TriggerFromAny(sm, AddState(sm, "Throw", C("Punch_Cross", false), new Vector3(600, 240), 1.6f), "Throw", battle);
+            TriggerFromAny(sm, AddState(sm, "Slash", C("Sword_Attack", false), new Vector3(900, 0), 1.7f), "Slash", battle, 0.8f);
+            TriggerFromAny(sm, AddState(sm, "Rush", C("Sprint_Loop", true), new Vector3(900, 60), 1.8f), "Rush", battle, 0.95f);
             var die = AddState(sm, "Die", C("Death01", false), new Vector3(600, 300));
             TriggerFromAny(sm, die, "Die", null);
             var revive = die.AddTransition(explore);
@@ -292,6 +304,8 @@ namespace UnityEve.Editor
                 EditorUtility.SetDirty(mat);
             }
 
+            Rim(rig, new Color(0.55f, 0.78f, 1f, 0.45f));
+
             var animator = rig.GetComponent<Animator>() ?? rig.AddComponent<Animator>();
             animator.runtimeAnimatorController = PlayerAnimator();
             animator.applyRootMotion = false;
@@ -303,6 +317,7 @@ namespace UnityEve.Editor
             cc.center = new Vector3(0f, 0.87f, 0f);
             cc.stepOffset = 0.35f;
             rig.AddComponent<PlayerController>().Configure(animator);
+            BuildKatana(rig, bones);
             rig.AddComponent<PlayerCharacter>();
             rig.AddComponent<Interactor>();
             rig.tag = "Player";
@@ -310,6 +325,69 @@ namespace UnityEve.Editor
             var prefab = PrefabUtility.SaveAsPrefabAsset(rig, $"{PrefabDir}/Kat.prefab");
             Object.DestroyImmediate(rig);
             return prefab;
+        }
+
+        /// <summary>
+        /// A katana from primitives (steel blade, gold tsuba, dark wrapped grip), worn across Kat's back and
+        /// drawn into her right hand. Anchor orientations come from the rig's rest pose so the blade leaves
+        /// the fist on the thumb side.
+        /// </summary>
+        private static void BuildKatana(GameObject rig, Dictionary<string, Transform> bones)
+        {
+            if (!bones.TryGetValue("hand_r", out var hand) || !bones.TryGetValue("spine_03", out var spine)) return;
+            var steel = SimpleMaterial("KatanaSteel", new Color(0.86f, 0.9f, 0.95f), null, 0.85f);
+            var wrap = SimpleMaterial("KatanaWrap", new Color(0.09f, 0.06f, 0.08f));
+            var gold = SimpleMaterial("KatanaGuard", new Color(0.78f, 0.6f, 0.22f), null, 0.6f);
+
+            var katana = new GameObject("Katana").transform;
+            void Part(PrimitiveType type, string name, Vector3 pos, Vector3 scale, Material mat)
+            {
+                var go = GameObject.CreatePrimitive(type);
+                Object.DestroyImmediate(go.GetComponent<Collider>());
+                go.name = name;
+                go.transform.SetParent(katana, false);
+                go.transform.localPosition = pos;
+                go.transform.localScale = scale;
+                go.GetComponent<Renderer>().sharedMaterial = mat;
+            }
+            // Local +Y runs from the grip (origin) to the tip.
+            Part(PrimitiveType.Cube, "Grip", Vector3.zero, new Vector3(0.034f, 0.27f, 0.034f), wrap);
+            Part(PrimitiveType.Cylinder, "Tsuba", new Vector3(0f, 0.145f, 0f), new Vector3(0.095f, 0.007f, 0.095f), gold);
+            Part(PrimitiveType.Cube, "Blade", new Vector3(0f, 0.55f, 0f), new Vector3(0.012f, 0.79f, 0.034f), steel);
+            var tip = new GameObject("Tip").transform;
+            tip.SetParent(katana, false);
+            tip.localPosition = new Vector3(0f, 0.93f, 0f);
+            var trail = tip.gameObject.AddComponent<TrailRenderer>();
+            trail.time = 0.2f;
+            trail.minVertexDistance = 0.02f;
+            trail.widthCurve = new AnimationCurve(new Keyframe(0f, 0.32f), new Keyframe(1f, 0f));
+            var g = new Gradient();
+            g.SetKeys(new[] { new GradientColorKey(new Color(0.85f, 1f, 1f), 0f), new GradientColorKey(new Color(0.2f, 0.75f, 1f), 1f) },
+                new[] { new GradientAlphaKey(0.9f, 0f), new GradientAlphaKey(0f, 1f) });
+            trail.colorGradient = g;
+            trail.sharedMaterial = TransparentMaterial("KatanaTrail", Color.white, additive: true, particles: true, twoSided: true);
+            trail.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            trail.emitting = false;
+
+            // Grip: in the rest pose the thumb side of the fist faces forward, so the blade points forward.
+            var fingers = hand.Cast<Transform>().FirstOrDefault(t => t.name.Contains("middle")) ?? hand.Cast<Transform>().FirstOrDefault();
+            var along = fingers != null ? (fingers.position - hand.position).normalized : rig.transform.right;
+            var blade = Vector3.ProjectOnPlane(rig.transform.forward, along).normalized;
+            var palm = Vector3.Cross(along, blade).normalized;
+            var handAnchor = new GameObject("KatanaGrip").transform;
+            handAnchor.SetParent(hand, false);
+            handAnchor.SetPositionAndRotation(hand.position + along * 0.075f - palm * 0.02f, Quaternion.LookRotation(along, blade));
+
+            // Back: across the shoulder blades, grip over the right shoulder, tip toward the left hip.
+            var back = -rig.transform.forward;
+            var down = Vector3.Normalize(-rig.transform.right * 0.55f - rig.transform.up);
+            var backAnchor = new GameObject("KatanaBack").transform;
+            backAnchor.SetParent(spine, false);
+            backAnchor.SetPositionAndRotation(spine.position + back * 0.17f + rig.transform.right * 0.2f + rig.transform.up * 0.16f,
+                Quaternion.LookRotation(back, down));
+
+            katana.SetParent(backAnchor, false);
+            rig.AddComponent<Katana>().Configure(katana, handAnchor, backAnchor, trail);
         }
 
         // ------------------------------------------------------------------ creatures
@@ -339,6 +417,7 @@ namespace UnityEve.Editor
                 bounds = RendererBounds(model);
                 model.transform.localPosition = new Vector3(-bounds.center.x, -bounds.min.y, -bounds.center.z);
                 ConvertRenderers(model, $"{MatDir}/{s.id}");
+                Rim(model, new Color(1f, 0.55f, 0.3f, 0.6f));
 
                 var animator = model.GetComponent<Animator>() ?? model.AddComponent<Animator>();
                 animator.runtimeAnimatorController = CreatureAnimator(s.id, modelPath, s.flier);

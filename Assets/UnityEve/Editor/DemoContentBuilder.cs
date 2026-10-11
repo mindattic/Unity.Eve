@@ -223,6 +223,8 @@ namespace UnityEve.Editor
             Map(SoundId.EnemyDeath, 0.7f, Gen("enemy_death"));
             Map(SoundId.EnemyBuffCharge, 0.55f, Gen("enemy_buff_charge"));
             Map(SoundId.EnemyBuff, 0.7f, Gen("enemy_buff"));
+            Map(SoundId.KatanaSlash, 0.8f, Gen("katana_slash"));
+            Map(SoundId.KatanaRush, 0.85f, Gen("katana_rush"));
             Map(SoundId.Dodge, 0.6f, Gen("dodge"));
             Map(SoundId.PerfectDodge, 0.9f, Gen("perfect_dodge"));
             Map(SoundId.PeCast, 0.7f, Gen("pe_cast"));

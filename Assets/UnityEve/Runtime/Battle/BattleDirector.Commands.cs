@@ -42,12 +42,26 @@ namespace UnityEve.Battle
                 menu.Add(new MenuEntry("Attack" + ammo, BeginAttackTargeting, w != null,
                     w != null ? $"{w.Stats.DisplayName}: {w.Stats.Damage} dmg, range {w.Stats.Range:0}m" + (w.Stats.Burst ? ", hits all in range" : "") : null));
             }
+            menu.Add(new MenuEntry("Blade", () => PushMenu(BuildBladeMenu()), _player.Katana != null, "Katana arts: Slash and Rush."));
             menu.Add(new MenuEntry("PE", () => PushMenu(BuildPeMenu()), _player.Abilities.Length > 0, "Parasite Energy abilities."));
             menu.Add(new MenuEntry("Item", () => PushMenu(BuildItemMenu()), true, "Medicine and throwables."));
             menu.Add(new MenuEntry("Equip", () => PushMenu(BuildEquipMenu()), _player.Weapons.Length > 1, "Swap weapons. Takes no turn."));
             var strongest = _enemies.Where(e => e.IsAlive).Select(e => e.Stats.Level).DefaultIfEmpty(1).Max();
             var chance = EscapeRule.Chance(_player.Progression.Level, strongest);
             menu.Add(new MenuEntry("Escape", DoEscape, true, $"Run for it. {Mathf.RoundToInt(chance * 100)}% chance."));
+            return menu;
+        }
+
+        private MenuModel BuildBladeMenu()
+        {
+            var menu = new MenuModel("BLADE");
+            var power = BladeArts.Power(BattleConfig.KatanaDamage, _player.Progression.Level, rush: false);
+            menu.Add(new MenuEntry("Slash", () => BeginTargeting(BattleConfig.KatanaSlashReach, target => Execute(SlashRoutine(target), 0.75f)), true,
+                $"A heavy cut: {power} dmg to the target and anything beside it. Reach {BattleConfig.KatanaSlashReach:0.0}m."));
+            var cost = BattleConfig.KatanaRushPeCost;
+            var affordable = _player.Pe.CanAfford(cost);
+            menu.Add(new MenuEntry($"Rush  {cost:0} PE", () => BeginTargeting(BattleConfig.KatanaRushRange, target => Execute(RushRoutine(target), 0.9f)), affordable,
+                $"Dash through a target up to {BattleConfig.KatanaRushRange:0}m away, cutting everything in the way. Untouchable mid-dash."));
             return menu;
         }
 
@@ -312,6 +326,87 @@ namespace UnityEve.Battle
             }
             _player.SpendRounds(w.Stats.Burst ? 1 : plan.Count);
             yield return new WaitForSeconds(w.Stats.RootSeconds * 0.5f);
+        }
+
+        private static readonly Color BladeColor = new Color(0.55f, 0.95f, 1f);
+
+        private void BladeHit(EnemyActor e, Vector3 from, bool rush)
+        {
+            var hit = DamageCalculator.Roll(BladeArts.Power(BattleConfig.KatanaDamage, _player.Progression.Level, rush), 1f, e.Stats.Defense, _rng);
+            DealDamage(e, hit.Amount, hit.Critical);
+            BattleFx.Instance?.Burst(e.AimPoint, BladeColor, hit.Critical ? 26 : 14, 5f, 0.05f);
+            e.Knockback(from, rush ? 0.3f : 0.45f);
+        }
+
+        private IEnumerator SlashRoutine(EnemyActor chosen)
+        {
+            var katana = _player.Katana;
+            katana?.Draw();
+            katana?.Trail(true);
+            _player.Controller.FaceTowards(chosen.transform.position);
+            _player.Controller.Animator?.SetTrigger(AnimParams.Slash);
+            AudioService.Play(SoundId.KatanaSlash);
+            yield return new WaitForSeconds(0.2f);
+
+            var origin = _player.transform.position;
+            var facing = _player.transform.forward;
+            foreach (var e in _enemies.Where(e => e.IsAlive).ToList())
+            {
+                var d = e.transform.position - origin;
+                if (e == chosen || BladeArts.InSlashArc(facing.x, facing.z, d.x, d.z, BattleConfig.KatanaSlashReach + e.BodyRadius))
+                    BladeHit(e, origin, rush: false);
+            }
+            CameraDirector.Instance?.AddTrauma(0.2f);
+            yield return new WaitForSeconds(0.4f);
+            katana?.Sheathe();
+        }
+
+        private IEnumerator RushRoutine(EnemyActor chosen)
+        {
+            if (!_player.Pe.TrySpend(BattleConfig.KatanaRushPeCost)) yield break;
+            var katana = _player.Katana;
+            katana?.Draw();
+            katana?.Trail(true);
+
+            var start = _player.transform.position;
+            var (ex, ez) = BladeArts.RushEnd(start.x, start.z, chosen.transform.position.x, chosen.transform.position.z);
+            var end = new Vector3(ex, start.y, ez);
+            if (_zone != null)
+            {
+                var b = _zone.Bounds;
+                end.x = Mathf.Clamp(end.x, b.min.x + 0.6f, b.max.x - 0.6f);
+                end.z = Mathf.Clamp(end.z, b.min.z + 0.6f, b.max.z - 0.6f);
+            }
+            _player.Controller.FaceTowards(end);
+            var rotation = _player.transform.rotation;
+            _player.Controller.GrantInvulnerability(BattleConfig.KatanaRushSeconds + 0.35f);
+            _player.Controller.Animator?.SetTrigger(AnimParams.Rush);
+            AudioService.Play(SoundId.KatanaRush);
+            BattleFx.Instance?.Tracer(start + Vector3.up * 1.0f, end + Vector3.up * 1.0f, BladeColor);
+
+            var cut = new System.Collections.Generic.HashSet<EnemyActor>();
+            for (var t = 0f; t < BattleConfig.KatanaRushSeconds; t += Time.deltaTime)
+            {
+                var k = 1f - Mathf.Pow(1f - t / BattleConfig.KatanaRushSeconds, 2f);
+                var at = Vector3.Lerp(start, end, k);
+                _player.Controller.Teleport(at, rotation);
+                foreach (var e in _enemies.Where(e => e.IsAlive && !cut.Contains(e)).ToList())
+                {
+                    var p = e.transform.position;
+                    if (!BladeArts.OnRushPath(start.x, start.z, at.x, at.z, p.x, p.z, e.BodyRadius)) continue;
+                    cut.Add(e);
+                    BladeHit(e, at, rush: true);
+                }
+                yield return null;
+            }
+            _player.Controller.Teleport(end, rotation);
+            _player.Controller.Animator?.SetTrigger(AnimParams.Slash);
+            BattleFx.Instance?.Flash(end + Vector3.up, BladeColor, 6f, 5f, 0.25f);
+            CameraDirector.Instance?.AddTrauma(0.35f);
+            GameInput.Instance?.Rumble(0.5f, 0.9f, 0.18f);
+            if (cut.Count > 1) GameHud.Instance?.Popup(end + Vector3.up * 2.2f, $"{cut.Count} CUT!", new Color(1f, 0.8f, 0.25f), big: true);
+            yield return new WaitForSeconds(0.45f);
+            katana?.Sheathe();
         }
 
         private IEnumerator AbilityRoutine(AbilityDefinition ability, EnemyActor target)

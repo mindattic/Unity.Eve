@@ -1,6 +1,7 @@
-// Unity Eve cel shader: banded light from the moon and every point light, a flat ambient fill, a thin
-// rim, and an inverted-hull ink outline sized in render-target pixels (so it stays 1 px on the 400x300
-// PS1 target). Keeps URP Lit's property names (_BaseMap, _BaseColor, _EmissionColor, _Smoothness) so the
+// Unity Eve cel shader (Borderlands / Parasite Mutant direction): banded light from the moon and every
+// point light with anti-aliased band edges, a flat ambient fill, a thin rim, and comic hatching where the
+// light falls away. Ink lines come from the full-screen InkOutline pass, fed by this shader's
+// DepthNormals pass. Keeps URP Lit's property names (_BaseMap, _BaseColor, _EmissionColor, _Smoothness) so the
 // content builder and the enemy telegraph glow (a MaterialPropertyBlock on _EmissionColor) work unchanged.
 Shader "UnityEve/Toon"
 {
@@ -11,9 +12,9 @@ Shader "UnityEve/Toon"
         [HDR] _EmissionColor ("Emission", Color) = (0, 0, 0, 1)
         _Smoothness ("Smoothness (hard specular above 0.3)", Range(0, 1)) = 0.1
         _Bands ("Light bands", Range(1, 6)) = 3
-        _RimColor ("Rim", Color) = (0.35, 0.4, 0.55, 1)
-        _OutlineWidth ("Outline width (px)", Range(0, 4)) = 1
-        _OutlineColor ("Outline", Color) = (0.02, 0.02, 0.03, 1)
+        _RimColor ("Rim (alpha = strength)", Color) = (0.35, 0.4, 0.55, 0.1)
+        _HatchStrength ("Shadow hatching", Range(0, 1)) = 0.55
+        _HatchDensity ("Hatch lines per screen height", Float) = 150
     }
 
     SubShader
@@ -30,8 +31,8 @@ Shader "UnityEve/Toon"
             half _Smoothness;
             half _Bands;
             half4 _RimColor;
-            half _OutlineWidth;
-            half4 _OutlineColor;
+            half _HatchStrength;
+            float _HatchDensity;
         CBUFFER_END
 
         TEXTURE2D(_BaseMap);
@@ -90,10 +91,14 @@ Shader "UnityEve/Toon"
             }
 
             // Quantise delivered light energy into flat steps (the cel look). Energy is not clamped to 1,
-            // so a bright lamp keeps its brightness: it just arrives in pools with hard edges.
-            half Band(half energy)
+            // so a bright lamp keeps its brightness: it just arrives in pools with crisp, anti-aliased edges.
+            float Band(float energy)
             {
-                return floor(max(energy, 0.0h) * _Bands + 0.5h) / _Bands;
+                // Anti-aliased floor: ramps to the next step over the last pixel before it.
+                float x = max(energy, 0.0) * _Bands + 0.5;
+                float f = floor(x);
+                float w = clamp(fwidth(x) * 1.5, 1e-4, 0.5);
+                return (f + smoothstep(1.0 - w, 1.0, x - f)) / _Bands;
             }
 
             half3 Shade(Light light, half3 n, half3 v)
@@ -138,57 +143,19 @@ Shader "UnityEve/Toon"
 
                 // Thin rim so silhouettes read against the night.
                 half rim = step(0.72h, 1.0h - saturate(dot(n, v)));
-                half3 colour = albedo.rgb * light + albedo.rgb * _RimColor.rgb * rim * 0.35h + _EmissionColor.rgb;
+                // Comic hatching where the light falls away: diagonal screen-space strokes (cameras are fixed,
+                // so they hold still), denser and darker the darker the surface.
+                half lum = dot(light, half3(0.299h, 0.587h, 0.114h));
+                float2 sp = i.positionCS.xy / _ScreenParams.y * _HatchDensity;
+                float stroke = abs(frac((sp.x + sp.y) * 0.7071) - 0.5) * 2.0;
+                float coverage = saturate(0.55 - lum * 1.6);
+                float aaH = max(fwidth(stroke), 1e-3);
+                float hatch = (1.0 - smoothstep(coverage - aaH, coverage + aaH, stroke)) * step(0.02, coverage);
+                light *= 1.0h - (half)(hatch * _HatchStrength * 0.6);
+
+                half3 colour = albedo.rgb * light + _RimColor.rgb * rim * _RimColor.a + _EmissionColor.rgb;
                 colour = MixFog(colour, i.fogFactor);
                 return half4(colour, 1);
-            }
-            ENDHLSL
-        }
-
-        Pass
-        {
-            // Inverted hull: back faces pushed out along the normal by a fixed number of pixels.
-            Name "ToonOutline"
-            Tags { "LightMode" = "SRPDefaultUnlit" }
-            Cull Front
-            ZWrite On
-
-            HLSLPROGRAM
-            #pragma vertex Vert
-            #pragma fragment Frag
-            #pragma multi_compile_fog
-            #pragma multi_compile_instancing
-
-            struct Attributes
-            {
-                float4 positionOS : POSITION;
-                float3 normalOS : NORMAL;
-                UNITY_VERTEX_INPUT_INSTANCE_ID
-            };
-
-            struct Varyings
-            {
-                float4 positionCS : SV_POSITION;
-                half fogFactor : TEXCOORD0;
-            };
-
-            Varyings Vert(Attributes v)
-            {
-                Varyings o;
-                UNITY_SETUP_INSTANCE_ID(v);
-                float4 pos = TransformObjectToHClip(v.positionOS.xyz);
-                float3 normalCS = mul((float3x3)UNITY_MATRIX_VP, TransformObjectToWorldNormal(v.normalOS));
-                float2 dir = normalCS.xy;
-                if (dot(dir, dir) > 1e-8) dir = normalize(dir);
-                pos.xy += dir * (_OutlineWidth * 2.0 / _ScreenParams.xy) * pos.w;
-                o.positionCS = pos;
-                o.fogFactor = ComputeFogFactor(pos.z);
-                return o;
-            }
-
-            half4 Frag(Varyings i) : SV_Target
-            {
-                return half4(MixFog(_OutlineColor.rgb, i.fogFactor), 1);
             }
             ENDHLSL
         }
@@ -263,6 +230,55 @@ Shader "UnityEve/Toon"
             }
 
             half Frag() : SV_Target { return 0; }
+            ENDHLSL
+        }
+
+        Pass
+        {
+            // Feeds _CameraNormalsTexture for the ink pass's crease detection.
+            Name "DepthNormals"
+            Tags { "LightMode" = "DepthNormals" }
+            ZWrite On
+            Cull Back
+
+            HLSLPROGRAM
+            #pragma vertex Vert
+            #pragma fragment Frag
+            #pragma multi_compile_fragment _ _GBUFFER_NORMALS_OCT
+            #pragma multi_compile_instancing
+
+            struct Attributes
+            {
+                float4 positionOS : POSITION;
+                float3 normalOS : NORMAL;
+                UNITY_VERTEX_INPUT_INSTANCE_ID
+            };
+
+            struct Varyings
+            {
+                float4 positionCS : SV_POSITION;
+                float3 normalWS : TEXCOORD0;
+            };
+
+            Varyings Vert(Attributes v)
+            {
+                Varyings o;
+                UNITY_SETUP_INSTANCE_ID(v);
+                o.positionCS = TransformObjectToHClip(v.positionOS.xyz);
+                o.normalWS = TransformObjectToWorldNormal(v.normalOS);
+                return o;
+            }
+
+            half4 Frag(Varyings i) : SV_Target
+            {
+                #if defined(_GBUFFER_NORMALS_OCT)
+                    float3 n = normalize(i.normalWS);
+                    float2 oct = saturate(PackNormalOctQuadEncode(n) * 0.5 + 0.5);
+                    return half4(PackFloat2To888(oct), 0.0);
+                #else
+                    return half4(NormalizeNormalPerPixel(i.normalWS), 0.0);
+                #endif
+            }
             ENDHLSL
         }
     }

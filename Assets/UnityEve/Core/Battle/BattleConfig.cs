@@ -44,6 +44,19 @@ namespace UnityEve.Core.Battle
         public const float EnemyBuffDamageMultiplier = 1.35f;
         public const float EnemyBuffTempo = 1.2f;
 
+        // --- Katana (BladeArts) ------------------------------------------------------------
+        public const int KatanaDamage = 24;
+        /// <summary>Slash reach in metres (the slash range dome).</summary>
+        public const float KatanaSlashReach = 2.4f;
+        public const float KatanaSlashArcDegrees = 110f;
+        /// <summary>Rush range in metres (the rush range dome).</summary>
+        public const float KatanaRushRange = 8f;
+        public const float KatanaRushPeCost = 12f;
+        public const float KatanaRushHalfWidth = 0.7f;
+        public const float KatanaRushOvershoot = 1.4f;
+        public const float KatanaRushDamageMultiplier = 0.85f;
+        public const float KatanaRushSeconds = 0.26f;
+
         // --- Player defence ----------------------------------------------------------------
         public const float DodgeSeconds = 0.34f;
         public const float DodgeInvulnerableSeconds = 0.5f;

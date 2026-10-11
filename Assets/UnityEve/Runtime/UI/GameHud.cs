@@ -5,8 +5,9 @@ using UnityEngine.UIElements;
 namespace UnityEve.UI
 {
     /// <summary>
-    /// The whole screen, built in code on UI Toolkit and styled by Hud.uss. Shows the low-resolution
-    /// PS1-style render target letterboxed to 4:3, and draws every HUD element on top of it.
+    /// The whole screen, built in code on UI Toolkit and styled by Hud.uss. Owns the world camera's
+    /// full-resolution render target (sized to the window), shows it edge to edge, and draws every HUD
+    /// element on top of it.
     /// The HUD only presents state; it never changes game rules.
     /// </summary>
     [RequireComponent(typeof(UIDocument))]
@@ -14,7 +15,7 @@ namespace UnityEve.UI
     {
         [SerializeField] private StyleSheet _style;
         [SerializeField] private Font _font;
-        [SerializeField] private RenderTexture _screenTexture;
+        private RenderTexture _target;
 
         private VisualElement _root, _screen, _overlay;
         private VisualElement _status, _hpFill, _peFill, _atbFill, _atbRow;
@@ -40,11 +41,35 @@ namespace UnityEve.UI
         public static GameHud Instance { get; private set; }
         public Camera WorldCamera { get; set; }
 
-        public void Configure(StyleSheet style, Font font, RenderTexture screen)
+        /// <summary>Render size for offscreen capture (batch-mode autoplay); null follows the window.</summary>
+        public Vector2Int? RenderSizeOverride { get; set; }
+
+        public void Configure(StyleSheet style, Font font)
         {
             _style = style;
             _font = font;
-            _screenTexture = screen;
+        }
+
+        /// <summary>Keeps the world camera's target the size of the window, so the image is never upscaled.</summary>
+        private void EnsureTarget()
+        {
+            var cam = WorldCamera;
+            if (cam == null || _screen == null) return;
+            var w = RenderSizeOverride?.x ?? Screen.width;
+            var h = RenderSizeOverride?.y ?? Screen.height;
+            if (w < 16 || h < 16) return;
+            if (_target != null && _target.width == w && _target.height == h && cam.targetTexture == _target) return;
+            var old = _target;
+            _target = new RenderTexture(w, h, 24, RenderTextureFormat.ARGB32) { filterMode = FilterMode.Bilinear, name = "WorldScreen" };
+            _target.Create();
+            cam.targetTexture = _target;
+            cam.ResetAspect();
+            _screen.style.backgroundImage = Background.FromRenderTexture(_target);
+            if (old != null)
+            {
+                old.Release();
+                Destroy(old);
+            }
         }
 
         private void Awake() => Instance = this;
@@ -95,7 +120,7 @@ namespace UnityEve.UI
         private void Build()
         {
             _screen = Add(_root, "screen");
-            if (_screenTexture != null) _screen.style.backgroundImage = Background.FromRenderTexture(_screenTexture);
+            if (_target != null) _screen.style.backgroundImage = Background.FromRenderTexture(_target);
             _overlay = Add(_screen, "overlay");
 
             _focusTint = Add(_overlay, "focus-tint");
@@ -255,6 +280,7 @@ namespace UnityEve.UI
         private void Update()
         {
             if (_root == null) return;
+            EnsureTarget();
             FitScreen();
 
             if (_shownMenu != null && _shownMenu.Version != _shownVersion) RedrawMenu();
@@ -276,23 +302,13 @@ namespace UnityEve.UI
             UpdatePopups();
         }
 
-        /// <summary>Letterbox the 4:3 render into whatever window shape the player picked.</summary>
+        /// <summary>The world image fills the whole window (it is rendered at the window's size).</summary>
         private void FitScreen()
         {
-            var w = _root.resolvedStyle.width;
-            var h = _root.resolvedStyle.height;
-            if (float.IsNaN(w) || w <= 0f || h <= 0f) return;
-            const float aspect = 4f / 3f;
-            float sw = w, sh = w / aspect;
-            if (sh > h)
-            {
-                sh = h;
-                sw = h * aspect;
-            }
-            _screen.style.width = sw;
-            _screen.style.height = sh;
-            _screen.style.left = (w - sw) * 0.5f;
-            _screen.style.top = (h - sh) * 0.5f;
+            _screen.style.left = 0f;
+            _screen.style.top = 0f;
+            _screen.style.width = Length.Percent(100f);
+            _screen.style.height = Length.Percent(100f);
         }
 
         private void RedrawMenu()

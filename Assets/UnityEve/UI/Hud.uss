@@ -1,10 +1,14 @@
-/* Unity Eve HUD. Colours follow the PS1 Parasite Eve palette: deep navy panels, amber cursor. */
+/* Unity Eve HUD. Comic-book panels (Borderlands / Parasite Mutant direction): ink-black borders,
+   amber accents, Bangers lettering with a heavy black outline. Reference resolution 1280x720. */
 
 .hud-root {
     flex-grow: 1;
     background-color: rgb(0, 0, 0);
-    color: rgb(230, 226, 214);
+    color: rgb(244, 238, 222);
     font-size: 26px;
+    letter-spacing: 1px;
+    -unity-text-outline-width: 1px;
+    -unity-text-outline-color: rgb(10, 8, 6);
 }
 
 .screen {
@@ -21,61 +25,66 @@
 /* ---- status (top left) ---- */
 .status {
     position: absolute;
-    left: 2.5%; top: 9%;
-    width: 36%;
-    padding: 6px 10px;
-    background-color: rgba(4, 8, 14, 0.62);
-    border-width: 1px;
-    border-color: rgb(47, 68, 80);
+    left: 2%; top: 4%;
+    width: 26%;
+    padding: 6px 12px 8px 12px;
+    background-color: rgba(18, 14, 10, 0.72);
+    border-width: 3px;
+    border-color: rgb(10, 8, 6);
+    border-left-color: rgb(246, 176, 36);
+    border-left-width: 6px;
 }
-.level { color: rgb(255, 221, 85); font-size: 22px; }
-.ammo { font-size: 20px; color: rgb(180, 190, 196); }
+.level { color: rgb(255, 205, 60); font-size: 26px; }
+.ammo { font-size: 22px; color: rgb(214, 206, 188); }
 
 .bar-row { flex-direction: row; align-items: center; height: 24px; }
-.bar-label { width: 34px; font-size: 22px; color: rgb(160, 176, 186); }
+.bar-label { width: 34px; font-size: 22px; color: rgb(246, 176, 36); }
 .bar-value { width: 74px; font-size: 22px; -unity-text-align: middle-right; }
 .bar-track {
     flex-grow: 1;
-    height: 9px;
-    background-color: rgb(14, 20, 26);
-    border-width: 1px;
-    border-color: rgb(47, 68, 80);
+    height: 11px;
+    background-color: rgb(30, 24, 18);
+    border-width: 2px;
+    border-color: rgb(10, 8, 6);
 }
 .bar-fill { height: 100%; width: 0%; }
-.fill-hp { background-color: rgb(200, 65, 47); }
-.fill-pe { background-color: rgb(64, 112, 192); }
-.fill-atb { background-color: rgb(63, 143, 208); }
-.fill-atb-full { background-color: rgb(140, 220, 255); }
+.fill-hp { background-color: rgb(222, 58, 38); }
+.fill-pe { background-color: rgb(70, 132, 230); }
+.fill-atb { background-color: rgb(246, 176, 36); }
+.fill-atb-full { background-color: rgb(255, 236, 120); }
 .fill-progress { background-color: rgb(216, 178, 58); }
 .fill-focus { background-color: rgb(120, 255, 210); }
 
 /* ---- target (top centre) ---- */
 .target {
     position: absolute;
-    left: 55%; top: 9%;
-    width: 38%;
-    padding: 4px 10px 8px 10px;
-    background-color: rgba(4, 8, 14, 0.62);
-    border-width: 1px;
-    border-color: rgb(74, 106, 122);
+    left: 66%; top: 4%;
+    width: 32%;
+    padding: 4px 12px 8px 12px;
+    background-color: rgba(18, 14, 10, 0.72);
+    border-width: 3px;
+    border-color: rgb(10, 8, 6);
+    border-right-color: rgb(222, 58, 38);
+    border-right-width: 6px;
 }
-.target-name { color: rgb(255, 221, 85); font-size: 22px; }
+.target-name { color: rgb(255, 205, 60); font-size: 24px; }
 
 /* ---- command menu (bottom left, PE-style) ---- */
 .menu {
     position: absolute;
-    left: 2.5%; bottom: 10%;
-    min-width: 34%;
-    padding: 6px 14px 10px 14px;
-    background-color: rgba(4, 8, 14, 0.88);
-    border-width: 2px;
-    border-color: rgb(74, 106, 122);
+    left: 2%; bottom: 8%;
+    min-width: 24%;
+    padding: 6px 16px 10px 16px;
+    background-color: rgba(18, 14, 10, 0.9);
+    border-width: 4px;
+    border-color: rgb(10, 8, 6);
+    border-top-color: rgb(246, 176, 36);
 }
-.menu-title { color: rgb(140, 170, 186); font-size: 20px; margin-bottom: 4px; }
-.menu-item { font-size: 28px; }
-.menu-item-selected { color: rgb(255, 221, 85); }
-.menu-item-disabled { color: rgb(106, 115, 123); }
-.menu-detail { font-size: 20px; color: rgb(180, 190, 196); white-space: normal; max-width: 420px; margin-top: 6px; }
+.menu-title { color: rgb(246, 176, 36); font-size: 22px; margin-bottom: 4px; letter-spacing: 3px; }
+.menu-item { font-size: 32px; }
+.menu-item-selected { color: rgb(255, 205, 60); translate: 8px 0; }
+.menu-item-disabled { color: rgb(120, 112, 100); }
+.menu-detail { font-size: 22px; color: rgb(214, 206, 188); white-space: normal; max-width: 460px; margin-top: 6px; }
 
 /* ---- prompts and messages ---- */
 .prompt {
@@ -84,7 +93,8 @@
     -unity-text-align: middle-center;
     font-size: 26px;
     color: rgb(255, 255, 255);
-    text-shadow: 2px 2px 0 rgb(0, 0, 0);
+    text-shadow: 3px 3px 0 rgb(10, 8, 6);
+    -unity-text-outline-width: 1.5px;
 }
 .message {
     position: absolute;
@@ -92,15 +102,19 @@
     -unity-text-align: middle-center;
     font-size: 28px;
     white-space: normal;
-    text-shadow: 2px 2px 0 rgb(0, 0, 0);
+    text-shadow: 3px 3px 0 rgb(10, 8, 6);
+    -unity-text-outline-width: 1.5px;
 }
 .banner {
     position: absolute;
     left: 0; right: 0; top: 36%;
     -unity-text-align: middle-center;
-    font-size: 64px;
-    color: rgb(230, 60, 40);
-    text-shadow: 3px 3px 0 rgb(0, 0, 0);
+    font-size: 84px;
+    color: rgb(255, 205, 60);
+    letter-spacing: 6px;
+    -unity-text-outline-width: 3px;
+    -unity-text-outline-color: rgb(10, 8, 6);
+    text-shadow: 5px 5px 0 rgb(170, 40, 20);
 }
 .sub-banner {
     position: absolute;
@@ -108,7 +122,8 @@
     -unity-text-align: middle-center;
     font-size: 28px;
     white-space: normal;
-    text-shadow: 2px 2px 0 rgb(0, 0, 0);
+    text-shadow: 3px 3px 0 rgb(10, 8, 6);
+    -unity-text-outline-width: 1.5px;
 }
 
 .progress {
@@ -127,9 +142,10 @@
     left: 25%; right: 25%; top: 24%;
     padding: 8px 12px;
     align-items: center;
-    background-color: rgba(4, 20, 24, 0.75);
-    border-width: 2px;
-    border-color: rgb(120, 255, 210);
+    background-color: rgba(10, 24, 22, 0.8);
+    border-width: 4px;
+    border-color: rgb(10, 8, 6);
+    border-top-color: rgb(120, 255, 210);
 }
 .focus-title { font-size: 40px; color: rgb(120, 255, 210); letter-spacing: 8px; }
 .focus-moves { flex-direction: column; align-items: center; margin: 4px 0 8px 0; }
@@ -161,6 +177,8 @@
 .popup {
     position: absolute;
     font-size: 30px;
-    text-shadow: 2px 2px 0 rgb(0, 0, 0);
+    text-shadow: 3px 3px 0 rgb(10, 8, 6);
+    -unity-text-outline-width: 1.5px;
 }
-.popup-big { font-size: 40px; }
+.popup { -unity-text-outline-width: 2px; -unity-text-outline-color: rgb(10, 8, 6); }
+.popup-big { font-size: 48px; }

@@ -31,9 +31,19 @@ namespace UnityEve.Editor
             Write(folder, "enemy_death", Sweep(300f, 60f, 0.7f, 0.6f, noise: 0.5f));
             Write(folder, "enemy_buff_charge", Sweep(70f, 260f, 1.1f, 0.45f, noise: 0.25f));
             Write(folder, "enemy_buff", Chord(new[] { 98f, 103.8f, 146.8f }, 0.6f));
+            Write(folder, "katana_slash", Mix(Whoosh(0.24f), Sweep(2400f, 1800f, 0.24f, 0.18f)));
+            Write(folder, "katana_rush", Mix(Whoosh(0.4f), Sweep(900f, 3200f, 0.4f, 0.22f, noise: 0.2f)));
         }
 
         private static float[] Buffer(float seconds) => new float[(int)(seconds * Rate)];
+
+        /// <summary>Sums two sounds (the longer sets the length).</summary>
+        private static float[] Mix(float[] a, float[] b)
+        {
+            var o = new float[System.Math.Max(a.Length, b.Length)];
+            for (var i = 0; i < o.Length; i++) o[i] = (i < a.Length ? a[i] : 0f) + (i < b.Length ? b[i] : 0f);
+            return o;
+        }
 
         private static float Noise(ref uint s)
         {

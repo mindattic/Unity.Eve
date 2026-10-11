@@ -29,6 +29,8 @@ updated: 2026-10-11
 | US-013 | The range dome is a semi-transparent shell of hexagons (fixed size in metres), faintly visible through walls | ✅ | autoplay:`encounter_1_street_range_dome`, `encounter_2_yard_range_dome`, `encounter_3_kitchen_range_dome` |
 | US-014 | Between attacks a creature stops to think, then chooses approach / flank / hold / buff / retreat from its temperament and senses | ✅ | `Mind_stops_to_think_first_and_freezes_while_the_world_is_paused`, `Every_intent_is_followed_by_a_thinking_pause`, `Temperament_shapes_choices_aggressive_press_cautious_hang_back`, `Hurt_cautious_creatures_retreat_and_healthy_ones_do_not`, `Mind_replays_identically_from_its_seed`, autoplay log `enemy intents seen` |
 | US-015 | A flanker works round to the player's back and strikes from the blind side | ✅ | `Flanker_waits_for_the_blind_side_then_seizes_the_opening` |
+| US-017 | Kat carries a katana with her gun; Blade > Slash cuts the target and anything beside it in a 110° arc | ✅ | `Slash_catches_the_front_arc_within_reach_and_nothing_behind`, autoplay:`encounter_3_kitchen_slash`, `encounter_3_kitchen_blade_menu` |
+| US-018 | Blade > Rush (PE) dashes through a target up to 8 m away, cutting everything on the line, untouchable mid-dash | ✅ | `Rush_ends_past_the_target_by_the_overshoot`, `Rush_cuts_everything_along_the_line_but_not_off_to_the_side`, `Rush_trades_per_hit_power_for_reach_and_level_raises_both`, autoplay:`encounter_2_yard_rush` |
 | US-016 | A creature can stand still and enrage itself (violet charge, sound, ENRAGED popup): harder hits and faster tempo for a while | ✅ | `Buff_cast_holds_still_then_raises_damage_and_tempo_until_it_wears_off`, autoplay:`encounter_*_enemy_buff` (when one occurs) |
 | US-004 | Rate of fire splits damage per PE1's table; Burst hits every target in range | ✅ | `Rate_of_fire_trades_per_round_power_for_total_power`, `Burst_weapon_hits_every_target_in_range` |
 | US-005 | Rounds per turn are limited by the clip; Reload takes a turn | ✅ | `Rounds_are_limited_by_ammo_in_the_clip` |
@@ -67,20 +69,21 @@ updated: 2026-10-11
 
 | ID | Story | Status | Evidence |
 | --- | --- | --- | --- |
-| US-040 | 400x300 point-filtered render, letterboxed to 4:3 | ✅ | every autoplay screenshot |
+| US-040 | Full-resolution 16:9 render with 4x MSAA (the 400x300 PS1 target is retired, owner 2026-10-11) | ✅ | every autoplay screenshot (1600x900) |
 | US-041 | Kat wears a painted outfit on the CC0 base body | ✅ | autoplay:`house_living` |
 | US-046 | Cel-shaded look: banded light pools and a 1 px ink outline on every opaque surface | ✅ | every autoplay screenshot, e.g. `07_house_living`, `encounter_3_kitchen_encounter` |
+| US-048 | Ink lines drawn like ink: full-screen depth/normal edges, brush-varied width, anti-aliased, fading into fog | ✅ | every autoplay screenshot, e.g. `03_02_mercer_porch`, `48_shed_interior` |
+| US-049 | Comic HUD: Bangers lettering, ink-bordered panels | ✅ | autoplay:`encounter_1_street_command_menu`, `field_menu` |
 | US-047 | Walking out of combat plays the walk/jog cycle | ✅ | autoplay:`explore_walk` (fails if no walk/jog clip is playing) |
 | US-042 | Gamepad-first input with keyboard fallback and rumble | 🟡 | Bindings in `GameInput`; needs a physical-pad playtest |
 | US-043 | Every event has a sound | ✅ | The content build warns on silent `SoundId`s (none) |
-| US-044 | PS1 vertex snap and affine texture warp | ⬜ | |
 | US-045 | Save and load | ⬜ | |
 
 ## Tally
 
 | Section | ✅ | 🟡 | ⬜ |
 | --- | --- | --- | --- |
-| Battle core | 16 | 0 | 0 |
+| Battle core | 18 | 0 | 0 |
 | Focus | 3 | 1 | 0 |
 | Exploration | 9 | 0 | 0 |
-| Presentation | 6 | 1 | 2 |
+| Presentation | 8 | 1 | 1 |

@@ -1,10 +1,10 @@
 # Unity Eve
 
-A proof of concept for a PS1-style survival-horror RPG with Parasite Eve's real-time/pause battle system, built in Unity 6 entirely from free (CC0/OFL) assets. You walk a street at night under fixed and CCTV cameras, enter houses, rummage through drawers and fridges, and fight creatures with an Active Time Bar, a range dome, PE abilities and grenades. On top of that sits one new idea, **Focus**: dodge an attack at the last moment and time slows, opening free bonus moves.
+A proof of concept for a cel-shaded, hand-inked survival-horror RPG (Borderlands meets Parasite Mutant) with Parasite Eve's real-time/pause battle system, built in Unity 6 entirely from free (CC0/OFL) assets. You walk a street at night under fixed and CCTV cameras, enter houses, rummage through drawers and fridges, and fight creatures with an Active Time Bar, a hexagon range dome, a gun and a katana, PE abilities and grenades. On top of that sits one new idea, **Focus**: dodge an attack at the last moment and time slows, opening free bonus moves.
 
 ![Unity 6000.4](https://img.shields.io/badge/Unity-6000.4.3f1-black) ![URP 17](https://img.shields.io/badge/URP-17.4-blue) ![Input System](https://img.shields.io/badge/Input%20System-1.19-green) ![Status PoC](https://img.shields.io/badge/status-proof%20of%20concept-yellow)
 
-![Kat in the Mercer living room, framed by a fixed corner camera, rendered at 400x300 and letterboxed to 4:3](docs/images/house-living-room.png)
+![Kat in the Mercer living room under a fixed corner camera: cel-shaded light pools, ink lines and comic hatching](docs/images/house-living-room.png)
 
 This is the Unity port of [ExperimentEve](https://github.com/mindattic/ExperimentEve) (the same game in Three.js and Babylon.js), whose battle numbers, enemy rhythm, camera rules and outfit painter it reuses.
 
@@ -22,6 +22,9 @@ This is the Unity port of [ExperimentEve](https://github.com/mindattic/Experimen
 - **Active Time Bar.** The gauge fills in real time while you move and dodge, using PE1's formula `(50 + ActiveTime) x gun multiplier` (pistol 1.0, shotgun 0.8, melee 2.0).
 - **World pause.** With a full gauge, Confirm stops time and opens **Attack / PE / Item / Equip / Escape**.
 - **Range dome.** Choosing Attack raises a translucent shell of hexagons sized to the weapon's range. Only enemies inside it can be targeted. In rooms smaller than the range, the shell shows faintly through the walls.
+- **Katana.** Kat carries a katana alongside her gun. The **Blade** command offers two arts:
+  - *Slash:* a heavy cut that hits the target and anything beside it in a 110° arc, within 2.4 m.
+  - *Rush (12 PE):* she dashes through a target up to 8 m away, cutting every creature along the line. She is untouchable mid-dash.
 - **Weapon behaviour from PE1:**
   - *Rate of fire:* two rounds at 60% each.
   - *Burst:* the shotgun hits everything in range.
@@ -35,7 +38,9 @@ This is the Unity port of [ExperimentEve](https://github.com/mindattic/Experimen
 - **Creatures that think.** Between attacks a creature stops, then picks what to do from its temperament and what it sees: press in, flank toward Kat's back and strike from her blind side, hang back and idle, glow violet and enrage itself (harder hits, faster tempo), or retreat when hurt. Rats swarm; spiders and serpents flank; the Drain Coil buffs and hangs back.
 - **Escape** succeeds more often against weaker packs. EXP, level-ups and Bonus Points feed Active Time, so the gauge fills faster as you grow.
 
-![The paused command menu over the street battle](docs/images/battle-command-menu.png)
+![The paused command menu over the Mercer kitchen fight](docs/images/battle-command-menu.png)
+
+![Katana Slash: the blade drawn from her back, a heavy cut with a light trail](docs/images/katana-slash.png)
 
 ### Focus (new)
 - Dodge (B / Space) so that a strike lands within 0.3 s of starting the dodge. Time drops to 15% for 2.4 real seconds and three free moves appear, none of which spends ATB:
@@ -47,7 +52,7 @@ This is the Unity port of [ExperimentEve](https://github.com/mindattic/Experimen
 ![Focus: a perfect dodge in the Mercer kitchen slows time and offers three free moves](docs/images/focus-perfect-dodge.png)
 
 ### Exploration
-- **Fixed cameras** with camera zones that hard-cut like a PS1 game. Overlapping trigger volumes give hysteresis, so the camera doesn't flicker at boundaries.
+- **Fixed cameras** with camera zones that hard-cut like classic survival horror. Overlapping trigger volumes give hysteresis, so the camera doesn't flicker at boundaries.
 - **CCTV cameras** stay mounted in place and servo-pan to follow you within yaw/pitch limits (the street, the alley, a kitchen nanny-cam). A **rail camera** slides along the street with you.
 - **Direction latch.** While the stick is held, "up" keeps its meaning across camera cuts. The basis rotates to the new camera after a short grace period, so a cut never reverses you.
 - **Doors** fade to black and move you between the street, the Mercer house and the shed. The shed is locked until you find its key.
@@ -57,7 +62,7 @@ This is the Unity port of [ExperimentEve](https://github.com/mindattic/Experimen
 ![The alley, watched by a CCTV camera that pans to follow Kat](docs/images/camera-alley-cctv.png)
 
 ### Presentation
-- **Cel-shaded PS1 render.** Every surface uses a cel shader: light falls in flat bands and hard-edged pools, with a 1 px ink outline. The world renders into a 400x300 point-filtered target, letterboxed to 4:3 by the UI Toolkit HUD. Hard cuts, fog and flickering bulbs complete the look.
+- **Cel-shaded, inked render** (Borderlands / Parasite Mutant). Light falls in flat, anti-aliased bands and hard-edged pools, with comic hatching where it falls away. A full-screen ink pass draws brush-like outlines from depth and normals: heavier close to the camera, thinner with distance, and sinking into the fog. The world renders at full window resolution with 4x MSAA, and the HUD uses comic panels and Bangers lettering. Hard cuts, fog and flickering bulbs complete the mood.
 - **Kat** is a Quaternius Universal Base Character on the Universal Animation Library skeleton. Both share the same 65-joint rig, so the meshes are rebound by bone name with no retargeting. Her jeans, boots and tank top are painted into her albedo by a C# port of ExperimentEve's outfit painter.
 - **Feel and sound.** Every event has a sound. Hits, crits, dodges and explosions add gamepad rumble and camera shake.
 
@@ -136,7 +141,6 @@ docs/          BIBLE.md (design canon), USER_STORIES.md (status + evidence)
 
 - This is a proof of concept with one street, two interiors, three encounters and seven creature types. There is no save system, title flow beyond a title card, or music.
 - Enemies move by transform with simple separation, not a navmesh. Arena walls keep fights contained.
-- There is no vertex-snap or affine-warp shader; whether it suits the cel-shaded look is undecided.
 - Bonus Points are spent automatically on Active Time rather than through a menu.
 - The shotgun pickup uses the survival kit's axe mesh as a stand-in.
 

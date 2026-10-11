@@ -28,4 +28,4 @@ MonoBehaviour:
     HoverHeight: 1.25
     Aggression: 0.75
     Caution: 0.25
-  Prefab: {fileID: 8419833095444431544, guid: a12025dd5ce96bf43b5dcfa61f79ed17, type: 3}
+  Prefab: {fileID: 3412190264248141000, guid: a12025dd5ce96bf43b5dcfa61f79ed17, type: 3}
