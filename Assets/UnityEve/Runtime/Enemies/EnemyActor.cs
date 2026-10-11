@@ -2,14 +2,17 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEve.Core.Battle;
+using UnityEve.Core.Util;
 using UnityEve.Data;
+using UnityEve.UI;
 
 namespace UnityEve.Enemies
 {
     /// <summary>
-    /// A creature in battle. Real-time behaviour on scaled time: it closes in, circles while the pack's
-    /// attacker limit is full, telegraphs (glows) during its windup, lunges at where the player was,
-    /// then recovers. Because it runs on scaled time, the world-pause freezes it mid-telegraph.
+    /// A creature in battle. Real-time behaviour on scaled time. Between attacks its <see cref="EnemyMind"/>
+    /// stops to think and chooses what to do: press in, flank toward the player's back, idle at range,
+    /// buff itself, or retreat. When it commits it telegraphs (glows) during its windup, lunges at where
+    /// the player was, then recovers. Because it runs on scaled time, the world-pause freezes it mid-telegraph.
     /// </summary>
     public sealed class EnemyActor : MonoBehaviour
     {
@@ -23,6 +26,9 @@ namespace UnityEve.Enemies
         private Renderer[] _renderers;
         private MaterialPropertyBlock _block;
         private EnemyAttackCycle _cycle;
+        private EnemyMind _mind;
+        private Func<int> _packAlive;
+        private Bounds _arena;
         private Transform _target;
         private Func<bool> _mayCommit;
         private float _stunnedUntil;
@@ -40,6 +46,10 @@ namespace UnityEve.Enemies
         public Health Health { get; private set; }
         public bool IsAlive => Health != null && !Health.IsDead;
         public bool IsCommitted => _cycle != null && _cycle.IsCommitted;
+        public EnemyIntent Intent => _mind != null ? _mind.Intent : EnemyIntent.Think;
+        public bool Buffed => _mind != null && _mind.Buffed;
+        /// <summary>Strike damage multiplier (an enraged creature hits harder).</summary>
+        public float DamageMultiplier => _mind != null ? _mind.DamageMultiplier : 1f;
         public float BodyRadius => _bodyRadius;
         public Vector3 AimPoint => transform.position + Vector3.up * (_aimHeight + Stats.HoverHeight);
         public bool Removed { get; private set; }
@@ -64,15 +74,25 @@ namespace UnityEve.Enemies
         }
 
         /// <summary>Called by the encounter when the creature materializes.</summary>
-        public void Begin(Transform target, Func<bool> mayCommit, float initialCooldown)
+        public void Begin(Transform target, Func<bool> mayCommit, float initialCooldown, uint seed, Bounds arena, Func<int> packAlive)
         {
+            _arena = arena;
+            _packAlive = packAlive;
+            var rng = new Rng(seed);
+            _mind = new EnemyMind(Stats, rng, rng.Range(0.3f, 0.9f));
+            _mind.IntentChosen += OnIntent;
+            _mind.BuffApplied += OnBuffApplied;
             Health = new Health(Stats.MaxHp);
             _target = target;
             _mayCommit = mayCommit;
             _cycle = new EnemyAttackCycle(Stats, initialCooldown);
             _cycle.WindupStarted += OnWindup;
-            _cycle.StrikeLanded += () => Struck?.Invoke(this);
-            _circleSign = UnityEngine.Random.value < 0.5f ? -1f : 1f;
+            _cycle.StrikeLanded += () =>
+            {
+                Struck?.Invoke(this);
+                _mind.Reconsider();
+            };
+            _circleSign = rng.Chance(0.5f) ? -1f : 1f;
             _spawnTime = Time.time;
             transform.localScale = _baseScale * 0.01f;
         }
@@ -84,10 +104,22 @@ namespace UnityEve.Enemies
             AudioService.Play(SoundId.EnemyTelegraph, 0.7f);
         }
 
+        private void OnIntent(EnemyIntent intent)
+        {
+            if (intent == EnemyIntent.Buff) AudioService.Play(SoundId.EnemyBuffCharge, 0.6f);
+        }
+
+        private void OnBuffApplied()
+        {
+            AudioService.Play(SoundId.EnemyBuff);
+            GameHud.Instance?.Popup(AimPoint + Vector3.up * 0.6f, "ENRAGED", new Color(1f, 0.55f, 0.2f));
+        }
+
         public void ApplyStun(float seconds)
         {
             _stunnedUntil = Mathf.Max(_stunnedUntil, Time.time + seconds);
             _cycle?.Interrupt();
+            _mind?.Reconsider();
         }
 
         public void ApplySlow(float seconds) => _slowUntil = Mathf.Max(_slowUntil, Time.time + seconds);
@@ -171,13 +203,26 @@ namespace UnityEve.Enemies
             var dist = toPlayer.magnitude;
             var dir = dist > 0.0001f ? toPlayer / dist : transform.forward;
 
+            var facing = _target.forward;
+            facing.y = 0f;
+            var senses = new EnemySenses
+            {
+                Distance = dist,
+                HealthFraction = Health.Fraction,
+                PlayerFacing = facing.sqrMagnitude > 0.0001f ? Vector3.Dot(facing.normalized, -dir) : 0f,
+                AttackSlotFree = _mayCommit == null || _mayCommit(),
+                PackAlive = _packAlive != null ? _packAlive() : 1,
+            };
+            tempo *= _mind.Tempo;
+
             if (!stunned && grow >= 1f)
             {
-                _cycle.Tick(dt, dist, _mayCommit == null || _mayCommit(), tempo);
-                Move(dt, dir, dist, tempo);
+                if (_cycle.Phase == AttackPhase.Close) _mind.Tick(dt, senses);
+                _cycle.Tick(dt, dist, senses.AttackSlotFree && _mind.MayAttack(senses), tempo);
+                Move(dt, dir, dist, tempo, _mind.Steer(senses), facing);
             }
 
-            var speed = stunned ? 0f : (_cycle.Phase == AttackPhase.Close ? Stats.MoveSpeed * tempo : 0f);
+            var speed = stunned || _cycle.Phase != AttackPhase.Close ? 0f : Stats.MoveSpeed * tempo * _mind.Steer(senses).Speed;
             if (_animator != null)
             {
                 _animator.SetFloat(AnimParams.Speed, speed);
@@ -194,25 +239,30 @@ namespace UnityEve.Enemies
             UpdateTint(stunned);
         }
 
-        private void Move(float dt, Vector3 dir, float dist, float tempo)
+        private void Move(float dt, Vector3 dir, float dist, float tempo, EnemySteering steering, Vector3 playerFacing)
         {
             switch (_cycle.Phase)
             {
                 case AttackPhase.Close:
                 {
+                    // Always watch the player, even while idling, thinking or powering up.
                     Turn(dir, 9f * dt);
-                    var speed = Stats.MoveSpeed * tempo;
-                    if (dist > Stats.Reach)
+                    if (steering.Still) break;
+                    var speed = Stats.MoveSpeed * tempo * steering.Speed;
+                    var tangent = new Vector3(-dir.z, 0f, dir.x) * _circleSign;
+                    if (steering.TowardBack)
                     {
-                        transform.position += dir * (speed * dt);
+                        // Go the way round that leads toward her back.
+                        tangent = new Vector3(-dir.z, 0f, dir.x);
+                        if (Vector3.Dot(tangent, -playerFacing) < 0f) tangent = -tangent;
                     }
-                    else
-                    {
-                        // Prowl: circle the player at reach while waiting for a turn to commit.
-                        var tangent = new Vector3(-dir.z, 0f, dir.x) * _circleSign;
-                        var radial = dir * (dist - Stats.Reach * 0.92f);
-                        transform.position += (tangent * 0.85f + radial).normalized * (speed * 0.55f * dt);
-                    }
+                    // Radial error: positive means too far (move in), negative means too close (back off).
+                    var error = steering.RingDistance >= 0f ? dist - steering.RingDistance : 0f;
+                    var radial = dir * Mathf.Clamp(error, -1f, 1f);
+                    var wish = radial + tangent * steering.Orbit * (Mathf.Abs(error) < 1.5f ? 1f : 0.3f);
+                    if (wish.sqrMagnitude > 0.0004f)
+                        transform.position += wish.normalized * (speed * Mathf.Clamp01(wish.magnitude + 0.35f) * dt);
+                    KeepInArena();
                     break;
                 }
                 case AttackPhase.Windup:
@@ -228,6 +278,15 @@ namespace UnityEve.Enemies
                     break;
                 }
             }
+        }
+
+        private void KeepInArena()
+        {
+            if (_arena.size.sqrMagnitude < 0.01f) return;
+            var p = transform.position;
+            p.x = Mathf.Clamp(p.x, _arena.min.x + _bodyRadius + 0.3f, _arena.max.x - _bodyRadius - 0.3f);
+            p.z = Mathf.Clamp(p.z, _arena.min.z + _bodyRadius + 0.3f, _arena.max.z - _bodyRadius - 0.3f);
+            transform.position = p;
         }
 
         private void Turn(Vector3 dir, float t)
@@ -248,6 +307,14 @@ namespace UnityEve.Enemies
             }
             else if (stunned)
                 c = new Color(0.2f, 0.2f, 0.35f);
+            else if (_mind.Intent == EnemyIntent.Buff)
+            {
+                // Charging up: a throbbing violet that builds toward the release.
+                var k = _mind.BuffCastProgress;
+                c = new Color(0.35f, 0.05f, 0.5f) * (0.3f + 0.7f * k) * (0.75f + 0.25f * Mathf.Sin(Time.time * 30f));
+            }
+            else if (_mind.Buffed)
+                c = new Color(0.28f, 0.08f, 0f) * (0.7f + 0.3f * Mathf.Sin(Time.time * 6f));
             else
                 c = Color.black;
 

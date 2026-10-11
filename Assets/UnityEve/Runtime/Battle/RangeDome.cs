@@ -3,11 +3,13 @@ using UnityEngine;
 namespace UnityEve.Battle
 {
     /// <summary>
-    /// Parasite Eve's range dome: a translucent hemisphere centred on the player whose radius is the
-    /// weapon's range. Only enemies inside it can be targeted. Also owns the target marker.
+    /// Parasite Eve's range dome: a translucent hemisphere of hexagon cells centred on the player whose
+    /// radius is the weapon's range. Only enemies inside it can be targeted. Also owns the target marker.
     /// </summary>
     public sealed class RangeDome : MonoBehaviour
     {
+        private static readonly int UnscaledTime = Shader.PropertyToID("_UnscaledTime");
+
         [SerializeField] private Transform _dome;
         [SerializeField] private Transform _marker;
 
@@ -44,9 +46,10 @@ namespace UnityEve.Battle
 
         private void Update()
         {
-            // Unscaled: the dome blooms in while the world is paused.
+            // Unscaled: the dome blooms in, and its hexagons scan, while the world is paused.
             if (_dome.gameObject.activeSelf)
             {
+                Shader.SetGlobalFloat(UnscaledTime, Time.unscaledTime);
                 _grow = Mathf.Min(1f, _grow + Time.unscaledDeltaTime * 2.5f);
                 var s = 1f - Mathf.Pow(1f - _grow, 3f);
                 _dome.localScale = Vector3.one * (_radius * 2f * s);

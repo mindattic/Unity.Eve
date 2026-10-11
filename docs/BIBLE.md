@@ -18,9 +18,14 @@ fight with Parasite Eve's real-time/pause Active Time Battle.
 - It plays like Parasite Eve (1998):
   - The gauge fills while you move in real time.
   - The world stops when you act.
-  - The weapon's range dome decides what you can hit.
+  - The weapon's range dome, a translucent shell of hexagons, decides what you can hit.
+  - Creatures fight with intent: between attacks they stop to think, then press in, flank toward your
+    back, hang back, enrage themselves, or retreat when hurt. It keeps the JRPG command-battle feel;
+    Parasite Mutant is the reference for the action's pace, not its gauge.
   - PE abilities and items round out the turn.
-- It looks like a PlayStation game:
+- It looks timeless: a cel-shaded PlayStation-era game (owner direction 2026-10-11):
+  - Every surface is cel-shaded (`UnityEve/Toon`): light arrives in flat bands and pools with hard
+    edges, with a 1 px ink outline.
   - The world renders at 400x300, point-filtered and letterboxed to 4:3.
   - Fixed and CCTV cameras hard-cut between shots.
   - Nights are foggy.
@@ -59,6 +64,7 @@ fight with Parasite Eve's real-time/pause Active Time Battle.
 - **Verbs:**
   - `BattleDirector.Begin/OpenCommandMenu/Execute`
   - `EnemyAttackCycle.Tick/Resolve`
+  - `EnemyMind.Tick/Decide/Steer` (tactics layered over the attack cycle)
   - `FocusWindow.Open/TryUse`
   - `Inventory.Add/TryRemove`
   - `LootTable.Roll`
@@ -95,18 +101,21 @@ Every third-party file is CC0 or OFL and listed in CREDITS.md. Missing sounds ar
 Edit `DemoContentBuilder`, then re-run it. A hand edit to `Generated/` or `Demo.unity` is lost on the next build.
 
 ## 6. Verified state {#UE-§6}
-- `dotnet test Tests/Core.Tests`: 31 passing.
+- `dotnet test Tests/Core.Tests`: 38 passing.
 - Unity 6000.4.3f1 batch-mode compile: clean.
-- `UnityEve.exe -batchmode -autoplay`: PASS, with 47 screenshots covering:
+- `UnityEve.exe -batchmode -autoplay`: PASS, with 46-47 screenshots (the enemy-buff shot appears when a
+  creature happens to power up) covering:
   - the camera tour
   - rummaging
   - 3 encounters won through the command menu, range dome, grenade and Focus
   - doors and searching the house interior
   - the padlocked shed refusing entry, the side-table key opening it, and the shotgun pickup
+  - walking out of combat playing the walk/jog cycle
+  - the enemy intents each fight actually used (logged)
   - the field menu
 
 ## 7. Active frontier {#UE-§7}
-- PS1 vertex-snap and affine shader
+- PS1 vertex-snap and affine shader (to reconsider against the cel-shaded direction)
 - Navmesh enemy movement
 - Bonus Point menu
 - Saves at a phone or save point

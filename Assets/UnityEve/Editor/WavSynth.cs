@@ -29,6 +29,8 @@ namespace UnityEve.Editor
             Write(folder, "dodge", Whoosh(0.28f));
             Write(folder, "throw", Whoosh(0.22f));
             Write(folder, "enemy_death", Sweep(300f, 60f, 0.7f, 0.6f, noise: 0.5f));
+            Write(folder, "enemy_buff_charge", Sweep(70f, 260f, 1.1f, 0.45f, noise: 0.25f));
+            Write(folder, "enemy_buff", Chord(new[] { 98f, 103.8f, 146.8f }, 0.6f));
         }
 
         private static float[] Buffer(float seconds) => new float[(int)(seconds * Rate)];

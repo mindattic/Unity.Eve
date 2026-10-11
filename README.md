@@ -21,7 +21,7 @@ This is the Unity port of [ExperimentEve](https://github.com/mindattic/Experimen
 - **No screen transition.** Walking into an encounter zone makes the creatures materialize where you stand and seals the area with invisible walls.
 - **Active Time Bar.** The gauge fills in real time while you move and dodge, using PE1's formula `(50 + ActiveTime) x gun multiplier` (pistol 1.0, shotgun 0.8, melee 2.0).
 - **World pause.** With a full gauge, Confirm stops time and opens **Attack / PE / Item / Equip / Escape**.
-- **Range dome.** Choosing Attack raises a translucent dome sized to the weapon's range. Only enemies inside it can be targeted.
+- **Range dome.** Choosing Attack raises a translucent shell of hexagons sized to the weapon's range. Only enemies inside it can be targeted. In rooms smaller than the range, the shell shows faintly through the walls.
 - **Weapon behaviour from PE1:**
   - *Rate of fire:* two rounds at 60% each.
   - *Burst:* the shotgun hits everything in range.
@@ -32,6 +32,7 @@ This is the Unity port of [ExperimentEve](https://github.com/mindattic/Experimen
   - *Flash grenade:* stuns everything within 3.5 m.
   - *Medicine, Cola and Mito Tonic:* restore HP or PE.
 - **Readable enemy attacks** (from ExperimentEve). Each enemy cycles close → windup → strike → recover. During the windup it glows, and the pause freezes it mid-telegraph. At most two enemies commit to an attack at once.
+- **Creatures that think.** Between attacks a creature stops, then picks what to do from its temperament and what it sees: press in, flank toward Kat's back and strike from her blind side, hang back and idle, glow violet and enrage itself (harder hits, faster tempo), or retreat when hurt. Rats swarm; spiders and serpents flank; the Drain Coil buffs and hangs back.
 - **Escape** succeeds more often against weaker packs. EXP, level-ups and Bonus Points feed Active Time, so the gauge fills faster as you grow.
 
 ![The paused command menu over the street battle](docs/images/battle-command-menu.png)
@@ -56,7 +57,7 @@ This is the Unity port of [ExperimentEve](https://github.com/mindattic/Experimen
 ![The alley, watched by a CCTV camera that pans to follow Kat](docs/images/camera-alley-cctv.png)
 
 ### Presentation
-- **PS1 render.** The world renders into a 400x300 point-filtered target, letterboxed to 4:3 by the UI Toolkit HUD. Hard cuts, fog and flickering bulbs complete the look.
+- **Cel-shaded PS1 render.** Every surface uses a cel shader: light falls in flat bands and hard-edged pools, with a 1 px ink outline. The world renders into a 400x300 point-filtered target, letterboxed to 4:3 by the UI Toolkit HUD. Hard cuts, fog and flickering bulbs complete the look.
 - **Kat** is a Quaternius Universal Base Character on the Universal Animation Library skeleton. Both share the same 65-joint rig, so the meshes are rebound by bone name with no retargeting. Her jeans, boots and tank top are painted into her albedo by a C# port of ExperimentEve's outfit painter.
 - **Feel and sound.** Every event has a sound. Hits, crits, dodges and explosions add gamepad rumble and camera shake.
 
@@ -135,7 +136,7 @@ docs/          BIBLE.md (design canon), USER_STORIES.md (status + evidence)
 
 - This is a proof of concept with one street, two interiors, three encounters and seven creature types. There is no save system, title flow beyond a title card, or music.
 - Enemies move by transform with simple separation, not a navmesh. Arena walls keep fights contained.
-- The PS1 look comes from resolution and filtering. There is no vertex-snap or affine-warp shader yet.
+- There is no vertex-snap or affine-warp shader; whether it suits the cel-shaded look is undecided.
 - Bonus Points are spent automatically on Active Time rather than through a menu.
 - The shotgun pickup uses the survival kit's axe mesh as a stand-in.
 

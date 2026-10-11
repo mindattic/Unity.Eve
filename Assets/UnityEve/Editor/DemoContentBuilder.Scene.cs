@@ -159,6 +159,7 @@ namespace UnityEve.Editor
             model.transform.localScale = Vector3.one * s;
             b = RendererBounds(model);
             model.transform.localPosition = new Vector3(-b.center.x, -b.min.y, -b.center.z);
+            ConvertRenderers(model, MatDir + "/Models");
             if (collider)
             {
                 var box = wrapper.AddComponent<BoxCollider>();
@@ -595,7 +596,7 @@ namespace UnityEve.Editor
             sphere.name = "Dome";
             sphere.transform.SetParent(dome.transform, false);
             var sphereRenderer = sphere.GetComponent<Renderer>();
-            sphereRenderer.sharedMaterial = TransparentMaterial("RangeDome", new Color(0.33f, 1f, 0.73f, 0.06f), additive: false);
+            sphereRenderer.sharedMaterial = HexDomeMaterial(new Color(0.33f, 1f, 0.73f));
             sphereRenderer.shadowCastingMode = ShadowCastingMode.Off;
             var marker = GameObject.CreatePrimitive(PrimitiveType.Cube);
             Object.DestroyImmediate(marker.GetComponent<Collider>());

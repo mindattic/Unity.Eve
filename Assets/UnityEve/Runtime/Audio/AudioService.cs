@@ -36,6 +36,8 @@ namespace UnityEve
         Victory,
         LevelUp,
         Footstep,
+        EnemyBuffCharge,
+        EnemyBuff,
     }
 
     /// <summary>Pooled 2D one-shot player. Sounds ignore time scale so menus stay responsive while paused.</summary>

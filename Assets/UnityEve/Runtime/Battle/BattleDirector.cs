@@ -121,7 +121,8 @@ namespace UnityEve.Battle
                 var go = Instantiate(spawn.Enemy.Prefab, zone.SpawnWorldPosition(spawn), Quaternion.identity);
                 go.transform.LookAt(new Vector3(_player.transform.position.x, go.transform.position.y, _player.transform.position.z));
                 var actor = go.GetComponent<EnemyActor>();
-                actor.Begin(_player.transform, MayCommit, 0.6f + _rng.Range(0f, 0.8f) + i * 0.25f);
+                actor.Begin(_player.transform, MayCommit, 0.6f + _rng.Range(0f, 0.8f) + i * 0.25f, _rng.NextUInt(), zone.Bounds,
+                    () => _enemies.Count(e => e.IsAlive));
                 actor.Struck += OnEnemyStrike;
                 actor.Died += OnEnemyDied;
                 _enemies.Add(actor);
@@ -282,7 +283,7 @@ namespace UnityEve.Battle
                     }
                     break;
                 case StrikeOutcome.Hit:
-                    var dealt = _player.TakeDamage(Mathf.RoundToInt(enemy.Stats.AttackDamage * _rng.Range(0.85f, 1.15f)));
+                    var dealt = _player.TakeDamage(Mathf.RoundToInt(enemy.Stats.AttackDamage * enemy.DamageMultiplier * _rng.Range(0.85f, 1.15f)));
                     var severity = Mathf.Min(1f, dealt / 14f);
                     hud?.Hurt(severity);
                     hud?.Popup(_player.transform.position + Vector3.up * 1.8f, dealt.ToString(), new Color(1f, 0.45f, 0.4f));

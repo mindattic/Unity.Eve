@@ -14,18 +14,21 @@ namespace UnityEve.Editor
     {
         private static readonly Dictionary<Material, Material> Converted = new Dictionary<Material, Material>();
 
+        /// <summary>Every opaque surface is cel-shaded with an ink outline (owner direction 2026-10-11).</summary>
+        private const string ToonShader = "UnityEve/Toon";
+
         // ------------------------------------------------------------------ materials
 
         /// <summary>
-        /// Converts an imported glTF material to a URP Lit material we own (base colour/texture kept,
-        /// emission enabled so creatures can glow during their attack telegraph).
+        /// Converts an imported glTF material to a cel-shaded material we own (base colour/texture kept,
+        /// emission available so creatures can glow during their attack telegraph).
         /// </summary>
         private static Material ToUrp(Material src, string folder, Color? tint = null)
         {
             if (src == null) return null;
             if (tint == null && Converted.TryGetValue(src, out var done)) return done;
             System.IO.Directory.CreateDirectory(folder);
-            var m = new Material(Shader.Find("Universal Render Pipeline/Lit"));
+            var m = new Material(Shader.Find(ToonShader));
             var color = src.HasProperty("baseColorFactor") ? src.GetColor("baseColorFactor")
                 : src.HasProperty("_BaseColor") ? src.GetColor("_BaseColor") : Color.white;
             Texture tex = src.HasProperty("baseColorTexture") ? src.GetTexture("baseColorTexture")
@@ -56,9 +59,10 @@ namespace UnityEve.Editor
             var m = AssetDatabase.LoadAssetAtPath<Material>(path);
             if (m == null)
             {
-                m = new Material(Shader.Find("Universal Render Pipeline/Lit"));
+                m = new Material(Shader.Find(ToonShader));
                 AssetDatabase.CreateAsset(m, path);
             }
+            m.shader = Shader.Find(ToonShader);
             m.SetColor("_BaseColor", color);
             m.SetTexture("_BaseMap", texture);
             m.SetFloat("_Smoothness", smoothness);
@@ -68,6 +72,17 @@ namespace UnityEve.Editor
                 m.SetColor("_EmissionColor", color * 2f);
             }
             EditorUtility.SetDirty(m);
+            return m;
+        }
+
+        /// <summary>The weapon range dome: translucent hexagon shell.</summary>
+        private static Material HexDomeMaterial(Color color)
+        {
+            var path = $"{MatDir}/RangeDome.mat";
+            AssetDatabase.DeleteAsset(path);
+            var m = new Material(Shader.Find("UnityEve/HexDome"));
+            m.SetColor("_BaseColor", color);
+            AssetDatabase.CreateAsset(m, path);
             return m;
         }
 
@@ -145,7 +160,11 @@ namespace UnityEve.Editor
         {
             const string ual = Art + "/Models/kat/UAL1_Standard.glb";
             var folder = AnimDir + "/Kat";
-            AnimationClip C(string name, bool loop) => OwnedClip(ual, name, loop, folder);
+            // OwnedClip deletes and recreates the .anim, so a second request for the same clip would
+            // orphan the first tree's reference (explore lost its walk/jog to the battle tree). Copy once.
+            var owned = new Dictionary<string, AnimationClip>();
+            AnimationClip C(string name, bool loop) =>
+                owned.TryGetValue(name, out var clip) ? clip : owned[name] = OwnedClip(ual, name, loop, folder);
 
             var path = AnimDir + "/Kat.controller";
             AssetDatabase.DeleteAsset(path);

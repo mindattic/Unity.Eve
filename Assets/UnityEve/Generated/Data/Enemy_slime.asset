@@ -26,4 +26,6 @@ MonoBehaviour:
     CooldownSeconds: 1.5
     Exp: 38
     HoverHeight: 0
-  Prefab: {fileID: 7787546452707684431, guid: 6553d5b2b02870347ab21947feb03442, type: 3}
+    Aggression: 0.3
+    Caution: 0.7
+  Prefab: {fileID: 2723320373799544440, guid: 6553d5b2b02870347ab21947feb03442, type: 3}

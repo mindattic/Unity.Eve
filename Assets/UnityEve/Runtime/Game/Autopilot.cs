@@ -261,7 +261,27 @@ namespace UnityEve.Game
                 }
             }
 
-            // 7. Field menu.
+            // 7. Out of combat, walking plays the walk/jog cycle (not a sliding idle).
+            var shedSpawn = GameObject.Find("Spawn_ShedInside");
+            var input = Input.GameInput.Instance;
+            if (shedSpawn != null && input != null && _player.Controller.Animator != null)
+            {
+                Teleport(shedSpawn.transform);
+                yield return Real(0.3f);
+                input.MoveOverride = new Vector2(0f, 1f);
+                yield return Real(0.6f);
+                var moving = _player.Controller.Animator.GetCurrentAnimatorClipInfo(0)
+                    .Where(ci => ci.weight > 0.3f).Any(ci => ci.clip != null && (ci.clip.name.Contains("Walk") || ci.clip.name.Contains("Jog")));
+                yield return Shot("explore_walk");
+                input.MoveOverride = null;
+                if (!moving)
+                {
+                    Log("FAIL explore locomotion is not playing a walk/jog clip");
+                    failures++;
+                }
+            }
+
+            // 8. Field menu.
             session.OpenFieldMenu();
             yield return Real(0.3f);
             yield return Shot("field_menu");
@@ -276,11 +296,21 @@ namespace UnityEve.Game
         {
             var turn = 0;
             var focusShown = false;
+            var buffShown = false;
+            var intents = new System.Collections.Generic.HashSet<EnemyIntent>();
             var timeout = Time.realtimeSinceStartup + 90f;
             while (battle.InBattle && battle.Phase != BattlePhase.Victory && Time.realtimeSinceStartup < timeout)
             {
                 // The autopilot is a tourist, not a test of skill: keep it alive.
                 if (_player.Health.Fraction < 0.5f) _player.Heal(999);
+
+                foreach (var e in battle.Enemies.Where(e => e.IsAlive)) intents.Add(e.Intent);
+                if (!buffShown && battle.Phase == BattlePhase.Active && battle.Enemies.Any(e => e.IsAlive && e.Intent == EnemyIntent.Buff))
+                {
+                    buffShown = true;
+                    yield return Real(0.5f);
+                    yield return Shot($"{tag}_enemy_buff");
+                }
 
                 if (!focusShown && turn == 1 && battle.Phase == BattlePhase.Active && battle.DebugOpenFocus())
                 {
@@ -350,6 +380,7 @@ namespace UnityEve.Game
                 turn++;
                 yield return null;
             }
+            Log($"{tag} enemy intents seen: {string.Join(", ", intents.OrderBy(i => i))}");
             yield return Real(0.4f);
             if (battle.Phase == BattlePhase.Victory) yield return Shot($"{tag}_victory");
             while (battle.InBattle && Time.realtimeSinceStartup < timeout) yield return null;

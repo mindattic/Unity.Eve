@@ -33,6 +33,17 @@ namespace UnityEve.Core.Battle
         public const float StrikeSeconds = 0.14f;
         public const float StrikeWhiffSlack = 0.35f;
 
+        // --- Enemy tactics (EnemyMind) ------------------------------------------------------
+        public const float EnemyThinkMinSeconds = 0.3f;
+        public const float EnemyThinkMaxSeconds = 0.75f;
+        /// <summary>A flanker strikes once the player's facing to it drops below this cosine (~78 degrees off her aim).</summary>
+        public const float EnemyFlankOpeningFacing = 0.2f;
+        public const float EnemyBuffCastSeconds = 1.1f;
+        public const float EnemyBuffSeconds = 8f;
+        public const float EnemyBuffCooldownSeconds = 14f;
+        public const float EnemyBuffDamageMultiplier = 1.35f;
+        public const float EnemyBuffTempo = 1.2f;
+
         // --- Player defence ----------------------------------------------------------------
         public const float DodgeSeconds = 0.34f;
         public const float DodgeInvulnerableSeconds = 0.5f;

@@ -104,5 +104,9 @@ namespace UnityEve.Core.Battle
         public float CooldownSeconds = 1f;
         public int Exp = 10;
         public float HoverHeight;
+        /// <summary>0..1: how readily it presses the attack.</summary>
+        public float Aggression = 0.5f;
+        /// <summary>0..1: how readily it holds back, flanks, buffs or retreats when hurt.</summary>
+        public float Caution = 0.3f;
     }
 }

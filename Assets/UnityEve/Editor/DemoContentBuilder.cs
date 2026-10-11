@@ -146,27 +146,28 @@ namespace UnityEve.Editor
             Ability("barrier", "Barrier", AbilityEffect.Barrier, 30, 0, 20, "Incoming damage is halved for 20 s.", new Color(0.6f, 0.9f, 1f));
 
             EnemyDefinition Enemy(string id, string name, int level, int hp, int def, int dmg, float speed, float reach,
-                float windup, float recover, float cooldown, int exp, float hover = 0f)
+                float windup, float recover, float cooldown, int exp, float aggression, float caution, float hover = 0f)
             {
                 var e = ScriptableObject.CreateInstance<EnemyDefinition>();
                 e.Stats = new EnemyStats
                 {
                     Id = id, DisplayName = name, Level = level, MaxHp = hp, Defense = def, AttackDamage = dmg, MoveSpeed = speed,
                     Reach = reach, WindupSeconds = windup, RecoverSeconds = recover, CooldownSeconds = cooldown, Exp = exp,
-                    HoverHeight = hover,
+                    HoverHeight = hover, Aggression = aggression, Caution = caution,
                 };
                 e = SaveAsset(e, $"{DataDir}/Enemy_{id}.asset");
                 c.Enemies[id] = e;
                 return e;
             }
-            // Species tuned from ExperimentEve's playtested table.
-            Enemy("rat", "Ratchoir Straggler", 1, 26, 0, 6, 3.0f, 0.95f, 0.36f, 0.34f, 0.9f, 14);
-            Enemy("spider", "Cobble Weaver", 2, 44, 1, 8, 2.3f, 1.05f, 0.42f, 0.42f, 1.0f, 24);
-            Enemy("frog", "Gutterspawn", 2, 52, 2, 10, 1.7f, 1.1f, 0.52f, 0.5f, 1.2f, 28);
-            Enemy("snake", "Gutter Serpent", 3, 46, 1, 13, 1.9f, 1.35f, 0.62f, 0.55f, 1.3f, 32);
-            Enemy("slime", "Drain Coil", 3, 64, 3, 12, 1.1f, 1.15f, 0.72f, 0.7f, 1.5f, 38);
-            Enemy("wasp", "Steeple Drone", 2, 26, 0, 9, 3.2f, 1.0f, 0.4f, 0.5f, 1.0f, 22, hover: 1.25f);
-            Enemy("bat", "Steeple Bat", 1, 22, 0, 5, 3.5f, 0.95f, 0.3f, 0.4f, 0.9f, 16, hover: 1.6f);
+            // Species tuned from ExperimentEve's playtested table; the last two numbers are temperament
+            // (aggression, caution): rats swarm, spiders and serpents flank, the slime buffs and hangs back.
+            Enemy("rat", "Ratchoir Straggler", 1, 26, 0, 6, 3.0f, 0.95f, 0.36f, 0.34f, 0.9f, 14, 0.85f, 0.1f);
+            Enemy("spider", "Cobble Weaver", 2, 44, 1, 8, 2.3f, 1.05f, 0.42f, 0.42f, 1.0f, 24, 0.45f, 0.6f);
+            Enemy("frog", "Gutterspawn", 2, 52, 2, 10, 1.7f, 1.1f, 0.52f, 0.5f, 1.2f, 28, 0.55f, 0.35f);
+            Enemy("snake", "Gutter Serpent", 3, 46, 1, 13, 1.9f, 1.35f, 0.62f, 0.55f, 1.3f, 32, 0.6f, 0.55f);
+            Enemy("slime", "Drain Coil", 3, 64, 3, 12, 1.1f, 1.15f, 0.72f, 0.7f, 1.5f, 38, 0.3f, 0.7f);
+            Enemy("wasp", "Steeple Drone", 2, 26, 0, 9, 3.2f, 1.0f, 0.4f, 0.5f, 1.0f, 22, 0.75f, 0.25f, hover: 1.25f);
+            Enemy("bat", "Steeple Bat", 1, 22, 0, 5, 3.5f, 0.95f, 0.3f, 0.4f, 0.9f, 16, 0.7f, 0.35f, hover: 1.6f);
 
             LootTableDefinition Loot(string id, int pulls, params (string item, int min, int max, float weight)[] entries)
             {
@@ -220,6 +221,8 @@ namespace UnityEve.Editor
             Map(SoundId.PlayerHurt, 0.9f, Impact("impactPunch_heavy_001"));
             Map(SoundId.EnemyTelegraph, 0.6f, Gen("telegraph"));
             Map(SoundId.EnemyDeath, 0.7f, Gen("enemy_death"));
+            Map(SoundId.EnemyBuffCharge, 0.55f, Gen("enemy_buff_charge"));
+            Map(SoundId.EnemyBuff, 0.7f, Gen("enemy_buff"));
             Map(SoundId.Dodge, 0.6f, Gen("dodge"));
             Map(SoundId.PerfectDodge, 0.9f, Gen("perfect_dodge"));
             Map(SoundId.PeCast, 0.7f, Gen("pe_cast"));
