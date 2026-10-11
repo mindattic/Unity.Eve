@@ -143,7 +143,9 @@ Shader "UnityEve/Toon"
                 #endif
 
                 // Thin rim so silhouettes read against the night.
-                half rim = step(0.72h, 1.0h - saturate(dot(n, v)));
+                // Soft rim: a gradual falloff (a hard step flickers into bright slivers along mesh seams
+                // where normals split), and only where some light reaches, so it never glows from shadow.
+                half rim = smoothstep(0.55h, 0.95h, 1.0h - saturate(dot(n, v))) * saturate(dot(light, half3(0.3h, 0.6h, 0.1h)) * 2.0h);
 
                 half3 colour = albedo.rgb * light + _RimColor.rgb * rim * _RimColor.a + _EmissionColor.rgb;
                 colour = MixFog(colour, i.fogFactor);

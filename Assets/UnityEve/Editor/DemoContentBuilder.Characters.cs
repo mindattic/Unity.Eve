@@ -309,7 +309,7 @@ namespace UnityEve.Editor
                 EditorUtility.SetDirty(mat);
             }
 
-            Rim(rig, new Color(0.6f, 0.82f, 1f, 0.8f));
+            Rim(rig, new Color(0.85f, 0.88f, 0.95f, 0.22f));
 
             var animator = rig.GetComponent<Animator>() ?? rig.AddComponent<Animator>();
             animator.runtimeAnimatorController = PlayerAnimator();
@@ -422,7 +422,7 @@ namespace UnityEve.Editor
                 bounds = RendererBounds(model);
                 model.transform.localPosition = new Vector3(-bounds.center.x, -bounds.min.y, -bounds.center.z);
                 ConvertRenderers(model, $"{MatDir}/{s.id}");
-                Rim(model, new Color(1f, 0.55f, 0.3f, 0.6f));
+                Rim(model, new Color(1f, 0.7f, 0.45f, 0.3f));
 
                 var animator = model.GetComponent<Animator>() ?? model.AddComponent<Animator>();
                 animator.runtimeAnimatorController = CreatureAnimator(s.id, modelPath, s.flier);
