@@ -11,18 +11,27 @@ using UnityEve.Player;
 namespace UnityEve.Game
 {
     /// <summary>
-    /// Self-play verification. Launch the player with <c>-autoplay [-artifacts DIR]</c> and it tours the
-    /// demo through the real systems — cameras, rummaging, doors, an ATB battle with the range dome,
-    /// a grenade, a Focus window — writing a screenshot at each beat, then quits. "Done is verified by
+    /// Self-play. Launch the player with <c>-autoplay [-artifacts DIR]</c> and it tours the demo through
+    /// the real systems — cameras, rummaging, doors, an ATB battle with the range dome, a grenade, a
+    /// Focus window — writing a screenshot at each beat, then quits with PASS/FAIL. "Done is verified by
     /// play": look at the PNGs.
+    /// <c>-demo</c> runs the same tour windowed, with no screenshots and no PASS/FAIL, and loops forever:
+    /// at the ending it clicks through to the title and plays the whole night again. Meant to be watched,
+    /// unattended, on a show floor or for capturing trailer footage.
     /// </summary>
     public sealed class Autopilot : MonoBehaviour
     {
         private string _dir;
         private int _shot;
+        private int _failures;
+        private bool _demo;
         private PlayerCharacter _player;
+        private Vector3? _retreatTarget;
+        private float _retreatTargetAt;
 
-        public static bool Requested => Environment.GetCommandLineArgs().Contains("-autoplay");
+        private static bool Autoplay => Environment.GetCommandLineArgs().Contains("-autoplay");
+        private static bool Demo => Environment.GetCommandLineArgs().Contains("-demo");
+        public static bool Requested => Autoplay || Demo;
 
         private static Autopilot _running;
 
@@ -38,6 +47,7 @@ namespace UnityEve.Game
         private void Awake()
         {
             var args = Environment.GetCommandLineArgs();
+            _demo = Demo;
             var i = Array.IndexOf(args, "-artifacts");
             _dir = i >= 0 && i + 1 < args.Length ? args[i + 1] : Path.Combine(Application.dataPath, "..", "artifacts", "autoplay");
             // ScreenCapture resolves relative paths against the _Data folder, so pin an absolute path.
@@ -70,6 +80,13 @@ namespace UnityEve.Game
 
         private IEnumerator Shot(string name)
         {
+            // Demo mode is watched live, not verified from PNGs afterward: skip the capture and its
+            // forced camera renders, keeping just a frame of pacing where a shot would have been taken.
+            if (_demo)
+            {
+                yield return null;
+                yield break;
+            }
             // A batch-mode player draws UI but does not render cameras by itself: render the world
             // camera into the PS1 target explicitly, let the HUD panel composite it, then read back.
             if (_offscreen != null && Cameras.CameraDirector.Instance != null)
@@ -127,21 +144,54 @@ namespace UnityEve.Game
         {
             if (Application.isBatchMode) SetupOffscreen();
             yield return Real(1.5f);
-            var session = GameSession.Instance;
-            if (session == null)
+            GameSession session;
+            do
             {
-                Log("FAIL no GameSession in scene");
-                Application.Quit(2);
-                yield break;
-            }
-            _player = session.Player;
-            var failures = 0;
-            // Never touch a player's real save: autoplay saves into its artifacts folder.
-            SaveSystem.PathOverride = Path.Combine(_dir, "save.json");
-            if (File.Exists(SaveSystem.PathOverride)) File.Delete(SaveSystem.PathOverride);
-            // Scripted steps teleport between screens; random encounters only run in their own step.
-            if (ScreenEncounters.Instance != null) ScreenEncounters.Instance.Enabled = false;
+                session = GameSession.Instance;
+                if (session == null)
+                {
+                    Log("FAIL no GameSession in scene");
+                    if (!_demo) Application.Quit(2);
+                    yield break;
+                }
+                _player = session.Player;
+                _failures = 0;
+                // Never touch a player's real save: autoplay saves into its artifacts folder.
+                SaveSystem.PathOverride = Path.Combine(_dir, "save.json");
+                if (File.Exists(SaveSystem.PathOverride)) File.Delete(SaveSystem.PathOverride);
+                // Scripted steps teleport between screens; random encounters only run in their own step.
+                if (ScreenEncounters.Instance != null) ScreenEncounters.Instance.Enabled = false;
 
+                yield return RunTour(session);
+
+                Log(_failures == 0 ? "PASS autoplay complete" : $"FAIL {_failures} step(s) failed");
+                yield return Real(0.5f);
+                if (!_demo)
+                {
+                    Application.Quit(_failures == 0 ? 0 : 1);
+                    yield break;
+                }
+
+                // Attract mode: ride the ending's own "Back to the title" reset into another lap. A lap
+                // that never reached the ending (a fight timed out, a check failed) has no such menu to
+                // click, so force a clean reload directly — the loop must never run a second lap on
+                // stale, corrupted world state (a battle stuck "in progress" forever, an untouched save,
+                // a story director mid-objective), which cascades into failures and eventually a crash.
+                yield return Real(2f);
+                var before = GameSession.Instance;
+                if (before.OnEndScreen && before.AutoChoose("Back"))
+                {
+                    var deadline = Time.realtimeSinceStartup + 10f;
+                    while ((GameSession.Instance == null || GameSession.Instance == before) && Time.realtimeSinceStartup < deadline)
+                        yield return null;
+                }
+                if (GameSession.Instance == before) before.ForceReload();
+                yield return WaitForReload(before);
+            } while (_demo);
+        }
+
+        private IEnumerator RunTour(GameSession session)
+        {
             // The title screen renders (players see it first; autoplay skips it otherwise).
             session.ShowTitle();
             yield return Real(0.6f);
@@ -186,7 +236,7 @@ namespace UnityEve.Game
                 if (!battle.InBattle)
                 {
                     Log($"FAIL battle did not start in {zone.name}");
-                    failures++;
+                    _failures++;
                     continue;
                 }
                 yield return Real(1.4f);
@@ -195,21 +245,21 @@ namespace UnityEve.Game
                 if (!zone.Cleared)
                 {
                     Log($"FAIL {zone.name} not cleared");
-                    failures++;
+                    _failures++;
                 }
                 yield return Real(0.5f);
             }
 
             // 3b. Returning to a screen after going somewhere far can start a random encounter;
             //     stepping back and forth between neighbouring screens never does.
-            yield return ReentryEncounter(() => failures++);
+            yield return ReentryEncounter(() => _failures++);
 
             // 4. The shed is padlocked until the key from the Mercer side table is in the bag.
             var shedDoor = FindObjectsByType<Door>(FindObjectsSortMode.None).FirstOrDefault(d => d.name == "Door_Shed_Enter");
             if (shedDoor == null)
             {
                 Log("FAIL no Door_Shed_Enter in scene");
-                failures++;
+                _failures++;
             }
             else
             {
@@ -221,7 +271,7 @@ namespace UnityEve.Game
                 if (!shedDoor.Locked || IsNear(shedDoor.Destination))
                 {
                     Log("FAIL shed opened without the key");
-                    failures++;
+                    _failures++;
                 }
             }
 
@@ -255,7 +305,7 @@ namespace UnityEve.Game
                 if (_player.Bag.CountOf("key_shed") == 0)
                 {
                     Log("FAIL side table did not give key_shed");
-                    failures++;
+                    _failures++;
                 }
                 Teleport(shedDoor.ApproachPoint, shedDoor.transform.position);
                 yield return Real(0.4f);
@@ -265,7 +315,7 @@ namespace UnityEve.Game
                 if (shedDoor.Locked || !IsNear(shedDoor.Destination))
                 {
                     Log("FAIL shed did not open with the key");
-                    failures++;
+                    _failures++;
                 }
                 var shotgun = FindObjectsByType<WeaponPickup>(FindObjectsSortMode.None).FirstOrDefault();
                 if (shotgun != null)
@@ -278,7 +328,7 @@ namespace UnityEve.Game
                     if (!_player.Weapons.Any(w => w != null && w.Stats.Id == "shotgun"))
                     {
                         Log("FAIL shotgun pickup did not add the weapon");
-                        failures++;
+                        _failures++;
                     }
                 }
             }
@@ -299,7 +349,7 @@ namespace UnityEve.Game
                 if (!moving)
                 {
                     Log("FAIL explore locomotion is not playing a walk/jog clip");
-                    failures++;
+                    _failures++;
                 }
             }
 
@@ -310,11 +360,7 @@ namespace UnityEve.Game
             session.CloseMenu();
 
             // 9. The vertical slice: church barred, the grocery's keys, save and load, the Mother, the ending.
-            yield return StorySlice(() => failures++);
-
-            Log(failures == 0 ? "PASS autoplay complete" : $"FAIL {failures} step(s) failed");
-            yield return Real(0.5f);
-            Application.Quit(failures == 0 ? 0 : 1);
+            yield return StorySlice(() => _failures++);
         }
 
         private static int EncounterNumber(string name)
@@ -417,7 +463,9 @@ namespace UnityEve.Game
             Check(MusicDirector.Instance != null && MusicDirector.Instance.Playing == "boss", "boss music plays");
             yield return Real(1.6f);
             yield return Shot("boss_encounter");
-            yield return FightToTheEnd(battle, "boss", 240f);
+            // Demo mode plays safety-first (retreats, leans on cover) rather than for speed, so the boss
+            // can legitimately take longer than autoplay's scripted, all-offence run; give it more room.
+            yield return FightToTheEnd(battle, "boss", _demo ? 480f : 240f);
             Check(boss.Cleared, "the Mother is dead");
             yield return Real(6f);
             yield return Shot("ending");
@@ -554,15 +602,43 @@ namespace UnityEve.Game
                     yield return Shot($"{tag}_enemy_buff");
                 }
 
-                if (!focusShown && turn == 1 && battle.Phase == BattlePhase.Active && battle.DebugOpenFocus())
+                if (_demo && battle.Phase == BattlePhase.Active)
                 {
-                    focusShown = true;
-                    yield return Real(0.5f);
-                    yield return Shot($"{tag}_focus");
-                    battle.UseFocusMove(FocusMove.TargetVitals);
-                    yield return Real(0.3f);
-                    yield return Shot($"{tag}_vitals");
+                    // Survival first: keep distance and lean on cover. A real Cancel-button dodge is
+                    // also attempted every tick, timed against a committed strike through the same input
+                    // path a human uses — it lands as an honest perfect dodge if the timing works out.
+                    TryStaySafe(battle);
+                    TryRollDodge(battle);
                 }
+
+                if (!focusShown && battle.Phase == BattlePhase.Active)
+                {
+                    if (_demo)
+                    {
+                        if (battle.Focus.IsOpen)
+                        {
+                            focusShown = true;
+                            yield return Shot($"{tag}_focus");
+                            battle.UseFocusMove(FocusMove.TargetVitals);
+                            yield return Real(0.3f);
+                            yield return Shot($"{tag}_vitals");
+                        }
+                    }
+                    else if (turn == 1 && battle.DebugOpenFocus())
+                    {
+                        focusShown = true;
+                        yield return Real(0.5f);
+                        yield return Shot($"{tag}_focus");
+                        battle.UseFocusMove(FocusMove.TargetVitals);
+                        yield return Real(0.3f);
+                        yield return Shot($"{tag}_vitals");
+                    }
+                }
+
+                // Active reload: press Confirm again the instant the bar enters the sweet spot, through
+                // the same input path a human uses, shortening the reload like a real timed press would.
+                if (_demo && battle.CurrentReload != null && battle.CurrentReload.InSweetSpot)
+                    Input.GameInput.Instance?.TriggerConfirm();
 
                 if (battle.Phase != BattlePhase.Active || !battle.Atb.IsFull)
                 {
@@ -667,6 +743,105 @@ namespace UnityEve.Game
             yield return Real(0.4f);
             if (battle.Phase == BattlePhase.Victory) yield return Shot($"{tag}_victory");
             while (battle.InBattle && Time.realtimeSinceStartup < timeout) yield return null;
+        }
+
+        /// <summary>Demo mode: a real Cancel-button press, timed against whichever enemy is about to land
+        /// its strike, through the same input path a human dodge uses (see GameInput.TriggerDodge).</summary>
+        private bool TryRollDodge(BattleDirector battle)
+        {
+            var incoming = battle.Enemies
+                .Where(e => e.IsAlive && e.SecondsUntilStrike <= FocusWindow.PerfectWindowSeconds - 0.08f)
+                .OrderBy(e => e.SecondsUntilStrike)
+                .FirstOrDefault();
+            if (incoming == null) return false;
+            Input.GameInput.Instance?.TriggerDodge();
+            return true;
+        }
+
+        /// <summary>Demo mode's #1 goal is staying alive, not winning fast: keep distance from whoever is
+        /// closest, up to the current weapon's effective range, and gravitate toward a nearby cover prop
+        /// when one is in reach.</summary>
+        private void TryStaySafe(BattleDirector battle)
+        {
+            var nearest = battle.Enemies.Where(e => e.IsAlive)
+                .OrderBy(e => (e.transform.position - _player.transform.position).sqrMagnitude).FirstOrDefault();
+            if (nearest == null)
+            {
+                _retreatTarget = null;
+                return;
+            }
+            var pos = _player.transform.position;
+            var away = pos - nearest.transform.position;
+            away.y = 0f;
+            var dist = away.magnitude;
+            var weapon = _player.Weapon;
+            var optimum = weapon != null && !weapon.Stats.Melee ? weapon.Stats.Range * 0.85f : 3f;
+            if (dist >= optimum * 0.9f)
+            {
+                _retreatTarget = null;
+                return;
+            }
+
+            // Pick a retreat point and hold it for a beat: re-picking every single frame flickers between
+            // "duck behind cover" and "step straight back" as the enemy closes in, and shakes her in place.
+            if (_retreatTarget == null || Time.time >= _retreatTargetAt)
+            {
+                var dir = dist > 0.1f ? away / dist : _player.transform.forward;
+                var desired = pos + dir * 1.2f;
+                var cover = NearestCoverProp(desired);
+                var target = cover != null && (cover.position - desired).sqrMagnitude < 9f
+                    ? cover.position + (cover.position - nearest.transform.position).normalized * 0.7f
+                    : desired;
+                var zone = battle.Zone;
+                if (zone != null)
+                {
+                    var b = zone.Bounds;
+                    target.x = Mathf.Clamp(target.x, b.min.x + 0.6f, b.max.x - 0.6f);
+                    target.z = Mathf.Clamp(target.z, b.min.z + 0.6f, b.max.z - 0.6f);
+                }
+                _retreatTarget = target;
+                _retreatTargetAt = Time.time + 0.5f;
+            }
+
+            const float retreatSpeed = 4f; // matches PlayerController's default run speed
+            var toTarget = _retreatTarget.Value - pos;
+            toTarget.y = 0f;
+            var remaining = toTarget.magnitude;
+            if (remaining < 0.02f) return; // already there
+
+            var moveDir = toTarget / remaining;
+            // Obstacle-aware: this moves her with a direct Teleport each tick, not the CharacterController,
+            // so nothing naturally stops her walking into a bench or lamp post on the way — steer around
+            // whatever a short sphere-cast finds directly ahead instead.
+            if (Physics.SphereCast(pos + Vector3.up * 0.9f, 0.35f, moveDir, out var hit, 1.1f) && !hit.collider.isTrigger)
+            {
+                var around = Vector3.Cross(Vector3.up, moveDir);
+                var outward = hit.normal;
+                outward.y = 0f;
+                if (outward.sqrMagnitude > 0.0001f && Vector3.Dot(around, outward) < 0f) around = -around;
+                moveDir = (moveDir + around).normalized;
+            }
+            var step = pos + moveDir * Mathf.Min(remaining, retreatSpeed * Time.deltaTime);
+            // Already there — boxed against the arena edge with nowhere left to go: stop nudging her.
+            if ((step - pos).sqrMagnitude < 0.0004f) return;
+
+            var face = nearest.transform.position - step;
+            face.y = 0f;
+            _player.Controller.Teleport(step, Quaternion.LookRotation(face.sqrMagnitude > 0.01f ? face : _player.transform.forward));
+        }
+
+        private static Transform NearestCoverProp(Vector3 near)
+        {
+            Transform best = null;
+            var bestSqr = float.MaxValue;
+            foreach (var p in CoverProp.Registry)
+            {
+                var sqr = (p.transform.position - near).sqrMagnitude;
+                if (sqr >= bestSqr) continue;
+                bestSqr = sqr;
+                best = p.transform;
+            }
+            return best;
         }
     }
 }

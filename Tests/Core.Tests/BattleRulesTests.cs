@@ -226,5 +226,30 @@ namespace UnityEve.Core.Tests
             h.Revive();
             Assert.Equal(new[] { 50 }, new[] { h.Current }.ToArray());
         }
+
+        [Fact]
+        public void ActiveReload_sweet_spot_sits_clear_of_both_ends_and_replays_from_seed()
+        {
+            var a = new ActiveReload(1.2f, new Rng(7));
+            var b = new ActiveReload(1.2f, new Rng(7));
+            Assert.Equal(a.SweetSpotStart, b.SweetSpotStart);
+            Assert.True(a.SweetSpotStart > 0f);
+            Assert.True(a.SweetSpotEnd < a.Duration);
+            Assert.Equal(a.Duration * BattleConfig.ActiveReloadSweetSpotWidth, a.SweetSpotEnd - a.SweetSpotStart, 3);
+        }
+
+        [Fact]
+        public void ActiveReload_is_only_in_the_sweet_spot_inside_its_window_and_finishes_at_its_duration()
+        {
+            var reload = new ActiveReload(1.2f, new Rng(7));
+            reload.Tick(reload.SweetSpotStart - 0.01f);
+            Assert.False(reload.InSweetSpot);
+            Assert.False(reload.Finished);
+            reload.Tick(0.02f);
+            Assert.True(reload.InSweetSpot);
+            reload.Tick(1f);
+            Assert.True(reload.Finished);
+            Assert.False(reload.InSweetSpot);
+        }
     }
 }

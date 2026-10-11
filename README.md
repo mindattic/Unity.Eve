@@ -128,6 +128,16 @@ Controls:
 # Self-play: tour, rummage, fight all three encounters, screenshot every beat, then quit.
 # Batch mode renders offscreen, so no window opens. Exit code 0 = PASS.
 Build/Windows/UnityEve.exe -batchmode -autoplay -artifacts artifacts/autoplay -logFile artifacts/autoplay.log
+
+# Attract mode: the same self-play tour, windowed, with no screenshots and no PASS/FAIL,
+# looping the whole night forever (it clicks through the ending back to the title). For a
+# show floor or capturing trailer footage; close the window to stop it.
+Build/Windows/UnityEve.exe -demo
+
+# A video from launch to quit, at native resolution (MindAttic.Capture, Assets/StreamingAssets/capture.json
+# turns it on). Production builds are capture-free by design; this build has it compiled in.
+./tools/unity.ps1 -Method MindAttic.Capture.Unity.Editor.CaptureBuild.BuildWindows -Log capture-build
+Builds/Capture/UnityEve.exe -autoplay -artifacts artifacts/autoplay   # or -demo
 ```
 
 Unity batch mode needs the Editor closed on this project; `tools/unity.ps1` refuses to run if it's open.

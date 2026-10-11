@@ -43,7 +43,7 @@ namespace UnityEve.Editor
             Facade(k, "Clinic", new Vector3(40f, 0f, 14f), new Vector3(62f, 7f, 20f), k.Brick, 13, faceSouth: true);
             Facade(k, "ArcadeWest", new Vector3(40f, 0f, -20f), new Vector3(44f, 6f, -14f), k.Siding, 14, faceSouth: false);
             Facade(k, "ArcadeEast", new Vector3(48f, 0f, -20f), new Vector3(62f, 6f, -14f), k.Siding, 15, faceSouth: false);
-            Block(k.Level, "SquareWallNE", new Vector3(62f, 0f, 8f), new Vector3(63f, 4f, 20f), k.Brick);
+            // The square's old north-east wall is gone: that gap is now the way through to Ashgrove Park.
             Block(k.Level, "SquareWallSE", new Vector3(62f, 0f, -20f), new Vector3(63f, 4f, -8f), k.Brick);
             // Saint Ansel's: nave, steeple, lit rose window, dark doors.
             Block(k.Level, "Church", new Vector3(62f, 0f, -8f), new Vector3(74f, 9f, 8f), k.Plaster);
@@ -175,6 +175,7 @@ namespace UnityEve.Editor
                 ["Crossing"] = new[] { P("crawler", "crawler"), P("wasp", "sporesac") },
                 ["SquareWest"] = new[] { P("tendril", "crawler"), P("sporesac", "sporesac", "crawler") },
                 ["SquareEast"] = new[] { P("brute"), P("tendril", "sporesac") },
+                ["Park"] = new[] { P("rat", "crawler"), P("bat", "bat") },
                 ["BackLane"] = new[] { P("crawler", "crawler") },
                 ["Dock"] = new[] { P("brute", "crawler"), P("spider", "spider") },
                 ["WillowJunction"] = new[] { P("rat", "crawler"), P("bat", "bat") },
@@ -212,6 +213,7 @@ namespace UnityEve.Editor
                 case "Yard": return "Service Yard";
                 case "Crossing": return "Market Crossing";
                 case "SquareWest": case "SquareEast": return "Market Square";
+                case "Park": return "Ashgrove Park";
                 case "BackLane": return "Back Lane";
                 case "Dock": return "Loading Dock";
                 case "WillowJunction": case "WillowNorth": case "WillowCulDeSac": case "WillowSouth": case "WillowSouthEnd": return "Willow Lane";

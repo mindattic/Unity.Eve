@@ -34,6 +34,8 @@ namespace UnityEve.Editor
             Write(folder, "katana_slash", Mix(Whoosh(0.24f), Sweep(2400f, 1800f, 0.24f, 0.18f)));
             Write(folder, "enemy_charge", Growl(0.35f));
             Write(folder, "save", Arpeggio(new[] { 659f, 880f, 1319f }, 0.12f, 0.35f));
+            Write(folder, "cover_block", Mix(Chord(new[] { 880f, 1320f }, 0.1f), Sweep(600f, 150f, 0.14f, 0.35f)));
+            Write(folder, "active_reload", Arpeggio(new[] { 1047f, 1568f, 2093f }, 0.045f, 0.4f));
             WriteMusic(folder);
             Write(folder, "katana_rush", Mix(Whoosh(0.4f), Sweep(900f, 3200f, 0.4f, 0.22f, noise: 0.2f)));
         }

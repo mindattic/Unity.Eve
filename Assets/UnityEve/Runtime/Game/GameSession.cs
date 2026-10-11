@@ -150,6 +150,7 @@ namespace UnityEve.Game
             hud.SetStatus(_player.Progression.Level, _player.Health.Current, _player.Health.Max,
                 _player.Pe.Current, _player.Pe.Max,
                 battle != null ? battle.Atb.Value : 0f, battle != null && battle.Atb.IsFull, ammo);
+            hud.SetCover(battle != null && battle.InBattle ? _player.Controller.CoverFraction : 0f);
         }
 
         // ------------------------------------------------------------------ field menu
@@ -355,10 +356,19 @@ namespace UnityEve.Game
                 $"Time {(int)time.TotalHours}:{time.Minutes:00}:{time.Seconds:00}    Creatures {(story != null ? story.Kills : 0)}    " +
                 $"Saves {(save != null ? save.Saves : 0)}    Level {_player.Progression.Level}", 0f);
             var menu = new MenuModel("");
-            menu.Add(new MenuEntry("Back to the title", () => { _endScreen = false; CloseTitleMenu(); WorldTime.Instance?.ClearAll();
-                UnityEngine.SceneManagement.SceneManager.LoadScene(UnityEngine.SceneManagement.SceneManager.GetActiveScene().buildIndex); }, true, "Thank you for playing the Unity Eve vertical slice."));
+            menu.Add(new MenuEntry("Back to the title", () => { _endScreen = false; CloseTitleMenu(); ForceReload(); }, true,
+                "Thank you for playing the Unity Eve vertical slice."));
             _menu = menu;
             hud?.ShowMenu(menu);
+        }
+
+        /// <summary>Reloads the scene from scratch, whatever state the game is in. The ending's own "Back
+        /// to the title" uses this; so does the demo attract-mode loop, as a guaranteed recovery if a lap
+        /// never reaches the ending (so a stuck fight can never wedge the loop into a corrupted replay).</summary>
+        public void ForceReload()
+        {
+            WorldTime.Instance?.ClearAll();
+            UnityEngine.SceneManagement.SceneManager.LoadScene(UnityEngine.SceneManagement.SceneManager.GetActiveScene().buildIndex);
         }
     }
 }

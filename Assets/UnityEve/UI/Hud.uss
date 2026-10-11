@@ -71,6 +71,20 @@
     -unity-text-outline-color: rgb(10, 8, 6);
 }
 
+/* ---- cover (shield badge, under the objective) ---- */
+.cover {
+    position: absolute;
+    left: 2%; top: 38%;
+    flex-direction: row;
+    align-items: center;
+    padding: 2px 10px 2px 2px;
+    background-color: rgba(18, 14, 10, 0.72);
+    border-left-width: 4px;
+    border-left-color: rgb(153, 217, 255);
+}
+.cover-icon { width: 26px; height: 26px; margin-right: 6px; }
+.cover-text { font-size: 22px; color: rgb(153, 217, 255); }
+
 /* ---- target (top centre) ---- */
 .target {
     position: absolute;
@@ -145,6 +159,22 @@
 .progress {
     position: absolute;
     left: 35%; right: 35%; top: 62%;
+}
+
+/* ---- active reload (press Reload again in the sweet spot) ---- */
+.reload {
+    position: absolute;
+    left: 30%; right: 30%; top: 56%;
+    align-items: center;
+}
+.reload-title { font-size: 20px; color: rgb(255, 205, 60); letter-spacing: 4px; margin-bottom: 2px; }
+.fill-reload { background-color: rgb(246, 176, 36); }
+.reload-sweet {
+    position: absolute;
+    top: 0; bottom: 0;
+    background-color: rgba(120, 255, 210, 0.85);
+    border-width: 1px;
+    border-color: rgb(10, 8, 6);
 }
 
 /* ---- Focus (perfect-dodge slow motion) ---- */

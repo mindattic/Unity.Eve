@@ -34,9 +34,9 @@ namespace UnityEve.Input
 
         /// <summary>Movement stick with a radial deadzone rescaled to 0..1.</summary>
         public Vector2 Move { get; private set; }
-        public bool ConfirmPressed => _confirm.WasPressedThisFrame();
+        public bool ConfirmPressed => _confirm.WasPressedThisFrame() || Consume(ref _confirmOverride);
         public bool ConfirmHeld => _confirm.IsPressed();
-        public bool CancelPressed => _cancel.WasPressedThisFrame();
+        public bool CancelPressed => _cancel.WasPressedThisFrame() || Consume(ref _dodgeOverride);
         public bool InteractPressed => _interact.WasPressedThisFrame();
         public bool InteractHeld => _interact.IsPressed();
         public bool MenuPressed => _menu.WasPressedThisFrame();
@@ -49,6 +49,24 @@ namespace UnityEve.Input
 
         /// <summary>Scripted input for the autopilot / tests. When set, overrides the stick.</summary>
         public Vector2? MoveOverride { get; set; }
+
+        private bool _dodgeOverride;
+        private bool _confirmOverride;
+
+        /// <summary>Scripted input for the autopilot: presses Cancel/Dodge for exactly one read, through
+        /// the real input path so timing against an enemy strike can land a genuine perfect dodge.</summary>
+        public void TriggerDodge() => _dodgeOverride = true;
+
+        /// <summary>Scripted input for the autopilot: presses Confirm for exactly one read, through the
+        /// real input path so timing an active reload's sweet spot works the same way a human's does.</summary>
+        public void TriggerConfirm() => _confirmOverride = true;
+
+        private static bool Consume(ref bool flag)
+        {
+            if (!flag) return false;
+            flag = false;
+            return true;
+        }
 
         private void Awake()
         {

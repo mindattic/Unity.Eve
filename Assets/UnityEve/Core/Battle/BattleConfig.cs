@@ -76,6 +76,24 @@ namespace UnityEve.Core.Battle
         public const float DodgeSeconds = 0.34f;
         public const float DodgeInvulnerableSeconds = 0.5f;
         public const float DodgeCooldownSeconds = 0.9f;
+        /// <summary>Kat's run speed, m/s. Every creature's default <c>MoveSpeed</c> must stay below this —
+        /// she can always walk away from one that isn't actively charging, or the fight is unwinnable
+        /// by distance alone. A short Charge (<see cref="EnemyChargeSpeed"/> multiplies it) may exceed it.</summary>
+        public const float PlayerRunSpeed = 4f;
+        /// <summary>Stepping away from a target within this long of her last attack backpedals (faces the
+        /// target, walks backward); past it, stepping away turns and runs like ordinary retreat.</summary>
+        public const float BackpedalWindowSeconds = 3f;
+
+        // --- Cover (benches, streetlamps, mailboxes) ----------------------------------------
+        /// <summary>Damage reduction at full (1.0) exposure-blocked, scaled by how much of Kat's
+        /// silhouette a cover prop actually blocks from the attacker (see Runtime/Battle/CoverProp.cs).</summary>
+        public const float CoverMaxReduction = 0.9f;
+
+        // --- Active reload (Gears-of-War-style: press Reload again in the sweet spot) --------
+        /// <summary>Full bar duration, seconds; a normal reload (no attempt, or a miss) takes this long.</summary>
+        public const float ActiveReloadDurationSeconds = 1.2f;
+        /// <summary>Sweet-spot width as a fraction of the bar.</summary>
+        public const float ActiveReloadSweetSpotWidth = 0.12f;
 
         // --- Escape ------------------------------------------------------------------------
         public const float EscapeBaseChance = 0.6f;

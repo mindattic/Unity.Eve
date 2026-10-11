@@ -18,5 +18,6 @@ namespace UnityEve
         public static readonly int Attack = Animator.StringToHash("Attack");
         public static readonly int Slash = Animator.StringToHash("Slash");
         public static readonly int Rush = Animator.StringToHash("Rush");
+        public static readonly int Backpedal = Animator.StringToHash("Backpedal");
     }
 }

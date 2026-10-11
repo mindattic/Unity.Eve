@@ -53,6 +53,7 @@ namespace UnityEve.Editor
             BuildHouse(k);
             BuildShed(k);
             BuildMarket(k);
+            BuildPark(k);
             BuildHeights(k);
             BuildGrocery(k);
             BuildChurch(k);
@@ -273,12 +274,51 @@ namespace UnityEve.Editor
             return l;
         }
 
+        /// <summary>A square-based pyramid with its apex pointing down, apex-to-base spanning y -0.5..0.5
+        /// like a unit cube (the target-selector shape, spinning in <see cref="RangeDome"/>).</summary>
+        private static GameObject InvertedPyramid(string name)
+        {
+            var go = new GameObject(name);
+            go.AddComponent<MeshRenderer>();
+            var top0 = new Vector3(-0.5f, 0.5f, -0.5f);
+            var top1 = new Vector3(0.5f, 0.5f, -0.5f);
+            var top2 = new Vector3(0.5f, 0.5f, 0.5f);
+            var top3 = new Vector3(-0.5f, 0.5f, 0.5f);
+            var apex = new Vector3(0f, -0.5f, 0f);
+            var verts = new List<Vector3>();
+            var tris = new List<int>();
+            void Tri(Vector3 a, Vector3 b, Vector3 cpt)
+            {
+                var i = verts.Count;
+                verts.Add(a);
+                verts.Add(b);
+                verts.Add(cpt);
+                tris.Add(i);
+                tris.Add(i + 1);
+                tris.Add(i + 2);
+            }
+            Tri(top0, top2, top1);
+            Tri(top0, top3, top2);
+            Tri(top0, top1, apex);
+            Tri(top1, top2, apex);
+            Tri(top2, top3, apex);
+            Tri(top3, top0, apex);
+            var mesh = new Mesh { name = name };
+            mesh.SetVertices(verts);
+            mesh.SetTriangles(tris, 0);
+            mesh.RecalculateNormals();
+            mesh.RecalculateBounds();
+            go.AddComponent<MeshFilter>().sharedMesh = mesh;
+            return go;
+        }
+
         /// <param name="yaw">Direction the lamp's arm reaches (0 = +Z): point it over the road.</param>
         private static void StreetLamp(SceneKit k, Vector3 at, float yaw, bool flicker = false)
         {
             var arm = Quaternion.Euler(0f, yaw, 0f) * Vector3.forward;
             Model(k.Level, Urban("detail-light-single"), at, FaceYaw(arm), size: 4.6f, collider: false, name: "StreetLamp");
-            Block(k.Level, "LampPost", at + new Vector3(-0.08f, 0f, -0.08f), at + new Vector3(0.08f, 4.2f, 0.08f), k.Metal);
+            var post = Block(k.Level, "LampPost", at + new Vector3(-0.08f, 0f, -0.08f), at + new Vector3(0.08f, 4.2f, 0.08f), k.Metal);
+            post.AddComponent<CoverProp>();
             PointLight(k, "LampLight", at + arm * 1f + new Vector3(0f, 4.05f, 0f), new Color(1f, 0.72f, 0.42f), 9f, 11f, flicker, shadows: true);
         }
 
@@ -606,11 +646,8 @@ namespace UnityEve.Editor
             var sphereRenderer = sphere.GetComponent<Renderer>();
             sphereRenderer.sharedMaterial = HexDomeMaterial(new Color(0.33f, 1f, 0.73f));
             sphereRenderer.shadowCastingMode = ShadowCastingMode.Off;
-            var marker = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            Object.DestroyImmediate(marker.GetComponent<Collider>());
-            marker.name = "TargetMarker";
+            var marker = InvertedPyramid("TargetMarker");
             marker.transform.SetParent(dome.transform, false);
-            marker.transform.rotation = Quaternion.Euler(45f, 0f, 45f);
             var markerRenderer = marker.GetComponent<Renderer>();
             markerRenderer.sharedMaterial = SimpleMaterial("TargetMarker", new Color(1f, 0.87f, 0.33f), null, 0.5f, emissive: true);
             markerRenderer.shadowCastingMode = ShadowCastingMode.Off;

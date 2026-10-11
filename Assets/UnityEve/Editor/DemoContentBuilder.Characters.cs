@@ -98,6 +98,18 @@ namespace UnityEve.Editor
             return m;
         }
 
+        /// <summary>Cel-shaded fountain/pool water: a flat banded tint with a scrolling toon sparkle.</summary>
+        private static Material ToonWaterMaterial(string name, Color deep, Color foam)
+        {
+            var path = $"{MatDir}/{name}.mat";
+            AssetDatabase.DeleteAsset(path);
+            var m = new Material(Shader.Find("UnityEve/ToonWater"));
+            m.SetColor("_BaseColor", deep);
+            m.SetColor("_FoamColor", foam);
+            AssetDatabase.CreateAsset(m, path);
+            return m;
+        }
+
         /// <param name="particles">Use URP's particle shader, which honours vertex colours (tracers, sparks).</param>
         private static Material TransparentMaterial(string name, Color color, bool additive, bool particles = false, bool twoSided = false)
         {
@@ -182,7 +194,7 @@ namespace UnityEve.Editor
             AssetDatabase.DeleteAsset(path);
             var ac = AnimatorController.CreateAnimatorControllerAtPath(path);
             foreach (var p in new[] { "Speed" }) ac.AddParameter(p, AnimatorControllerParameterType.Float);
-            foreach (var p in new[] { "InBattle", "Searching" }) ac.AddParameter(p, AnimatorControllerParameterType.Bool);
+            foreach (var p in new[] { "InBattle", "Searching", "Backpedal" }) ac.AddParameter(p, AnimatorControllerParameterType.Bool);
             foreach (var p in new[] { "Shoot", "Hit", "Dodge", "Cast", "Throw", "Die", "Revive", "Slash", "Rush" }) ac.AddParameter(p, AnimatorControllerParameterType.Trigger);
 
             var sm = ac.layers[0].stateMachine;
@@ -204,6 +216,16 @@ namespace UnityEve.Editor
             var toExplore = battle.AddTransition(explore);
             toExplore.AddCondition(AnimatorConditionMode.IfNot, 0, "InBattle");
             toExplore.duration = 0.3f;
+
+            // Backpedal: facing a target and stepping away from it shortly after an attack plays the
+            // walk cycle in reverse, instead of turning around into a normal forward retreat.
+            var backpedal = AddState(sm, "Backpedal", C("Walk_Loop", true), new Vector3(300, 160), speed: -1f);
+            var toBackpedal = battle.AddTransition(backpedal);
+            toBackpedal.AddCondition(AnimatorConditionMode.If, 0, "Backpedal");
+            toBackpedal.duration = 0.15f;
+            var fromBackpedal = backpedal.AddTransition(battle);
+            fromBackpedal.AddCondition(AnimatorConditionMode.IfNot, 0, "Backpedal");
+            fromBackpedal.duration = 0.15f;
 
             var search = AddState(sm, "Search", C("Interact", true), new Vector3(600, -100));
             var into = explore.AddTransition(search);
@@ -321,6 +343,15 @@ namespace UnityEve.Editor
             cc.radius = 0.3f;
             cc.center = new Vector3(0f, 0.87f, 0f);
             cc.stepOffset = 0.35f;
+            // The outer "slow your roll" warning collider, bigger than the CharacterController above
+            // (the inner, final one): walls and furniture inside it ease her run speed down before she
+            // actually makes contact, instead of hitting them at full speed and jittering.
+            var warning = rig.AddComponent<CapsuleCollider>();
+            warning.isTrigger = true;
+            warning.height = cc.height;
+            warning.radius = cc.radius + 0.5f;
+            warning.center = cc.center;
+            rig.AddComponent<ObstacleAwareness>();
             rig.AddComponent<PlayerController>().Configure(animator);
             BuildKatana(rig, bones);
             rig.AddComponent<PlayerCharacter>();

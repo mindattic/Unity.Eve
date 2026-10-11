@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UIElements;
+using UnityEve.Core.Battle;
 
 namespace UnityEve.UI
 {
@@ -29,6 +30,10 @@ namespace UnityEve.UI
         private Label _message, _prompt, _banner, _subBanner;
         private VisualElement _progress, _progressFill;
         private VisualElement _focus, _focusFill;
+        private VisualElement _reload, _reloadFill, _reloadSweet;
+        private VisualElement _cover;
+        private ShieldIcon _coverIcon;
+        private Label _coverText;
         private VisualElement _letterTop, _letterBottom, _fade, _hurt, _focusTint;
         private readonly List<(Label label, Vector3 world, float born, float life)> _popups = new List<(Label, Vector3, float, float)>();
         private MenuModel _shownMenu;
@@ -139,6 +144,11 @@ namespace UnityEve.UI
             _objective = AddLabel(_overlay, "objective");
             _objective.style.display = DisplayStyle.None;
 
+            _cover = Add(_overlay, "cover");
+            _coverIcon = new ShieldIcon();
+            Add(_cover, "cover-icon", _coverIcon);
+            _coverText = AddLabel(_cover, "cover-text");
+
             _targetPanel = Add(_overlay, "target");
             _targetName = AddLabel(_targetPanel, "target-name");
             var track = Add(_targetPanel, "bar-track");
@@ -153,6 +163,13 @@ namespace UnityEve.UI
             _progress = Add(_overlay, "progress");
             _progressFill = Add(Add(_progress, "bar-track"), "bar-fill");
             _progressFill.AddToClassList("fill-progress");
+
+            _reload = Add(_overlay, "reload");
+            AddLabel(_reload, "reload-title", "RELOAD");
+            var reloadTrack = Add(_reload, "bar-track");
+            _reloadSweet = Add(reloadTrack, "reload-sweet");
+            _reloadFill = Add(reloadTrack, "bar-fill");
+            _reloadFill.AddToClassList("fill-reload");
 
             _focus = Add(_overlay, "focus");
             AddLabel(_focus, "focus-title", "FOCUS");
@@ -175,6 +192,8 @@ namespace UnityEve.UI
             ShowPrompt(null);
             ShowProgress(-1f);
             ShowFocus(-1f);
+            ShowReload(-1f, 0f, 0f);
+            SetCover(0f);
             _banner.style.display = DisplayStyle.None;
             _subBanner.style.display = DisplayStyle.None;
             SetFade(0f);
@@ -260,6 +279,27 @@ namespace UnityEve.UI
             _focus.style.display = on ? DisplayStyle.Flex : DisplayStyle.None;
             _focusTint.style.display = on ? DisplayStyle.Flex : DisplayStyle.None;
             if (on) _focusFill.style.width = Length.Percent(100f * remaining01);
+        }
+
+        /// <summary>The shield badge near a cover prop; shows the live damage reduction while sheltering.</summary>
+        /// <param name="exposureBlocked">0..1 of Kat's silhouette a cover prop currently blocks.</param>
+        public void SetCover(float exposureBlocked)
+        {
+            var on = exposureBlocked > 0.05f;
+            _cover.style.display = on ? DisplayStyle.Flex : DisplayStyle.None;
+            if (on) _coverText.text = $"-{Mathf.RoundToInt(exposureBlocked * BattleConfig.CoverMaxReduction * 100f)}%";
+        }
+
+        /// <summary>The active-reload bar: a sweet-spot band to hit as the fill crosses it.</summary>
+        /// <param name="progress01">0..1 fill, or negative to hide.</param>
+        public void ShowReload(float progress01, float sweetStart01, float sweetEnd01)
+        {
+            var on = progress01 >= 0f;
+            _reload.style.display = on ? DisplayStyle.Flex : DisplayStyle.None;
+            if (!on) return;
+            _reloadFill.style.width = Length.Percent(100f * progress01);
+            _reloadSweet.style.left = Length.Percent(100f * sweetStart01);
+            _reloadSweet.style.width = Length.Percent(100f * Mathf.Max(0f, sweetEnd01 - sweetStart01));
         }
 
         public void SetFade(float alpha)
@@ -362,6 +402,34 @@ namespace UnityEve.UI
                 label.style.left = vp.x * w - 30f;
                 label.style.top = (1f - vp.y) * h - 46f * k - 20f;
                 label.style.opacity = 1f - k * k;
+            }
+        }
+
+        /// <summary>A shield badge drawn as a vector shape (no imported icon asset).</summary>
+        private sealed class ShieldIcon : VisualElement
+        {
+            private static readonly Color32 Fill = new Color32(153, 217, 255, 255);
+
+            public ShieldIcon() => generateVisualContent += OnGenerateVisualContent;
+
+            private static void OnGenerateVisualContent(MeshGenerationContext mgc)
+            {
+                var r = mgc.visualElement.contentRect;
+                if (r.width < 2f || r.height < 2f) return;
+                // A crest silhouette: flat shoulders, pointed base.
+                var fx = new[] { 0.5f, 0.92f, 0.92f, 0.5f, 0.08f, 0.08f };
+                var fy = new[] { 0.02f, 0.2f, 0.56f, 0.98f, 0.56f, 0.2f };
+                var mwd = mgc.Allocate(fx.Length, (fx.Length - 2) * 3);
+                for (var i = 0; i < fx.Length; i++)
+                    mwd.SetNextVertex(new Vertex { position = new Vector3(fx[i] * r.width, fy[i] * r.height, Vertex.nearZ), tint = Fill });
+                var indices = new ushort[(fx.Length - 2) * 3];
+                for (ushort i = 1, k = 0; i < fx.Length - 1; i++)
+                {
+                    indices[k++] = 0;
+                    indices[k++] = i;
+                    indices[k++] = (ushort)(i + 1);
+                }
+                mwd.SetAllIndices(indices);
             }
         }
     }

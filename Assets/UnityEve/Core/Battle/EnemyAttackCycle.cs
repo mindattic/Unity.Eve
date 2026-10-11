@@ -31,6 +31,14 @@ namespace UnityEve.Core.Battle
 
         public bool IsCommitted => Phase == AttackPhase.Windup || Phase == AttackPhase.Strike;
 
+        /// <summary>Seconds until <see cref="StrikeLanded"/> fires, across windup and strike; +infinity if not committed.</summary>
+        public float SecondsUntilStrike => Phase switch
+        {
+            AttackPhase.Windup => _phaseTimer + BattleConfig.StrikeSeconds,
+            AttackPhase.Strike => _phaseTimer,
+            _ => float.PositiveInfinity,
+        };
+
         public event Action WindupStarted;
         /// <summary>Raised when the strike lands; the listener resolves hit/whiff/evade.</summary>
         public event Action StrikeLanded;

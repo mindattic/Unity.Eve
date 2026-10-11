@@ -152,6 +152,11 @@ namespace UnityEve.Editor
             EnemyDefinition Enemy(string id, string name, int level, int hp, int def, int dmg, float speed, float reach,
                 float windup, float recover, float cooldown, int exp, float aggression, float caution, float hover = 0f)
             {
+                // Kat must always be able to walk away from a creature that isn't actively charging
+                // (BattleConfig.PlayerRunSpeed), or distance stops being a real defensive option.
+                if (speed >= BattleConfig.PlayerRunSpeed)
+                    Debug.LogWarning($"[UnityEve] enemy '{id}' MoveSpeed {speed} is not slower than Kat's " +
+                        $"run speed {BattleConfig.PlayerRunSpeed} — she can be run down even outside a Charge.");
                 var e = ScriptableObject.CreateInstance<EnemyDefinition>();
                 e.Stats = new EnemyStats
                 {
@@ -242,6 +247,8 @@ namespace UnityEve.Editor
             Map(SoundId.KatanaRush, 0.85f, Gen("katana_rush"));
             Map(SoundId.EnemyCharge, 0.75f, Gen("enemy_charge"));
             Map(SoundId.Save, 0.7f, Gen("save"));
+            Map(SoundId.CoverBlock, 0.7f, Gen("cover_block"));
+            Map(SoundId.ActiveReload, 0.8f, Gen("active_reload"));
             Map(SoundId.Dodge, 0.6f, Gen("dodge"));
             Map(SoundId.PerfectDodge, 0.9f, Gen("perfect_dodge"));
             Map(SoundId.PeCast, 0.7f, Gen("pe_cast"));

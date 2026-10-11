@@ -61,6 +61,9 @@ namespace UnityEve.Battle
         private EnemyActor _focusAttacker;
         private int _expEarned;
         private bool _menuLocked;
+        private ActiveReload _activeReload;
+        private float _lastAttackAt = -999f;
+        private EnemyActor _lastAttackTarget;
 
         public static BattleDirector Instance { get; private set; }
         public BattlePhase Phase { get; private set; } = BattlePhase.Inactive;
@@ -72,6 +75,12 @@ namespace UnityEve.Battle
         public PlayerCharacter Player => _player;
         public MenuModel Menu => _menu;
         public int PerfectDodges => _focus.PerfectDodges;
+        /// <summary>The live active-reload minigame while one is running; null the rest of the time.</summary>
+        public ActiveReload CurrentReload => _activeReload;
+        /// <summary>Seconds since Kat's last gun shot, Slash or Rush (for the backpedal window).</summary>
+        public float SecondsSinceLastAttack => Time.time - _lastAttackAt;
+        /// <summary>Whoever she last attacked, alive or not; null before her first attack this battle.</summary>
+        public EnemyActor LastAttackTarget => _lastAttackTarget;
         /// <summary>When true, encounter zones do not trigger (cutscenes, autopilot sightseeing).</summary>
         public bool SuppressEncounters { get; set; }
 
@@ -317,11 +326,23 @@ namespace UnityEve.Battle
                     }
                     break;
                 case StrikeOutcome.Hit:
-                    var dealt = _player.TakeDamage(Mathf.RoundToInt(enemy.Stats.AttackDamage * enemy.DamageMultiplier * _rng.Range(0.85f, 1.15f)));
+                    var exposure = Cover.Exposure(_player.transform.position, enemy.AimPoint);
+                    var inCover = exposure > 0.05f;
+                    var raw = enemy.Stats.AttackDamage * enemy.DamageMultiplier * _rng.Range(0.85f, 1.15f);
+                    raw *= 1f - exposure * BattleConfig.CoverMaxReduction;
+                    var dealt = _player.TakeDamage(Mathf.RoundToInt(raw));
                     var severity = Mathf.Min(1f, dealt / 14f);
                     hud?.Hurt(severity);
                     hud?.Popup(_player.transform.position + Vector3.up * 1.8f, dealt.ToString(), new Color(1f, 0.45f, 0.4f));
-                    AudioService.Play(SoundId.PlayerHurt);
+                    if (inCover)
+                    {
+                        hud?.Popup(_player.transform.position + Vector3.up * 2.3f, "COVER", new Color(0.6f, 0.85f, 1f));
+                        AudioService.Play(SoundId.CoverBlock);
+                    }
+                    else
+                    {
+                        AudioService.Play(SoundId.PlayerHurt);
+                    }
                     _player.Controller.Animator?.SetTrigger(AnimParams.Hit);
                     CameraDirector.Instance?.AddTrauma(0.25f + 0.3f * severity);
                     GameInput.Instance?.Rumble(0.9f, 1f, 0.18f);

@@ -265,7 +265,7 @@ namespace UnityEve.Battle
             }
         }
 
-        private void DoReload() => Execute(ReloadRoutine(), 1.2f);
+        private void DoReload() => Execute(ReloadRoutine(), BattleConfig.ActiveReloadDurationSeconds);
 
         private void DoEscape()
         {
@@ -303,6 +303,8 @@ namespace UnityEve.Battle
 
         private IEnumerator AttackRoutine(EnemyActor chosen)
         {
+            _lastAttackAt = Time.time;
+            _lastAttackTarget = chosen;
             var w = _player.Weapon;
             var origin = _player.transform.position;
             var inRange = _enemies
@@ -340,6 +342,8 @@ namespace UnityEve.Battle
 
         private IEnumerator SlashRoutine(EnemyActor chosen)
         {
+            _lastAttackAt = Time.time;
+            _lastAttackTarget = chosen;
             var katana = _player.Katana;
             katana?.Draw();
             katana?.Trail(true);
@@ -364,6 +368,8 @@ namespace UnityEve.Battle
         private IEnumerator RushRoutine(EnemyActor chosen)
         {
             if (!_player.Pe.TrySpend(BattleConfig.KatanaRushPeCost)) yield break;
+            _lastAttackAt = Time.time;
+            _lastAttackTarget = chosen;
             var katana = _player.Katana;
             katana?.Draw();
             katana?.Trail(true);
@@ -523,12 +529,42 @@ namespace UnityEve.Battle
 
         private IEnumerator ReloadRoutine()
         {
+            var hud = GameHud.Instance;
+            _activeReload = new ActiveReload(BattleConfig.ActiveReloadDurationSeconds, _rng);
+            var reload = _activeReload;
+            var pressed = false;
+            var perfect = false;
+            while (!reload.Finished && !perfect)
+            {
+                hud?.ShowReload(reload.Progress01, reload.SweetSpotStart01, reload.SweetSpotEnd01);
+                // One attempt per reload: a press outside the sweet spot is just absorbed, not re-tried.
+                if (!pressed && GameInput.Instance != null && GameInput.Instance.ConfirmPressed)
+                {
+                    pressed = true;
+                    perfect = reload.InSweetSpot;
+                }
+                if (perfect) break;
+                reload.Tick(Time.deltaTime);
+                yield return null;
+            }
+            hud?.ShowReload(-1f, 0f, 0f);
+            _activeReload = null;
+
             if (_player.Reload())
             {
-                AudioService.Play(SoundId.Reload);
-                GameHud.Instance?.ShowMessage("Reloaded.");
+                if (perfect)
+                {
+                    AudioService.Play(SoundId.ActiveReload);
+                    hud?.ShowMessage("Active reload!");
+                    hud?.Popup(_player.transform.position + Vector3.up * 1.8f, "ACTIVE RELOAD", new Color(1f, 0.87f, 0.33f));
+                    _player.Controller.Unroot();
+                }
+                else
+                {
+                    AudioService.Play(SoundId.Reload);
+                    hud?.ShowMessage("Reloaded.");
+                }
             }
-            yield return new WaitForSeconds(1.0f);
         }
     
 

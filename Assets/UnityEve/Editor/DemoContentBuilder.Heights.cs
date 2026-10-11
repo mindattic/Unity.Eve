@@ -24,8 +24,12 @@ namespace UnityEve.Editor
         /// </summary>
         private static float FaceYaw(Vector3 direction) => Mathf.Atan2(-direction.x, -direction.z) * Mathf.Rad2Deg;
 
-        private static GameObject Bench(SceneKit k, Vector3 at, Vector3 faceToward) =>
-            Model(k.Level, Urban("detail-bench"), at, FaceYaw(faceToward), size: 1.8f, name: "Bench");
+        private static GameObject Bench(SceneKit k, Vector3 at, Vector3 faceToward)
+        {
+            var go = Model(k.Level, Urban("detail-bench"), at, FaceYaw(faceToward), size: 1.8f, name: "Bench");
+            go.AddComponent<CoverProp>();
+            return go;
+        }
 
         // ------------------------------------------------------------------ primitives in a local frame
 
@@ -345,6 +349,13 @@ namespace UnityEve.Editor
             mail.localPosition = V(2.8f, 0f, -0.4f);
             LocalBox(mail, "Post", new Vector3(-0.04f, 0f, -0.04f), new Vector3(0.04f, 1.05f, 0.04f), k.Wood);
             LocalBox(mail, "Box", new Vector3(-0.14f, 1.05f, -0.25f), new Vector3(0.14f, 1.32f, 0.25f), k.Metal, false);
+            // The box's render collider stays off; give it a trigger volume matching its silhouette
+            // instead, so the cover raycasts see the wide mailbox body without changing collision.
+            var coverVolume = mail.gameObject.AddComponent<BoxCollider>();
+            coverVolume.center = new Vector3(0f, 0.66f, -0.1f);
+            coverVolume.size = new Vector3(0.3f, 1.34f, 0.52f);
+            coverVolume.isTrigger = true;
+            mail.gameObject.AddComponent<CoverProp>();
             var mailboxName = "Container_Mailbox_" + name.Replace("House_", "");
             var mailbox = LocalBox(interact, mailboxName, Vector3.zero, Vector3.one * 0.01f, k.Metal, false);
             mailbox.transform.position = lot.TransformPoint(V(2.8f, 1.1f, -0.4f));

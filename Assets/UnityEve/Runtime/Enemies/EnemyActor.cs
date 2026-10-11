@@ -50,6 +50,8 @@ namespace UnityEve.Enemies
         public EnemyIntent Intent => _mind != null ? _mind.Intent : EnemyIntent.Think;
         public bool Buffed => _mind != null && _mind.Buffed;
         public bool RearingUp => _mind != null && _mind.RearingUp;
+        /// <summary>Seconds until this creature's committed strike lands; +infinity if it isn't attacking.</summary>
+        public float SecondsUntilStrike => _cycle != null ? _cycle.SecondsUntilStrike : float.PositiveInfinity;
         /// <summary>Strike damage multiplier (an enraged creature hits harder).</summary>
         public float DamageMultiplier => _mind != null ? _mind.DamageMultiplier : 1f;
         public float BodyRadius => _bodyRadius;
