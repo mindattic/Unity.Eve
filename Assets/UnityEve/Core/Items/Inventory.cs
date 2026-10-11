@@ -84,5 +84,12 @@ namespace UnityEve.Core.Items
         }
 
         public void SetCapacity(int capacity) => Capacity = Math.Max(capacity, _slots.Count);
+
+        /// <summary>Empties the bag (before loading a save).</summary>
+        public void Clear()
+        {
+            _slots.Clear();
+            Changed?.Invoke();
+        }
     }
 }

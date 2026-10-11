@@ -104,6 +104,9 @@ namespace UnityEve.Player
             RoundsInClip = Mathf.Max(0, RoundsInClip - rounds);
         }
 
+        /// <summary>Loading a save: the magazine as it was.</summary>
+        public void SetRounds(int rounds) => RoundsInClip = _weapon == null || _weapon.Stats.Melee ? 0 : Mathf.Clamp(rounds, 0, _weapon.Stats.ClipSize);
+
         public bool NeedsReload => _weapon != null && !_weapon.Stats.Melee && RoundsInClip <= 0;
         public bool CanReload => _weapon != null && _weapon.Ammo != null && RoundsInClip < _weapon.Stats.ClipSize && Bag.CountOf(_weapon.Ammo.Id) > 0;
 

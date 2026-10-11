@@ -8,7 +8,7 @@ namespace UnityEve.Editor
     /// WAV. Kenney's CC0 packs have no firearms, so these are synthesized: original, license-free,
     /// and regenerated identically on every content build.
     /// </summary>
-    public static class WavSynth
+    public static partial class WavSynth
     {
         private const int Rate = 22050;
 
@@ -33,6 +33,8 @@ namespace UnityEve.Editor
             Write(folder, "enemy_buff", Chord(new[] { 98f, 103.8f, 146.8f }, 0.6f));
             Write(folder, "katana_slash", Mix(Whoosh(0.24f), Sweep(2400f, 1800f, 0.24f, 0.18f)));
             Write(folder, "enemy_charge", Growl(0.35f));
+            Write(folder, "save", Arpeggio(new[] { 659f, 880f, 1319f }, 0.12f, 0.35f));
+            WriteMusic(folder);
             Write(folder, "katana_rush", Mix(Whoosh(0.4f), Sweep(900f, 3200f, 0.4f, 0.22f, noise: 0.2f)));
         }
 

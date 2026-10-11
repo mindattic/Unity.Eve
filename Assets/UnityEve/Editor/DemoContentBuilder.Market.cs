@@ -28,8 +28,8 @@ namespace UnityEve.Editor
                 Block(k.Level, "LaneMark", new Vector3(x, 0.02f, -0.08f), new Vector3(x + 2f, 0.03f, 0.08f), k.Plaster, false);
             Facade(k, "Pharmacy", new Vector3(26f, 0f, 6.5f), new Vector3(40f, 6.5f, 15f), k.Plaster, 11, faceSouth: true);
             Facade(k, "Pawnshop", new Vector3(26f, 0f, -15f), new Vector3(40f, 5.5f, -6.5f), k.Brick, 12, faceSouth: false);
-            Model(k.Level, Urban("detail-light-traffic"), new Vector3(38.5f, 0.14f, 5.6f), 180f, size: 4f, collider: false, name: "TrafficLight");
-            Model(k.Level, Urban("detail-light-traffic"), new Vector3(27.5f, 0.14f, -5.6f), 0f, size: 4f, collider: false, name: "TrafficLight");
+            Model(k.Level, Urban("detail-light-traffic"), new Vector3(38.5f, 0.14f, 5.6f), FaceYaw(Vector3.back), size: 4f, collider: false, name: "TrafficLight");
+            Model(k.Level, Urban("detail-light-traffic"), new Vector3(27.5f, 0.14f, -5.6f), FaceYaw(Vector3.forward), size: 4f, collider: false, name: "TrafficLight");
             PointLight(k, "TrafficRed", new Vector3(38.5f, 3.4f, 5.2f), new Color(1f, 0.15f, 0.1f), 2.5f, 5f, flicker: true);
             Model(k.Level, Urban("truck-flat"), new Vector3(37.6f, 0.02f, 2.9f), 15f, size: 4.6f, name: "WreckedTruck");
             Model(k.Level, Urban("detail-barrier-type-a"), new Vector3(29f, 0.02f, -2.9f), 30f, size: 1.6f, name: "Barrier");
@@ -84,10 +84,12 @@ namespace UnityEve.Editor
                 Model(k.Level, Urban("detail-awning-wide"), new Vector3(x, 2.4f, 10f), 180f, size: 3.6f, collider: false, name: "StallAwning");
                 Model(k.Level, Surv("box"), new Vector3(x - 0.8f, 1f, 10f), 15f, size: 0.5f, collider: false, name: "StallBox");
             }
-            Model(k.Level, Urban("tree-small"), new Vector3(42.5f, 0.06f, -11.5f), 0f, size: 3.8f, name: "Tree");
-            Model(k.Level, Urban("tree-small"), new Vector3(59.5f, 0.06f, 11.5f), 0f, size: 3.8f, name: "Tree");
-            Model(k.Level, Urban("detail-bench"), new Vector3(47f, 0.06f, -4.5f), 30f, size: 1.8f, name: "Bench");
-            Model(k.Level, Urban("detail-bench"), new Vector3(55f, 0.06f, 4.5f), 210f, size: 1.8f, name: "Bench");
+            Tree(k, new Vector3(42.5f, 0.06f, -11.5f), 5.5f, 81);
+            Tree(k, new Vector3(59.5f, 0.06f, 11.5f), 5.5f, 82);
+            // Benches face the fountain.
+            Bench(k, new Vector3(47f, 0.06f, -4.5f), new Vector3(51f, 0f, 0f) - new Vector3(47f, 0f, -4.5f));
+            Bench(k, new Vector3(55f, 0.06f, 4.5f), new Vector3(51f, 0f, 0f) - new Vector3(55f, 0f, 4.5f));
+            Bench(k, new Vector3(51f, 0.06f, -5.2f), Vector3.forward);
             foreach (var (x, z) in new[] { (44f, -8f), (58f, 8f), (44f, 8f), (58f, -8f) })
                 StreetLamp(k, new Vector3(x, 0.06f, z), z > 0 ? 180f : 0f, flicker: x > 50f && z < 0f);
 
@@ -114,7 +116,7 @@ namespace UnityEve.Editor
             // ---- Things to find.
             var stall = Model(k.Interact, Surv("box-open"), new Vector3(50f, 0.06f, 8.6f), 0f, size: 0.9f, name: "Container_Market_Stall");
             Attach<Container>(stall, new Vector3(50f, 0.06f, 7.6f), 1.6f).Configure("market crate", c.Loot["kitchen"], "Bruised fruit and a few things worth taking.");
-            var pawn = Model(k.Interact, Urban("detail-dumpster-closed"), new Vector3(37f, 0.14f, -6f), 0f, size: 2.1f, name: "Container_Crossing_Dumpster");
+            var pawn = Model(k.Interact, Urban("detail-dumpster-closed"), new Vector3(37f, 0.14f, -6f), FaceYaw(Vector3.forward), size: 2.1f, name: "Container_Crossing_Dumpster");
             Attach<Container>(pawn, new Vector3(37f, 0.14f, -4.6f), 1.8f).Configure("dumpster", c.Loot["dumpster"]);
             var dockCrate = Model(k.Interact, Surv("chest"), new Vector3(56.8f, 0.03f, -37f), 270f, size: 1.1f, name: "Container_Dock_Chest");
             Attach<Container>(dockCrate, new Vector3(55.6f, 0.03f, -37f), 1.6f).Configure("tool chest", c.Loot["garage"]);
@@ -175,6 +177,12 @@ namespace UnityEve.Editor
                 ["SquareEast"] = new[] { P("brute"), P("tendril", "sporesac") },
                 ["BackLane"] = new[] { P("crawler", "crawler") },
                 ["Dock"] = new[] { P("brute", "crawler"), P("spider", "spider") },
+                ["WillowJunction"] = new[] { P("rat", "crawler"), P("bat", "bat") },
+                ["WillowNorth"] = new[] { P("crawler", "rat"), P("sporesac", "frog") },
+                ["WillowCulDeSac"] = new[] { P("tendril", "rat"), P("crawler", "crawler", "bat") },
+                ["WillowSouth"] = new[] { P("spider", "rat"), P("crawler", "sporesac") },
+                ["WillowSouthEnd"] = new[] { P("crawler", "crawler"), P("snake", "frog") },
+                ["Parking"] = new[] { P("tendril", "crawler"), P("brute"), P("sporesac", "sporesac", "rat") },
             };
             var screens = new List<RoamingScreen>();
             foreach (var (name, packs) in tables)
@@ -206,6 +214,8 @@ namespace UnityEve.Editor
                 case "SquareWest": case "SquareEast": return "Market Square";
                 case "BackLane": return "Back Lane";
                 case "Dock": return "Loading Dock";
+                case "WillowJunction": case "WillowNorth": case "WillowCulDeSac": case "WillowSouth": case "WillowSouthEnd": return "Willow Lane";
+                case "Parking": return "Kingsport Foods Lot";
                 default: return screen;
             }
         }

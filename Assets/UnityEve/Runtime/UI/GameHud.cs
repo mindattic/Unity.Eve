@@ -19,7 +19,7 @@ namespace UnityEve.UI
 
         private VisualElement _root, _screen, _overlay;
         private VisualElement _status, _hpFill, _peFill, _atbFill, _atbRow;
-        private Label _hpText, _peText, _levelText, _ammoText;
+        private Label _hpText, _peText, _levelText, _ammoText, _objective;
         private VisualElement _menuPanel;
         private Label _menuTitle;
         private VisualElement _menuList;
@@ -136,6 +136,9 @@ namespace UnityEve.UI
             _atbRow = _atbFill.parent.parent;
             _ammoText = AddLabel(_status, "ammo");
 
+            _objective = AddLabel(_overlay, "objective");
+            _objective.style.display = DisplayStyle.None;
+
             _targetPanel = Add(_overlay, "target");
             _targetName = AddLabel(_targetPanel, "target-name");
             var track = Add(_targetPanel, "bar-track");
@@ -178,6 +181,14 @@ namespace UnityEve.UI
         }
 
         // ---------------------------------------------------------------- public presentation API
+
+        /// <summary>The current objective under the status panel; null hides it.</summary>
+        public void SetObjective(string text)
+        {
+            if (_objective == null) return;
+            _objective.text = string.IsNullOrEmpty(text) ? "" : "OBJECTIVE  " + text;
+            _objective.style.display = string.IsNullOrEmpty(text) ? DisplayStyle.None : DisplayStyle.Flex;
+        }
 
         public void SetStatus(int level, int hp, int maxHp, float pe, float maxPe, float atb, bool atbFull, string ammo)
         {

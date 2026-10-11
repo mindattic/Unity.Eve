@@ -57,6 +57,7 @@ namespace UnityEve.Editor
             BuildAudio(content);
             BuildEnemyPrefabs(content);
             BuildAlienPrefabs(content);
+            BuildMother(content);
             content.PlayerPrefab = BuildPlayerPrefab();
             AssetDatabase.SaveAssets();
             BuildScene(content);
@@ -106,6 +107,8 @@ namespace UnityEve.Editor
             Item(c, "flash", "Flash Grenade", ItemEffect.Flash, 0, "Thrown. Stuns everything within 3.5 m for 4 s.", 3, radius: 3.5f, stun: 4f);
             Item(c, "pe_tonic", "Mito Tonic", ItemEffect.RestorePe, 0, "Fully restores Parasite Energy.", 3);
             Item(c, "key_shed", "Shed Key", ItemEffect.Key, 0, "A brass key on a fish-shaped fob. 'SHED'.", 1, battle: false);
+            Item(c, "key_storeroom", "Storeroom Key", ItemEffect.Key, 0, "A key on a Kingsport Foods lanyard. 'STOREROOM - STAFF ONLY'.", 1, battle: false);
+            Item(c, "key_church", "Church Key", ItemEffect.Key, 0, "A heavy iron key tagged 'St. Ansel's - side door'.", 1, battle: false);
 
             WeaponDefinition Weapon(string id, string name, int dmg, float range, float atb, int clip, int rof, bool burst, bool melee,
                 ItemDefinition ammo, SoundId sound, float root)
@@ -174,6 +177,11 @@ namespace UnityEve.Editor
             Enemy("tendril", "Drain Tendril", 3, 58, 2, 14, 1.0f, 1.9f, 0.7f, 0.6f, 1.4f, 40, 0.5f, 0.65f);
             Enemy("sporesac", "Spore Sac", 2, 30, 0, 10, 1.9f, 1.1f, 0.5f, 0.5f, 1.1f, 30, 0.45f, 0.75f, hover: 1.3f);
             Enemy("brute", "Husk Brute", 5, 130, 4, 20, 1.6f, 1.6f, 0.85f, 0.8f, 1.8f, 90, 0.6f, 0.2f);
+            // The boss: rooted to her nest, her tentacles reach most of the nave; she calls her brood.
+            var mother = Enemy("mother", "Mito Mother", 8, 420, 4, 22, 0f, 6f, 0.95f, 1f, 2.2f, 320, 1f, 0f);
+            mother.Stats.Boss = true;
+            mother.Brood = c.Enemies["crawler"];
+            EditorUtility.SetDirty(mother);
 
             LootTableDefinition Loot(string id, int pulls, params (string item, int min, int max, float weight)[] entries)
             {
@@ -190,6 +198,7 @@ namespace UnityEve.Editor
             Loot("dumpster", 1, ("ammo_9mm", 1, 1, 3f), ("cola", 1, 1, 2f), ("", 0, 0, 2f));
             Loot("kitchen", 1, ("medicine", 1, 1, 2f), ("cola", 1, 2, 3f), ("", 0, 0, 1.5f));
             Loot("drawer", 1, ("ammo_9mm", 1, 1, 3f), ("flash", 1, 1, 1f), ("pe_tonic", 1, 1, 1f), ("", 0, 0, 2f));
+            Loot("mail", 1, ("ammo_9mm", 1, 1, 1f), ("cola", 1, 1, 1f), ("", 0, 0, 3f));
             Loot("bathroom", 1, ("medicine", 1, 2, 3f), ("", 0, 0, 1f));
             Loot("garage", 2, ("grenade", 1, 1, 2f), ("ammo_shells", 1, 1, 2f), ("ammo_9mm", 1, 1, 1f));
 
@@ -232,6 +241,7 @@ namespace UnityEve.Editor
             Map(SoundId.KatanaSlash, 0.8f, Gen("katana_slash"));
             Map(SoundId.KatanaRush, 0.85f, Gen("katana_rush"));
             Map(SoundId.EnemyCharge, 0.75f, Gen("enemy_charge"));
+            Map(SoundId.Save, 0.7f, Gen("save"));
             Map(SoundId.Dodge, 0.6f, Gen("dodge"));
             Map(SoundId.PerfectDodge, 0.9f, Gen("perfect_dodge"));
             Map(SoundId.PeCast, 0.7f, Gen("pe_cast"));

@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8ebecf102b133b14d9a4dfba096ede9f, type: 3}
-  m_Name: Enemy_crawler
+  m_Name: 
   m_EditorClassIdentifier: UnityEve.Runtime::UnityEve.Data.EnemyDefinition
   Stats:
     Id: crawler
@@ -28,4 +28,6 @@ MonoBehaviour:
     HoverHeight: 0
     Aggression: 0.85
     Caution: 0.2
-  Prefab: {fileID: 7781207041753394493, guid: 85c4530026c4f1f438daf5e30d866767, type: 3}
+    Boss: 0
+  Prefab: {fileID: 7461833571679444955, guid: 85c4530026c4f1f438daf5e30d866767, type: 3}
+  Brood: {fileID: 0}

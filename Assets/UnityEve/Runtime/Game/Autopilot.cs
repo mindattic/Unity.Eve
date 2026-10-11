@@ -24,11 +24,15 @@ namespace UnityEve.Game
 
         public static bool Requested => Environment.GetCommandLineArgs().Contains("-autoplay");
 
+        private static Autopilot _running;
+
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void Boot()
         {
-            if (!Requested) return;
-            new GameObject("Autopilot").AddComponent<Autopilot>();
+            if (!Requested || _running != null) return;
+            _running = new GameObject("Autopilot").AddComponent<Autopilot>();
+            // Survives the scene reload that loading a save performs.
+            DontDestroyOnLoad(_running.gameObject);
         }
 
         private void Awake()
@@ -132,9 +136,18 @@ namespace UnityEve.Game
             }
             _player = session.Player;
             var failures = 0;
+            // Never touch a player's real save: autoplay saves into its artifacts folder.
+            SaveSystem.PathOverride = Path.Combine(_dir, "save.json");
+            if (File.Exists(SaveSystem.PathOverride)) File.Delete(SaveSystem.PathOverride);
             // Scripted steps teleport between screens; random encounters only run in their own step.
             if (ScreenEncounters.Instance != null) ScreenEncounters.Instance.Enabled = false;
 
+            // The title screen renders (players see it first; autoplay skips it otherwise).
+            session.ShowTitle();
+            yield return Real(0.6f);
+            yield return Shot("title");
+            session.StartGame();
+            yield return Real(0.5f);
             yield return Shot("street_start");
 
             // 1. Camera tour: every "Tour_" marker, in name order. Encounters stay dormant while sightseeing.
@@ -161,7 +174,9 @@ namespace UnityEve.Game
             }
 
             // 3. Battles: walk into each encounter and fight it through the command menu.
-            foreach (var zone in FindObjectsByType<EncounterZone>(FindObjectsSortMode.None).Where(z => !z.Roaming).OrderBy(z => z.name))
+            // (The boss waits for the story run at the end.)
+            foreach (var zone in FindObjectsByType<EncounterZone>(FindObjectsSortMode.None)
+                         .Where(z => !z.Roaming && !z.name.Contains("Boss")).OrderBy(z => EncounterNumber(z.name)))
             {
 
 
@@ -211,7 +226,7 @@ namespace UnityEve.Game
             }
 
             // 5. Enter the house, search everything inside, including the side table with the shed key.
-            var houseDoor = FindObjectsByType<Door>(FindObjectsSortMode.None).OrderBy(d => d.name).FirstOrDefault(d => d.name.Contains("Enter"));
+            var houseDoor = FindObjectsByType<Door>(FindObjectsSortMode.None).FirstOrDefault(d => d.name == "Door_HouseA_Enter");
             if (houseDoor != null)
             {
                 Teleport(houseDoor.transform.position + houseDoor.transform.forward * 1.2f, houseDoor.transform.position);
@@ -294,9 +309,119 @@ namespace UnityEve.Game
             yield return Shot("field_menu");
             session.CloseMenu();
 
+            // 9. The vertical slice: church barred, the grocery's keys, save and load, the Mother, the ending.
+            yield return StorySlice(() => failures++);
+
             Log(failures == 0 ? "PASS autoplay complete" : $"FAIL {failures} step(s) failed");
             yield return Real(0.5f);
             Application.Quit(failures == 0 ? 0 : 1);
+        }
+
+        private static int EncounterNumber(string name)
+        {
+            var digits = new string(name.SkipWhile(ch => !char.IsDigit(ch)).TakeWhile(char.IsDigit).ToArray());
+            return int.TryParse(digits, out var n) ? n : 999;
+        }
+
+        private static T Named<T>(string name) where T : Component =>
+            FindObjectsByType<T>(FindObjectsInactive.Include, FindObjectsSortMode.None).FirstOrDefault(c => c.name == name);
+
+        private IEnumerator UseDoor(string name, string shot)
+        {
+            var door = Named<Door>(name);
+            if (door == null) yield break;
+            Teleport(door.ApproachPoint, door.transform.position);
+            yield return Real(0.4f);
+            door.Interact(_player);
+            yield return Real(2.2f);
+            if (shot != null) yield return Shot(shot);
+        }
+
+        private IEnumerator Search(string name)
+        {
+            var c = Named<Container>(name);
+            if (c == null) yield break;
+            Teleport(c.ApproachPoint, c.transform.position);
+            yield return Real(0.4f);
+            _player.GetComponent<Interactor>().InteractNow(c);
+            yield return Real(0.5f);
+        }
+
+        private IEnumerator StorySlice(Action fail)
+        {
+            void Check(bool ok, string what)
+            {
+                if (ok) Log($"story: {what}");
+                else
+                {
+                    Log($"FAIL story: {what}");
+                    fail();
+                }
+            }
+            var story = StoryDirector.Instance;
+            Check(story != null && story.Objectives.Knows("weapon:shotgun"), "shed key and shotgun recorded as facts");
+            Log($"objective: {story?.CurrentText}");
+
+            // The church door is barred and points the way to the grocery.
+            yield return UseDoor("Door_Church_Enter", "church_barred");
+            Check(story.Objectives.Knows("flag:church_tried") && story.CurrentText.Contains("Kingsport Foods"), "barred church sends Kat to Kingsport Foods");
+
+            // Kingsport Foods: the register holds the storeroom key, the manager's desk the church key.
+            yield return UseDoor("Door_Grocery_Enter", "grocery_inside");
+            yield return Search("Container_Grocery_Register");
+            Check(_player.Bag.CountOf("key_storeroom") > 0, "storeroom key from the register");
+            yield return UseDoor("Door_Storeroom_Enter", "storeroom_unlocked");
+            yield return Search("Container_Storeroom_Desk");
+            yield return Shot("church_key");
+            Check(_player.Bag.CountOf("key_church") > 0, "church key from the manager's desk");
+            Log($"objective: {story.CurrentText}");
+
+            // Save at the store's payphone, then load: the scene reloads and everything comes back.
+            var phone = Named<SavePoint>("SavePoint_Grocery");
+            Teleport(phone.ApproachPoint, phone.transform.position);
+            yield return Real(0.5f);
+            _player.GetComponent<Interactor>().InteractNow(phone);
+            yield return Real(0.6f);
+            yield return Shot("saved");
+            var expectLevel = _player.Progression.Level;
+            var expectFacts = story.Objectives.Facts.Count;
+            var expectSlots = _player.Bag.Slots.Count;
+            Check(File.Exists(SaveSystem.PathOverride) && SaveSystem.Read() != null, "save written");
+
+            var oldSession = GameSession.Instance;
+            SaveSystem.Load();
+            var deadline = Time.realtimeSinceStartup + 20f;
+            while ((GameSession.Instance == null || GameSession.Instance == oldSession || SaveSystem.Pending != null) && Time.realtimeSinceStartup < deadline)
+                yield return null;
+            yield return Real(1.2f);
+            if (Application.isBatchMode) SetupOffscreen();
+            if (ScreenEncounters.Instance != null) ScreenEncounters.Instance.Enabled = false;
+            _player = GameSession.Instance.Player;
+            story = StoryDirector.Instance;
+            yield return Real(0.5f);
+            yield return Shot("loaded");
+            Check(_player.Progression.Level == expectLevel, $"level restored ({expectLevel})");
+            Check(story.Objectives.Facts.Count == expectFacts, $"story facts restored ({expectFacts})");
+            Check(_player.Bag.Slots.Count == expectSlots && _player.Bag.CountOf("key_church") > 0, "bag restored with the church key");
+            Check(Named<Container>("Container_Grocery_Register").Searched, "register stays searched");
+            Check(Named<Door>("Door_Storeroom_Enter").Unlocked, "storeroom door stays unlocked");
+            Check(Vector3.Distance(_player.transform.position, Named<SavePoint>("SavePoint_Grocery").ApproachPoint) < 2f, "resumed at the payphone");
+
+            // Saint Ansel's: in through the side door, into the nave, and the Mother.
+            yield return UseDoor("Door_Church_Enter", "nave");
+            Check(story.Objectives.Knows("flag:church_entered"), "inside Saint Ansel's");
+            var boss = Named<EncounterZone>("Encounter_Boss_Nave");
+            var battle = BattleDirector.Instance;
+            Teleport(boss.Bounds.center - new Vector3(0f, boss.Bounds.extents.y - 0.1f, 3f), boss.Bounds.center + Vector3.forward * 4f);
+            yield return Real(0.4f);
+            Check(battle.InBattle && battle.BossFight, "the boss fight begins");
+            yield return Real(1.6f);
+            yield return Shot("boss_encounter");
+            yield return FightToTheEnd(battle, "boss", 240f);
+            Check(boss.Cleared, "the Mother is dead");
+            yield return Real(6f);
+            yield return Shot("ending");
+            Check(story.Ended && GameSession.Instance.OnEndScreen, "the ending plays");
         }
 
         private Transform Marker(string name) => FindObjectsByType<Transform>(FindObjectsSortMode.None).FirstOrDefault(t => t.name == name);
@@ -354,14 +479,14 @@ namespace UnityEve.Game
             screens.Enabled = false;
         }
 
-        private IEnumerator FightToTheEnd(BattleDirector battle, string tag)
+        private IEnumerator FightToTheEnd(BattleDirector battle, string tag, float seconds = 90f)
         {
             var turn = 0;
             var focusShown = false;
             var buffShown = false;
             var chargeShown = false;
             var intents = new System.Collections.Generic.HashSet<EnemyIntent>();
-            var timeout = Time.realtimeSinceStartup + 90f;
+            var timeout = Time.realtimeSinceStartup + seconds;
             while (battle.InBattle && battle.Phase != BattlePhase.Victory && Time.realtimeSinceStartup < timeout)
             {
                 // The autopilot is a tourist, not a test of skill: keep it alive.

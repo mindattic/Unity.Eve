@@ -39,6 +39,9 @@ namespace UnityEve.Core.Battle
 
         public void BeginBattle() => CastsThisBattle = 0;
 
+        /// <summary>Loading a save: exact current PE, clamped to the maximum.</summary>
+        public void Restore(float current) => Current = current < 0f ? 0f : current > Max ? Max : current;
+
         public void SetMax(float max, bool refill)
         {
             Max = max;

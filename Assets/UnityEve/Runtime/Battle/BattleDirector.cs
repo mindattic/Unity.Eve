@@ -51,6 +51,8 @@ namespace UnityEve.Battle
         private Rng _rng;
         private EncounterZone _zone;
         private AttackTokens _tokens;
+        private Core.Story.BossPhases _bossPhases;
+        public bool BossFight => _bossPhases != null;
         private MenuModel _menu;
         private readonly Stack<MenuModel> _menuStack = new Stack<MenuModel>();
         private int _targetIndex;
@@ -122,16 +124,11 @@ namespace UnityEve.Battle
             foreach (var spawn in zone.Spawns)
             {
                 if (spawn.Enemy == null || spawn.Enemy.Prefab == null) continue;
-                var go = Instantiate(spawn.Enemy.Prefab, zone.SpawnWorldPosition(spawn), Quaternion.identity);
-                go.transform.LookAt(new Vector3(_player.transform.position.x, go.transform.position.y, _player.transform.position.z));
-                var actor = go.GetComponent<EnemyActor>();
-                actor.Begin(_player.transform, MayCommit, 0.6f + _rng.Range(0f, 0.8f) + i * 0.25f, _rng.NextUInt(), zone.Bounds,
-                    () => _enemies.Count(e => e.IsAlive), _tokens);
-                actor.Struck += OnEnemyStrike;
-                actor.Died += OnEnemyDied;
-                _enemies.Add(actor);
+                Spawn(spawn.Enemy, zone.SpawnWorldPosition(spawn), 0.6f + _rng.Range(0f, 0.8f) + i * 0.25f);
                 i++;
             }
+            var boss = _enemies.FirstOrDefault(e => e.Stats.Boss);
+            _bossPhases = boss != null ? new Core.Story.BossPhases(0.66f, 0.33f) : null;
 
             zone.SealWalls(true);
             Phase = BattlePhase.Active;
@@ -143,6 +140,37 @@ namespace UnityEve.Battle
             CameraDirector.Instance?.AddTrauma(0.25f);
             GameInput.Instance?.Rumble(0.4f, 0.6f, 0.2f);
             BattleStarted?.Invoke(zone);
+        }
+
+        private EnemyActor Spawn(EnemyDefinition definition, Vector3 at, float initialCooldown)
+        {
+            var go = Instantiate(definition.Prefab, at, Quaternion.identity);
+            go.transform.LookAt(new Vector3(_player.transform.position.x, go.transform.position.y, _player.transform.position.z));
+            var actor = go.GetComponent<EnemyActor>();
+            actor.Begin(_player.transform, MayCommit, initialCooldown, _rng.NextUInt(), _zone.Bounds,
+                () => _enemies.Count(e => e.IsAlive), _tokens);
+            actor.Struck += OnEnemyStrike;
+            actor.Died += OnEnemyDied;
+            _enemies.Add(actor);
+            return actor;
+        }
+
+        /// <summary>The boss calls its brood as its health falls (Core BossPhases decides when).</summary>
+        private void CheckBossPhases()
+        {
+            if (_bossPhases == null) return;
+            var boss = _enemies.FirstOrDefault(e => e.Stats.Boss);
+            if (boss == null || !boss.IsAlive || boss.Definition.Brood == null) return;
+            var waves = _bossPhases.Check(boss.Health.Fraction);
+            if (waves <= 0) return;
+            var b = _zone.Bounds;
+            for (var w = 0; w < waves; w++)
+            foreach (var corner in new[] { new Vector3(b.min.x + 1.5f, 0f, b.max.z - 1.5f), new Vector3(b.max.x - 1.5f, 0f, b.max.z - 1.5f) })
+                Spawn(boss.Definition.Brood, new Vector3(corner.x, _player.transform.position.y, corner.z), 1.2f);
+            GameHud.Instance?.ShowBanner("THE MOTHER SCREAMS", "Her brood claws up through the floor.", 1.6f);
+            AudioService.Play(SoundId.EnemyBuff);
+            CameraDirector.Instance?.AddTrauma(0.5f);
+            GameInput.Instance?.Rumble(0.8f, 1f, 0.4f);
         }
 
         private void NudgeInside(EncounterZone zone)
@@ -206,6 +234,7 @@ namespace UnityEve.Battle
             }
 
             EnemyActor.Separate(_enemies, _player.transform);
+            if (Phase == BattlePhase.Active || Phase == BattlePhase.Executing) CheckBossPhases();
             if (_focus.IsOpen) GameHud.Instance?.ShowFocus(_focus.Remaining01);
             CheckOutcome();
         }
@@ -357,7 +386,14 @@ namespace UnityEve.Battle
             else GameHud.Instance?.ShowTarget($"{enemy.Stats.DisplayName}  LV{enemy.Stats.Level}", enemy.Health.Fraction);
         }
 
-        private void OnEnemyDied(EnemyActor enemy) => _expEarned += enemy.Stats.Exp;
+        /// <summary>Raised for every creature killed (kill count for the ending).</summary>
+        public event System.Action<EnemyActor> EnemyKilled;
+
+        private void OnEnemyDied(EnemyActor enemy)
+        {
+            _expEarned += enemy.Stats.Exp;
+            EnemyKilled?.Invoke(enemy);
+        }
 
         private void ShotVisual(EnemyActor target)
         {

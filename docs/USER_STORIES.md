@@ -81,7 +81,21 @@ updated: 2026-10-11
 | US-047 | Walking out of combat plays the walk/jog cycle | ✅ | autoplay:`explore_walk` (fails if no walk/jog clip is playing) |
 | US-042 | Gamepad-first input with keyboard fallback and rumble | 🟡 | Bindings in `GameInput`; needs a physical-pad playtest |
 | US-043 | Every event has a sound | ✅ | The content build warns on silent `SoundId`s (none) |
-| US-045 | Save and load | ⬜ | |
+| US-045 | Save at payphones; Continue reloads the scene and restores level, HP/PE, bag, weapons, story facts, searched containers, taken items, unlocked doors and cleared fights, resuming at the payphone | ✅ | `Restore_puts_progression_health_pe_and_the_bag_back_exactly`, `A_save_needs_the_current_version_a_resume_point_and_a_living_heroine`, autoplay:`saved`, `loaded` (six restore checks) |
+
+## Vertical slice
+
+| ID | Story | Status | Evidence |
+| --- | --- | --- | --- |
+| US-060 | Title screen: New Game, Continue (last save, with its summary), Quit | ✅ | autoplay:`title` |
+| US-061 | The current objective is always shown; each new one is announced; facts can arrive out of order | ✅ | `Objectives_advance_as_facts_are_learned_and_announce_each_change`, `Objectives_can_be_completed_out_of_order_and_the_tracker_skips_ahead`, autoplay:`church_barred` |
+| US-062 | The story: Mercer house -> shed shotgun -> barred church -> grocery register (storeroom key) -> manager's desk (church key) -> the nave | ✅ | autoplay story log, `church_barred`, `grocery_inside`, `storeroom_unlocked`, `church_key`, `nave` |
+| US-063 | Boss: the Mito Mother, rooted in the nave, long tentacle reach, calls her brood at 66% and 33% health | ✅ | `Boss_calls_each_reinforcement_wave_once_as_its_health_falls`, autoplay:`boss_encounter`, `boss_victory` |
+| US-064 | Ending: the night's tally (time, creatures, saves, level), then back to the title | ✅ | `Completing_the_last_objective_ends_the_story_once`, autoplay:`ending` |
+| US-065 | Dying offers Continue from the last save or a retry at the bus stop | 🟡 | Built in `GameSession.DefeatRoutine`; autoplay never dies, so the menu is unverified by play |
+| US-066 | Music: exploration, battle and boss loops crossfade with the fights | 🟡 | `MusicDirector` + synthesized loops; batch autoplay has no audio to check by ear |
+| US-067 | Ashgrove Heights: Willow Lane's seeded houses, cars, signs, benches facing the street; Kingsport Foods and its parking lot | ✅ | autoplay:`16_willow_junction` ... `22_storefront` |
+| US-068 | Kingsport Foods interior: checkout, aisles, produce, freezers, locked staff storeroom, two fights | ✅ | autoplay:`23_grocery_checkout` ... `26_storeroom`, `encounter_9_grocery_*`, `encounter_10_storeroom_*` |
 
 ## Tally
 
@@ -90,4 +104,5 @@ updated: 2026-10-11
 | Battle core | 21 | 0 | 0 |
 | Focus | 3 | 1 | 0 |
 | Exploration | 10 | 0 | 0 |
-| Presentation | 8 | 1 | 1 |
+| Presentation | 9 | 1 | 0 |
+| Vertical slice | 7 | 2 | 0 |

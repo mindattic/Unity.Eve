@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8ebecf102b133b14d9a4dfba096ede9f, type: 3}
-  m_Name: Enemy_tendril
+  m_Name: 
   m_EditorClassIdentifier: UnityEve.Runtime::UnityEve.Data.EnemyDefinition
   Stats:
     Id: tendril
@@ -28,4 +28,6 @@ MonoBehaviour:
     HoverHeight: 0
     Aggression: 0.5
     Caution: 0.65
-  Prefab: {fileID: 580850172992778088, guid: 99b1167f36451ca479b0a44876effa95, type: 3}
+    Boss: 0
+  Prefab: {fileID: 7433556718827483518, guid: 99b1167f36451ca479b0a44876effa95, type: 3}
+  Brood: {fileID: 0}

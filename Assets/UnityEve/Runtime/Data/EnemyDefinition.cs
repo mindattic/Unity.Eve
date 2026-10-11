@@ -9,5 +9,7 @@ namespace UnityEve.Data
         public EnemyStats Stats = new EnemyStats();
         [Tooltip("Prefab with an EnemyActor component.")]
         public GameObject Prefab;
+        [Tooltip("Bosses only: what climbs out when its health crosses a phase threshold.")]
+        public EnemyDefinition Brood;
     }
 }

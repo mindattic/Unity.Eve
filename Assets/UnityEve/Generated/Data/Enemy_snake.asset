@@ -28,4 +28,6 @@ MonoBehaviour:
     HoverHeight: 0
     Aggression: 0.6
     Caution: 0.55
-  Prefab: {fileID: 1438804228750554737, guid: 526828f7725886d4aa49712587926f91, type: 3}
+    Boss: 0
+  Prefab: {fileID: 1202418063883396096, guid: 526828f7725886d4aa49712587926f91, type: 3}
+  Brood: {fileID: 0}

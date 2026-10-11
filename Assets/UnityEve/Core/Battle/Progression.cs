@@ -15,6 +15,15 @@ namespace UnityEve.Core.Battle
 
         public int ExpToNext => ExpForLevel(Level);
 
+        /// <summary>Loading a save: put the counters back exactly as they were.</summary>
+        public void Restore(int level, int exp, int bonusPoints, int activeTime)
+        {
+            Level = level < 1 ? 1 : level;
+            Exp = exp < 0 ? 0 : exp;
+            BonusPoints = bonusPoints < 0 ? 0 : bonusPoints;
+            ActiveTime = activeTime < 0 ? 0 : activeTime;
+        }
+
         public static int ExpForLevel(int level) =>
             (int)Math.Round(BattleConfig.ExpPerLevelBase * Math.Pow(BattleConfig.ExpCurveGrowth, level - 1));
 

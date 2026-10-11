@@ -43,8 +43,8 @@ fight with Parasite Eve's real-time/pause Active Time Battle.
   Parasite Mutant's segmented "Active Time Chains".
 - **Not a mobile game.** There are no touch controls and no portrait layout.
 - **Not built on paid or non-redistributable assets.** That means no Mixamo, no Asset Store packs and no ripped game files.
-- **Not a full game.** It has a street, the Market district, two interiors, six fixed encounters plus random
-  re-entry encounters, and no saves or music yet.
+- **Not a full game.** It is a vertical slice: one night with a beginning, a boss and an ending, every
+  system working together, in a small town (Ashgrove Street, Ashgrove Heights, the Market district).
 
 ## 4. Architecture canon {#UE-§4}
 
@@ -71,6 +71,8 @@ fight with Parasite Eve's real-time/pause Active Time Battle.
   - `BattleDirector.Begin/OpenCommandMenu/Execute`
   - `EnemyAttackCycle.Tick/Resolve`
   - `EnemyMind.Tick/Decide/Steer` + `AttackTokens.TryTake/Release` (turn-taking tactics over the attack cycle)
+  - `Objectives.Learn` (story facts -> current objective), `SaveGame` (+ `SaveSystem.Save/Load`),
+    `BossPhases.Check` (brood waves), `ScreenEncounterRule.Enter`
   - `BladeArts.InSlashArc/RushEnd/OnRushPath` (katana)
   - `FocusWindow.Open/TryUse`
   - `Inventory.Add/TryRemove`
@@ -108,7 +110,7 @@ Every third-party file is CC0 or OFL and listed in CREDITS.md. Missing sounds ar
 Edit `DemoContentBuilder`, then re-run it. A hand edit to `Generated/` or `Demo.unity` is lost on the next build.
 
 ## 6. Verified state {#UE-§6}
-- `dotnet test Tests/Core.Tests`: 52 passing.
+- `dotnet test Tests/Core.Tests`: 59 passing.
 - Unity 6000.4.3f1 batch-mode compile: clean.
 - `UnityEve.exe -batchmode -autoplay`: PASS, with 46-47 screenshots (the enemy-buff shot appears when a
   creature happens to power up) covering:
@@ -121,13 +123,17 @@ Edit `DemoContentBuilder`, then re-run it. A hand edit to `Generated/` or `Demo.
   - the Blade menu, a katana Rush and a Slash
   - the enemy intents each fight actually used (logged)
   - the field menu
+  - the whole story: the barred church, the grocery's two keys, a payphone save and a real
+    scene-reload load (level, facts, bag, searched containers, unlocked doors, position all
+    checked), the Mito Mother and her brood waves, and the ending card
+  - the title screen
 
 ## 7. Active frontier {#UE-§7}
 - Navmesh enemy movement
 - Bonus Point menu
-- Saves at a phone or save point
-- Music
-- A boss with part targeting (ExperimentEve's bone-bound weak points)
+- Boss part targeting (ExperimentEve's bone-bound weak points)
+- More interiors (the houses on Willow Lane are exteriors only)
+- A recorded score in place of the synthesized loops
 
 ## 8. Quality bar {#UE-§8}
 A change is done when all of these hold:

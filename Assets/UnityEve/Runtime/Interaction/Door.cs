@@ -18,12 +18,24 @@ namespace UnityEve.Interaction
         [SerializeField] private ItemDefinition _requiredKey;
         [SerializeField] private bool _consumeKey;
         [SerializeField] private string _lockedText = "It's locked.";
+        [Tooltip("Story fact learned when the player tries this door while it is locked / when it opens.")]
+        [SerializeField] private string _factOnTry;
+        [SerializeField] private string _factOnOpen;
 
         private bool _unlocked;
         private bool _busy;
 
         public Transform Destination => _destination;
         public bool Locked => _requiredKey != null && !_unlocked;
+        public bool Unlocked => _unlocked;
+        /// <summary>Loading a save: it was already opened with its key.</summary>
+        public void Unlock() => _unlocked = true;
+
+        public void SetStoryFacts(string onTry, string onOpen)
+        {
+            _factOnTry = onTry;
+            _factOnOpen = onOpen;
+        }
         public override string Prompt => _label;
         public override bool CanInteract => base.CanInteract && !_busy;
 
@@ -41,6 +53,7 @@ namespace UnityEve.Interaction
             {
                 if (player.Bag.CountOf(_requiredKey.Id) == 0)
                 {
+                    Game.StoryDirector.Instance?.Learn(_factOnTry);
                     AudioService.Play(SoundId.DoorLocked);
                     GameHud.Instance?.ShowMessage(_lockedText);
                     return;
@@ -49,6 +62,7 @@ namespace UnityEve.Interaction
                 _unlocked = true;
                 GameHud.Instance?.ShowMessage($"Used the {_requiredKey.Stats.DisplayName}.");
             }
+            Game.StoryDirector.Instance?.Learn(_factOnOpen);
             StartCoroutine(Transition(player));
         }
 

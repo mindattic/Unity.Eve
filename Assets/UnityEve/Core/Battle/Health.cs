@@ -41,5 +41,8 @@ namespace UnityEve.Core.Battle
         }
 
         public void Revive() => Current = Max;
+
+        /// <summary>Loading a save: exact current HP, clamped to the maximum.</summary>
+        public void Restore(int current) => Current = current < 1 ? 1 : current > Max ? Max : current;
     }
 }

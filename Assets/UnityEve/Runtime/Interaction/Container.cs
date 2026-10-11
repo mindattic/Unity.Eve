@@ -24,6 +24,8 @@ namespace UnityEve.Interaction
         private bool _searched;
 
         public bool Searched => _searched;
+        /// <summary>Loading a save: it was already emptied.</summary>
+        public void MarkSearched() => _searched = true;
         public override string Prompt => _searched ? null : $"Search {_noun}";
         public override float HoldSeconds => _searchSeconds;
 

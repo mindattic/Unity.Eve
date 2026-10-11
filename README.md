@@ -1,8 +1,8 @@
 # Unity Eve
 
-A proof of concept for a cel-shaded, hand-inked survival-horror RPG (Borderlands meets Parasite Mutant) with Parasite Eve's real-time/pause battle system, built in Unity 6 entirely from free (CC0/OFL) assets. You walk a street at night under fixed and CCTV cameras, enter houses, rummage through drawers and fridges, and fight creatures with an Active Time Bar, a hexagon range dome, a gun and a katana, PE abilities and grenades. On top of that sits one new idea, **Focus**: dodge an attack at the last moment and time slows, opening free bonus moves.
+A proof of concept for a cel-shaded, hand-inked survival-horror RPG (Borderlands meets Parasite Mutant) with Parasite Eve's real-time/pause battle system, built in Unity 6 entirely from free (CC0/OFL) assets. It is a playable vertical slice: one night in Kingsport, from the bus stop through a neighbourhood of houses, a grocery store and a market square to a boss in the church, with objectives, payphone saves, music and an ending. You explore under fixed and CCTV cameras, enter buildings, rummage through drawers and fridges, and fight creatures with an Active Time Bar, a hexagon range dome, a gun and a katana, PE abilities and grenades. On top of that sits one new idea, **Focus**: dodge an attack at the last moment and time slows, opening free bonus moves.
 
-![Unity 6000.4](https://img.shields.io/badge/Unity-6000.4.3f1-black) ![URP 17](https://img.shields.io/badge/URP-17.4-blue) ![Input System](https://img.shields.io/badge/Input%20System-1.19-green) ![Status PoC](https://img.shields.io/badge/status-proof%20of%20concept-yellow)
+![Unity 6000.4](https://img.shields.io/badge/Unity-6000.4.3f1-black) ![URP 17](https://img.shields.io/badge/URP-17.4-blue) ![Input System](https://img.shields.io/badge/Input%20System-1.19-green) ![Status vertical slice](https://img.shields.io/badge/status-vertical%20slice-yellow)
 
 ![Kat in the Mercer living room under a fixed corner camera: cel-shaded light pools, ink lines and comic hatching](docs/images/house-living-room.png)
 
@@ -14,6 +14,25 @@ This is the Unity port of [ExperimentEve](https://github.com/mindattic/Experimen
 - **Recapture the PE1 battle.** No open-source recreation of Parasite Eve's battle system existed, so this builds one: real time while the gauge fills, the world stops when you act, and the weapon's dome decides what you can hit.
 - **Add one idea of its own.** Focus rewards precise dodging the way Max Payne and Clair Obscur: Expedition 33 do, but the game never requires it.
 - **Built for PC with a controller.** It is gamepad-first with keyboard fallback, and the HUD is laid out for a monitor, not a phone.
+
+## The night (vertical slice)
+
+1. **Title.** New Game, or Continue from your last payphone save.
+2. **Ashgrove Street.** Find out what happened to the Mercers. Their letter sends you to the side table for the shed key; the shed holds a shotgun.
+3. **Market Square.** Survivors were gathering at Saint Ansel's, but the church is barred. A note points to Frank's spare key at Kingsport Foods.
+4. **Willow Lane and Kingsport Foods.** Down a street of houses to the grocery. The register holds the storeroom key; the manager's desk holds the church key. The storeroom holds a Husk Brute.
+5. **Saint Ansel's.** Save in the vestibule, then face the **Mito Mother** in the nave. She whips the whole aisle with her tentacles and calls her brood as she weakens.
+6. **Ending.** The night's tally (time, creatures, saves, level), then back to the title.
+
+![The title screen over Ashgrove Street](docs/images/title.png)
+
+![Willow Lane: seeded houses, porches, fences, driveways and parked cars](docs/images/willow-lane.png)
+
+![The Kingsport Foods parking lot](docs/images/kingsport-foods-lot.png)
+
+![The Mito Mother in the nave of Saint Ansel's](docs/images/boss-mito-mother.png)
+
+The current objective is always on screen; each new one is announced. Payphones (green light) save anywhere they stand: the bus stop, the Mercer house, Willow Lane, the square, the grocery and the church. Dying offers Continue from the last save, or a retry at the bus stop.
 
 ## Features
 
@@ -52,6 +71,8 @@ This is the Unity port of [ExperimentEve](https://github.com/mindattic/Experimen
 ![Focus: a perfect dodge in the Mercer kitchen slows time and offers three free moves](docs/images/focus-perfect-dodge.png)
 
 ### Exploration
+- **A believable neighbourhood.** Willow Lane is lined with detached houses generated from a seed: lawns, porches, gable roofs, garages and driveways, picket fences or hedges, mailboxes you can search, trees and cars. Kingsport Foods sits at the south end behind a striped parking lot, with an interior of checkout lanes, stocked aisles, freezers and a staff storeroom. Benches, lamps and dumpsters all face the way they should.
+- **Random encounters on return.** Coming back to a screen after being somewhere far can start a fight from that screen's own pack; stepping back and forth across a boundary never does.
 - **Fixed cameras** with camera zones that hard-cut like classic survival horror. Overlapping trigger volumes give hysteresis, so the camera doesn't flicker at boundaries.
 - **CCTV cameras** stay mounted in place and servo-pan to follow you within yaw/pitch limits (the street, the alley, a kitchen nanny-cam). A **rail camera** slides along the street with you.
 - **Direction latch.** While the stick is held, "up" keeps its meaning across camera cuts. The basis rotates to the new camera after a short grace period, so a cut never reverses you.
@@ -139,9 +160,10 @@ docs/          BIBLE.md (design canon), USER_STORIES.md (status + evidence)
 
 ## Limitations
 
-- This is a proof of concept with Ashgrove Street, the Market district, two interiors, six fixed encounters plus random re-entry encounters, and eleven creature types (seven mutated animals, four aliens). There is no save system, title flow beyond a title card, or music.
+- It is a vertical slice: one night, about 20-40 minutes. Ashgrove Street, Ashgrove Heights (Willow Lane and Kingsport Foods), the Market district and five interiors; eleven fixed encounters plus random re-entry encounters; twelve creature types (seven mutated animals, four aliens, one boss).
 - Enemies move by transform with simple separation, not a navmesh. Arena walls keep fights contained.
 - Bonus Points are spent automatically on Active Time rather than through a menu.
+- Music and all sound effects are synthesized in code; there is no recorded score.
 - The shotgun pickup uses the survival kit's axe mesh as a stand-in.
 
 ## Documentation

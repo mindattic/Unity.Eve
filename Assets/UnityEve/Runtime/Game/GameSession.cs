@@ -12,8 +12,9 @@ using UnityEve.UI;
 namespace UnityEve.Game
 {
     /// <summary>
-    /// Composition root and game flow: title card, the field pause menu (items / equip / controls),
-    /// HUD status each frame, and defeat → retry. Scene references are wired by the content builder.
+    /// Composition root and game flow: the title screen (New Game / Continue / Quit), the field pause
+    /// menu (items / equip / controls), HUD status each frame, defeat (continue from the last save or
+    /// retry), and the ending. Scene references are wired by the content builder.
     /// </summary>
     public sealed class GameSession : MonoBehaviour
     {
@@ -54,33 +55,71 @@ namespace UnityEve.Game
 
         private IEnumerator Start()
         {
+            if (GameHud.Instance != null && CameraDirector.Instance != null) GameHud.Instance.WorldCamera = CameraDirector.Instance.Camera;
+
+            // Continue: a save is waiting from the scene reload. Put the night back and play on.
+            if (SaveSystem.Pending != null)
+            {
+                yield return null; // let every world object finish Awake/Start first
+                SaveSystem.ApplyPending();
+                GameHud.Instance?.ShowMessage("Progress loaded.", 2.5f);
+                yield break;
+            }
+
             for (var i = 0; i < _startingItems.Length; i++)
                 if (_startingItems[i] != null) _player.Bag.Add(_startingItems[i].Id, i < _startingCounts.Length ? _startingCounts[i] : 1);
-
-            if (GameHud.Instance != null && CameraDirector.Instance != null) GameHud.Instance.WorldCamera = CameraDirector.Instance.Camera;
             if (!_showTitle || Autopilot.Requested) yield break;
+            ShowTitle();
+        }
 
+        /// <summary>The title screen (also used by autoplay to check it renders).</summary>
+        public void ShowTitle()
+        {
             _onTitle = true;
             WorldTime.Instance?.Pause(TitlePauseKey);
-            GameHud.Instance?.ShowBanner("UNITY EVE", "Kingsport, June 21 1998. The shortest night of the year.\n\nPress A / Enter", 0f);
+            _player.Controller.Lock();
+            GameHud.Instance?.ShowBanner("UNITY EVE", "Kingsport, June 21 1998. The shortest night of the year.", 0f);
+            var save = SaveSystem.Read();
+            var menu = new MenuModel("");
+            menu.Add(new MenuEntry("New Game", StartGame, true, "Begin at the bus stop on Ashgrove Street."));
+            menu.Add(new MenuEntry("Continue", () => { CloseTitleMenu(); SaveSystem.Load(); }, save != null,
+                save != null ? $"Last save: {save.Summary}" : "No saved game yet. Payphones save your progress."));
+            menu.Add(new MenuEntry("Quit", Application.Quit, true, "Leave Kingsport."));
+            _menu = menu;
+            _stack.Clear();
+            GameHud.Instance?.ShowMenu(menu);
+        }
+
+        private void CloseTitleMenu()
+        {
+            _menu = null;
+            GameHud.Instance?.ShowMenu(null);
         }
 
         public void StartGame()
         {
             if (!_onTitle) return;
             _onTitle = false;
+            CloseTitleMenu();
             WorldTime.Instance?.Resume(TitlePauseKey);
+            _player.Controller.Unlock();
             GameHud.Instance?.HideBanner();
             AudioService.Play(SoundId.UiConfirm);
-            GameHud.Instance?.ShowMessage("Something is wrong with the town tonight. Search the houses; find a way through.", 4.5f);
+            GameHud.Instance?.ShowMessage("Something is wrong with the town tonight. Find out what happened to the Mercers.", 4.5f);
+            var story = StoryDirector.Instance;
+            if (story != null && story.CurrentText != null) GameHud.Instance?.ShowBanner("OBJECTIVE", story.CurrentText, 3f);
         }
 
         private void Update()
         {
             var input = GameInput.Instance;
-            if (_onTitle)
+            if (_onTitle || _endScreen)
             {
-                if (input != null && input.ConfirmPressed) StartGame();
+                if (_menu != null && input != null)
+                {
+                    if (input.NavigateStep.y != 0) _menu.Move(-input.NavigateStep.y);
+                    if (input.ConfirmPressed) _menu.Confirm();
+                }
                 return;
             }
 
@@ -233,6 +272,9 @@ namespace UnityEve.Game
 
         // ------------------------------------------------------------------ defeat
 
+        private bool _endScreen;
+        public bool OnEndScreen => _endScreen;
+
         public void OnPlayerDefeated(EncounterZone zone)
         {
             StartCoroutine(DefeatRoutine());
@@ -241,8 +283,29 @@ namespace UnityEve.Game
         private IEnumerator DefeatRoutine()
         {
             var hud = GameHud.Instance;
-            hud?.ShowBanner("YOU DIED", "Kingsport keeps her... for now.", 2.5f);
-            yield return new WaitForSeconds(2.5f);
+            hud?.ShowBanner("YOU DIED", "Kingsport keeps her... for now.", 0f);
+            yield return new WaitForSecondsRealtime(1.5f);
+            if (Autopilot.Requested)
+            {
+                yield return RetryAtBusStop();
+                yield break;
+            }
+            // Continue from the last save, or wake at the bus stop.
+            _endScreen = true;
+            var save = SaveSystem.Read();
+            var menu = new MenuModel("");
+            menu.Add(new MenuEntry("Continue", () => { _endScreen = false; CloseTitleMenu(); SaveSystem.Load(); }, save != null,
+                save != null ? $"From {save.Location}. {save.Summary}" : "No saved game yet."));
+            menu.Add(new MenuEntry("Retry at the bus stop", () => { _endScreen = false; CloseTitleMenu(); StartCoroutine(RetryAtBusStop()); }, true,
+                "Keep everything you carry; wake where the night began."));
+            _menu = menu;
+            hud?.ShowMenu(menu);
+        }
+
+        private IEnumerator RetryAtBusStop()
+        {
+            var hud = GameHud.Instance;
+            hud?.HideBanner();
             for (var t = 0f; t < 1f; t += Time.unscaledDeltaTime / 0.5f)
             {
                 hud?.SetFade(t);
@@ -260,6 +323,36 @@ namespace UnityEve.Game
             }
             hud?.SetFade(0f);
             hud?.ShowMessage("You wake at the bus stop. The creatures are waiting.");
+        }
+    
+        // ------------------------------------------------------------------ ending
+
+        /// <summary>The last objective fell: the ending card and the night's tally, then the title.</summary>
+        public void Ending() => StartCoroutine(EndingRoutine());
+
+        private IEnumerator EndingRoutine()
+        {
+            var hud = GameHud.Instance;
+            yield return new WaitForSecondsRealtime(2.5f);
+            for (var t = 0f; t < 1f; t += Time.unscaledDeltaTime / 1.2f)
+            {
+                hud?.SetFade(t * 0.85f);
+                yield return null;
+            }
+            _endScreen = true;
+            _player.Controller.Lock();
+            var story = StoryDirector.Instance;
+            var time = System.TimeSpan.FromSeconds(story != null ? story.PlaySeconds : 0f);
+            var save = SaveSystem.Read();
+            hud?.ShowBanner("THE NIGHT IS NOT OVER",
+                "The Mother is ash. Under Kingsport, something else is still singing.\n\n" +
+                $"Time {(int)time.TotalHours}:{time.Minutes:00}:{time.Seconds:00}    Creatures {(story != null ? story.Kills : 0)}    " +
+                $"Saves {(save != null ? save.Saves : 0)}    Level {_player.Progression.Level}", 0f);
+            var menu = new MenuModel("");
+            menu.Add(new MenuEntry("Back to the title", () => { _endScreen = false; CloseTitleMenu(); WorldTime.Instance?.ClearAll();
+                UnityEngine.SceneManagement.SceneManager.LoadScene(UnityEngine.SceneManagement.SceneManager.GetActiveScene().buildIndex); }, true, "Thank you for playing the Unity Eve vertical slice."));
+            _menu = menu;
+            hud?.ShowMenu(menu);
         }
     }
 }

@@ -108,5 +108,7 @@ namespace UnityEve.Core.Battle
         public float Aggression = 0.5f;
         /// <summary>0..1: how readily it holds back, flanks, buffs or retreats when hurt.</summary>
         public float Caution = 0.3f;
+        /// <summary>A boss: calls reinforcement waves as its health falls, gets the boss music.</summary>
+        public bool Boss;
     }
 }

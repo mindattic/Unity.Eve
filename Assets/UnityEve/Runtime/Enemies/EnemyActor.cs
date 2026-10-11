@@ -82,9 +82,11 @@ namespace UnityEve.Enemies
             _arena = arena;
             _packAlive = packAlive;
             var rng = new Rng(seed);
+            // Bosses do not queue for the pack's attack token: the Mother attacks whenever she can reach.
+            var queue = tokens != null && !Stats.Boss;
             _mind = new EnemyMind(Stats, rng, rng.Range(0.4f, 1.2f),
-                tokens != null ? () => tokens.TryTake(this) : (Func<bool>)null,
-                tokens != null ? () => tokens.Release(this) : (Action)null);
+                queue ? () => tokens.TryTake(this) : (Func<bool>)null,
+                queue ? () => tokens.Release(this) : (Action)null);
             _mind.IntentChosen += OnIntent;
             _mind.BuffApplied += OnBuffApplied;
             Health = new Health(Stats.MaxHp);

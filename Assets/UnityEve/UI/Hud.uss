@@ -55,6 +55,22 @@
 .fill-progress { background-color: rgb(216, 178, 58); }
 .fill-focus { background-color: rgb(120, 255, 210); }
 
+/* ---- objective (under the status panel) ---- */
+.objective {
+    position: absolute;
+    left: 2%; top: 30%;
+    width: 26%;
+    padding: 4px 10px;
+    font-size: 20px;
+    white-space: normal;
+    color: rgb(255, 236, 170);
+    background-color: rgba(18, 14, 10, 0.6);
+    border-left-width: 4px;
+    border-left-color: rgb(246, 176, 36);
+    -unity-text-outline-width: 1px;
+    -unity-text-outline-color: rgb(10, 8, 6);
+}
+
 /* ---- target (top centre) ---- */
 .target {
     position: absolute;

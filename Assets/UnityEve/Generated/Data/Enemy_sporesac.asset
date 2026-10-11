@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8ebecf102b133b14d9a4dfba096ede9f, type: 3}
-  m_Name: Enemy_sporesac
+  m_Name: 
   m_EditorClassIdentifier: UnityEve.Runtime::UnityEve.Data.EnemyDefinition
   Stats:
     Id: sporesac
@@ -28,4 +28,6 @@ MonoBehaviour:
     HoverHeight: 1.3
     Aggression: 0.45
     Caution: 0.75
-  Prefab: {fileID: 7895527765373799040, guid: 11d5c4af843a9c745ad9db6fc155d93e, type: 3}
+    Boss: 0
+  Prefab: {fileID: 3426079052951569087, guid: 11d5c4af843a9c745ad9db6fc155d93e, type: 3}
+  Brood: {fileID: 0}

@@ -53,6 +53,10 @@ namespace UnityEve.Editor
             BuildHouse(k);
             BuildShed(k);
             BuildMarket(k);
+            BuildHeights(k);
+            BuildGrocery(k);
+            BuildChurch(k);
+            BuildVerticalSlice(k);
             BuildRoaming(k);
 
             var player = (GameObject)PrefabUtility.InstantiatePrefab(content.PlayerPrefab);
@@ -269,11 +273,13 @@ namespace UnityEve.Editor
             return l;
         }
 
+        /// <param name="yaw">Direction the lamp's arm reaches (0 = +Z): point it over the road.</param>
         private static void StreetLamp(SceneKit k, Vector3 at, float yaw, bool flicker = false)
         {
-            Model(k.Level, Urban("detail-light-single"), at, yaw, size: 4.6f, collider: false, name: "StreetLamp");
+            var arm = Quaternion.Euler(0f, yaw, 0f) * Vector3.forward;
+            Model(k.Level, Urban("detail-light-single"), at, FaceYaw(arm), size: 4.6f, collider: false, name: "StreetLamp");
             Block(k.Level, "LampPost", at + new Vector3(-0.08f, 0f, -0.08f), at + new Vector3(0.08f, 4.2f, 0.08f), k.Metal);
-            PointLight(k, "LampLight", at + new Vector3(0f, 4.1f, 0f), new Color(1f, 0.72f, 0.42f), 9f, 11f, flicker, shadows: true);
+            PointLight(k, "LampLight", at + arm * 1f + new Vector3(0f, 4.05f, 0f), new Color(1f, 0.72f, 0.42f), 9f, 11f, flicker, shadows: true);
         }
 
         // ------------------------------------------------------------------ street
@@ -310,9 +316,7 @@ namespace UnityEve.Editor
             Block(k.Level, "YardWallNW", new Vector3(5f, 0f, -21f), new Vector3(11f, 3f, -20f), k.Brick);
             Block(k.Level, "YardWallNE", new Vector3(18f, 0f, -21f), new Vector3(25f, 3f, -20f), k.Brick);
             // Street ends: police barriers and a broken wall so the play space reads as closed.
-            Block(k.Level, "EndWest", new Vector3(-27f, 0f, -6.5f), new Vector3(-26f, 2.5f, 6.5f), k.Brick);
-            for (var z = -3f; z <= 3f; z += 1.6f)
-                Model(k.Level, Urban("detail-barrier-strong-type-a"), new Vector3(-24.5f, 0.02f, z), 90f, size: 1.6f, name: "Barrier");
+            // West: the street runs on to Willow Lane (DemoContentBuilder.Heights).
             // East: the police barricade has been smashed through; the road runs on to the Market district.
             Model(k.Level, Urban("detail-barrier-strong-damaged"), new Vector3(24.5f, 0.02f, -3.4f), 70f, size: 1.6f, name: "Barrier");
             Model(k.Level, Urban("detail-barrier-strong-damaged"), new Vector3(25f, 0.02f, 3.2f), 120f, size: 1.6f, name: "Barrier");
@@ -338,19 +342,20 @@ namespace UnityEve.Editor
             }
             Model(k.Level, Urban("truck-grey-cargo"), new Vector3(-14f, 0.02f, 2.2f), 90f, size: 5.5f, name: "ParkedTruck");
             Model(k.Level, Urban("truck-green"), new Vector3(19f, 0.02f, -2.4f), -90f, size: 5f, name: "AbandonedTruck");
-            Model(k.Level, Urban("detail-bench"), new Vector3(-18f, 0.14f, -6f), 0f, size: 1.8f, name: "BusStopBench");
+            Bench(k, new Vector3(-18f, 0.14f, -5.9f), Vector3.forward).name = "BusStopBench"; // faces the road
             Model(k.Level, Urban("pallet"), new Vector3(10.5f, 0.14f, 5.5f), 20f, size: 1.3f, name: "Pallet");
             Model(k.Level, Urban("planks"), new Vector3(-2f, 0.14f, -5.6f), 80f, size: 1.6f, name: "Planks");
-            Model(k.Level, Urban("tree-small"), new Vector3(-9f, 0.14f, -5.5f), 0f, size: 3.5f, name: "Tree");
-            Model(k.Level, Urban("tree-shrub"), new Vector3(1f, 0.14f, -5.6f), 0f, size: 1.2f, name: "Shrub");
+            Tree(k, new Vector3(-9f, 0.14f, -5.5f), 5f, 91);
+            Block(k.Level, "Planter", new Vector3(0.4f, 0.14f, -6.2f), new Vector3(1.6f, 0.6f, -5.2f), k.Plaster);
+            Tree(k, new Vector3(1f, 0.6f, -5.7f), 1.6f, 92);
             Model(k.Level, Urban("scaffolding-structure"), new Vector3(14f, 0.14f, 7.5f), 0f, size: 4.5f, name: "Scaffolding");
             Model(k.Level, Urban("detail-cables-type-a"), new Vector3(6f, 5.5f, 0f), 90f, size: 12f, collider: false, name: "Cables");
 
             // Rummage: street dumpster and the yard crate.
-            var dumpster = Model(k.Interact, Urban("detail-dumpster-closed"), new Vector3(-22.5f, 0.14f, 5.6f), 180f, size: 2.1f, name: "Container_Street_Dumpster");
+            var dumpster = Model(k.Interact, Urban("detail-dumpster-closed"), new Vector3(-22.5f, 0.14f, 5.6f), FaceYaw(Vector3.back), size: 2.1f, name: "Container_Street_Dumpster");
             Attach<Container>(dumpster, new Vector3(-22.5f, 0.14f, 4.1f), 1.8f)
                 .Configure("dumpster", c.Loot["dumpster"], "You hold your breath and dig through the trash.");
-            var mailbox = Model(k.Interact, Urban("detail-dumpster-open"), new Vector3(20f, 0.03f, -28.6f), 0f, size: 2.1f, name: "Container_Yard_Dumpster");
+            var mailbox = Model(k.Interact, Urban("detail-dumpster-open"), new Vector3(20f, 0.03f, -28.6f), FaceYaw(Vector3.forward), size: 2.1f, name: "Container_Yard_Dumpster");
             Attach<Container>(mailbox, new Vector3(20f, 0.03f, -27f), 1.8f).Configure("dumpster", c.Loot["dumpster"]);
             var crate = Model(k.Interact, Surv("box-large"), new Vector3(8f, 0.03f, -28.5f), 15f, size: 1.1f, name: "Container_Yard_Crate");
             Attach<Container>(crate, new Vector3(8.2f, 0.03f, -27.2f), 1.6f).Configure("crate", c.Loot["garage"]);
@@ -405,9 +410,12 @@ namespace UnityEve.Editor
 
         // ------------------------------------------------------------------ Mercer house interior
 
-        private static void Room(SceneKit k, string name, Vector3 min, Vector3 max, Material floor, Material walls, params (char side, float from, float to)[] openings)
+        private static void Room(SceneKit k, string name, Vector3 min, Vector3 max, Material floor, Material walls, params (char side, float from, float to)[] openings) =>
+            RoomH(k, name, min, max, floor, walls, 2.8f, openings);
+
+        private static void RoomH(SceneKit k, string name, Vector3 min, Vector3 max, Material floor, Material walls, float h, params (char side, float from, float to)[] openings)
         {
-            const float h = 2.8f, t = 0.2f;
+            const float t = 0.2f;
             Block(k.Level, name + "_Floor", new Vector3(min.x, -0.2f, min.z), new Vector3(max.x, 0f, max.z), floor);
             Block(k.Level, name + "_Ceiling", new Vector3(min.x - t, h, min.z - t), new Vector3(max.x + t, h + 0.2f, max.z + t), k.Ceiling);
             void Wall(char side, float a, float b)
