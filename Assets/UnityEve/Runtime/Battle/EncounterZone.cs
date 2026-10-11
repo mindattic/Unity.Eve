@@ -24,6 +24,8 @@ namespace UnityEve.Battle
         [SerializeField] private List<EncounterSpawn> _spawns = new List<EncounterSpawn>();
         [Tooltip("Re-arm delay after a successful escape, in seconds.")]
         [SerializeField] private float _rearmSeconds = 10f;
+        [Tooltip("A screen's random-encounter arena: never triggers by walking in, never stays cleared.")]
+        [SerializeField] private bool _roaming;
 
         private readonly List<Collider> _walls = new List<Collider>();
         private float _armedAt;
@@ -31,14 +33,19 @@ namespace UnityEve.Battle
         public string DisplayName => _displayName;
         public IReadOnlyList<EncounterSpawn> Spawns => _spawns;
         public bool Cleared { get; private set; }
+        public bool Roaming => _roaming;
         public bool IsArmed => !Cleared && Time.time >= _armedAt;
         public Bounds Bounds => GetComponent<BoxCollider>().bounds;
 
-        public void Configure(string displayName, List<EncounterSpawn> spawns)
+        public void Configure(string displayName, List<EncounterSpawn> spawns, bool roaming = false)
         {
             _displayName = displayName;
             _spawns = spawns;
+            _roaming = roaming;
         }
+
+        /// <summary>Roaming arenas get a fresh pack each time a screen rolls an encounter.</summary>
+        public void SetSpawns(List<EncounterSpawn> spawns) => _spawns = spawns;
 
         private void Awake()
         {
@@ -76,7 +83,7 @@ namespace UnityEve.Battle
 
         public void MarkCleared()
         {
-            Cleared = true;
+            Cleared = !_roaming;
             SealWalls(false);
         }
 
@@ -90,7 +97,7 @@ namespace UnityEve.Battle
 
         private void OnTriggerEnter(Collider other)
         {
-            if (!other.CompareTag("Player") || !IsArmed) return;
+            if (_roaming || !other.CompareTag("Player") || !IsArmed) return;
             var director = BattleDirector.Instance;
             if (director != null && !director.InBattle && !director.SuppressEncounters) director.Begin(this);
         }

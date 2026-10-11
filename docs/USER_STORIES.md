@@ -41,6 +41,9 @@ updated: 2026-10-11
 | US-010 | Escape chance favours stronger players, clamped | ✅ | `Escape_chance_is_clamped_and_favours_stronger_players` |
 | US-011 | Victory grants EXP; levels give Bonus Points that raise Active Time | ✅ | `Level_up_grants_bonus_points_and_bp_raise_active_time`, autoplay:`encounter_1_street_victory` |
 | US-012 | Encounters materialize in place and seal the area | ✅ | autoplay:`encounter_1_street_encounter` |
+| US-050 | Returning to a screen after being somewhere not adjacent to it can start a random encounter from that screen's pack table; bouncing between neighbouring screens never does; cooldown after any battle | ✅ | `ScreenEncounterRuleTests` (6), autoplay:`reentry_encounter` (and the bounce check) |
+| US-051 | Alien creatures built in-engine with procedural animation: Mito Crawler, Drain Tendril, Spore Sac, Husk Brute | ✅ | autoplay:`encounter_4_crossing_encounter`, `encounter_5_square_encounter`, `encounter_6_dock_encounter` |
+| US-052 | The animal models are mutated (sickly tint, glowing pustules) so nothing reads as a plain animal | ✅ | autoplay:`encounter_1_street_encounter`, `encounter_2_yard_encounter` |
 
 ## Focus (perfect dodge)
 
@@ -60,6 +63,7 @@ updated: 2026-10-11
 | US-032 | A rail camera slides along the street | ✅ | autoplay:`04_street_rail` |
 | US-033 | Stick direction holds across a cut until released | ✅ | `Movement_basis_holds_direction_across_a_cut_while_stick_held`, `Movement_basis_adopts_new_camera_instantly_on_neutral_stick` |
 | US-034 | Doors fade and move between the street and the house | ✅ | autoplay:`front_door`, `interior` |
+| US-039 | The Market district east of the street: crossing, square with fountain, stalls and church, back lane, loading dock (five screens, three encounters) | ✅ | autoplay:`11_crossing` … `15_dock`, `encounter_4..6_*` |
 | US-038 | The shed door stays locked until the key from the Mercer side table is in the bag | ✅ | autoplay:`shed_locked`, `search_container_house_sidetable`, `shed_interior`, `shed_shotgun` |
 | US-035 | Hold Interact to rummage; each container rolls its seeded loot table once | ✅ | `Loot_table_is_deterministic_and_can_roll_nothing`, autoplay:`rummage_street`, `search_container_house_fridge` |
 | US-036 | The bag has limited slots; stacks spill over and overflow is reported | ✅ | `Inventory_stacks_then_spills_into_new_slots`, `Inventory_reports_overflow_when_full` |
@@ -83,7 +87,7 @@ updated: 2026-10-11
 
 | Section | ✅ | 🟡 | ⬜ |
 | --- | --- | --- | --- |
-| Battle core | 18 | 0 | 0 |
+| Battle core | 21 | 0 | 0 |
 | Focus | 3 | 1 | 0 |
-| Exploration | 9 | 0 | 0 |
+| Exploration | 10 | 0 | 0 |
 | Presentation | 8 | 1 | 1 |

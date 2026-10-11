@@ -56,6 +56,7 @@ namespace UnityEve.Editor
             BuildData(content);
             BuildAudio(content);
             BuildEnemyPrefabs(content);
+            BuildAlienPrefabs(content);
             content.PlayerPrefab = BuildPlayerPrefab();
             AssetDatabase.SaveAssets();
             BuildScene(content);
@@ -168,6 +169,11 @@ namespace UnityEve.Editor
             Enemy("slime", "Drain Coil", 3, 64, 3, 12, 1.1f, 1.15f, 0.72f, 0.7f, 1.5f, 38, 0.3f, 0.7f);
             Enemy("wasp", "Steeple Drone", 2, 26, 0, 9, 3.2f, 1.0f, 0.4f, 0.5f, 1.0f, 22, 0.75f, 0.25f, hover: 1.25f);
             Enemy("bat", "Steeple Bat", 1, 22, 0, 5, 3.5f, 0.95f, 0.3f, 0.4f, 0.9f, 16, 0.7f, 0.35f, hover: 1.6f);
+            // The aliens (procedural, see DemoContentBuilder.Aliens).
+            Enemy("crawler", "Mito Crawler", 2, 34, 1, 9, 3.2f, 1.0f, 0.38f, 0.4f, 0.9f, 26, 0.85f, 0.2f);
+            Enemy("tendril", "Drain Tendril", 3, 58, 2, 14, 1.0f, 1.9f, 0.7f, 0.6f, 1.4f, 40, 0.5f, 0.65f);
+            Enemy("sporesac", "Spore Sac", 2, 30, 0, 10, 1.9f, 1.1f, 0.5f, 0.5f, 1.1f, 30, 0.45f, 0.75f, hover: 1.3f);
+            Enemy("brute", "Husk Brute", 5, 130, 4, 20, 1.6f, 1.6f, 0.85f, 0.8f, 1.8f, 90, 0.6f, 0.2f);
 
             LootTableDefinition Loot(string id, int pulls, params (string item, int min, int max, float weight)[] entries)
             {

@@ -11,7 +11,7 @@ Shader "UnityEve/InkOutline"
     Properties
     {
         _InkColor ("Ink", Color) = (0.03, 0.025, 0.04, 1)
-        _Thickness ("Stroke width (px at 1080p)", Range(0.5, 6)) = 2.2
+        _Thickness ("Stroke width (px at 1080p)", Range(0.5, 6)) = 1.1
         _DepthThreshold ("Silhouette sensitivity", Range(0.005, 0.5)) = 0.04
         _NormalThreshold ("Crease (1 - cos angle)", Range(0.05, 1)) = 0.35
         _FadeDistance ("Lines fade out by (m)", Float) = 40
@@ -82,9 +82,9 @@ Shader "UnityEve/InkOutline"
                 float3 nC = SampleSceneNormals(uv);
 
                 float scale = _ScreenParams.y / 1080.0;
-                float radius = max(0.8, _Thickness * scale * lerp(1.15, 0.6, saturate(depth / 25.0)));
-                // A solid core plus a softer outer rim gives a clean anti-aliased stroke.
-                float edge = max(Edge(uv, radius * 0.5, invC, nC), 0.65 * Edge(uv, radius, invC, nC));
+                // A fine pen line: about a pixel wide at 1080p, a touch finer in the distance.
+                float radius = max(0.6, _Thickness * scale * lerp(1.0, 0.75, saturate(depth / 25.0)));
+                float edge = max(Edge(uv, radius * 0.6, invC, nC), 0.8 * Edge(uv, radius, invC, nC));
 
                 float f = unity_FogParams.x * depth;
                 edge *= saturate(exp2(-f * f)) * saturate((_FadeDistance - depth) / (_FadeDistance * 0.3));

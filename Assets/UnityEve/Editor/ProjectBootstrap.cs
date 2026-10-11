@@ -78,7 +78,7 @@ namespace UnityEve.Editor
             }
             material.shader = Shader.Find("UnityEve/InkOutline");
             material.SetColor("_InkColor", new Color(0.03f, 0.025f, 0.04f, 1f));
-            material.SetFloat("_Thickness", 2.2f);
+            material.SetFloat("_Thickness", 1.1f);
             material.SetFloat("_DepthThreshold", 0.04f);
             material.SetFloat("_NormalThreshold", 0.35f);
             material.SetFloat("_FadeDistance", 40f);

@@ -67,6 +67,7 @@ namespace UnityEve.Battle
         public FocusWindow Focus => _focus;
         public IReadOnlyList<EnemyActor> Enemies => _enemies;
         public EncounterZone Zone => _zone;
+        public PlayerCharacter Player => _player;
         public MenuModel Menu => _menu;
         public int PerfectDodges => _focus.PerfectDodges;
         /// <summary>When true, encounter zones do not trigger (cutscenes, autopilot sightseeing).</summary>

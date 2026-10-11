@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8ebecf102b133b14d9a4dfba096ede9f, type: 3}
+  m_Name: Enemy_crawler
+  m_EditorClassIdentifier: UnityEve.Runtime::UnityEve.Data.EnemyDefinition
+  Stats:
+    Id: crawler
+    DisplayName: Mito Crawler
+    Level: 2
+    MaxHp: 34
+    Defense: 1
+    AttackDamage: 9
+    MoveSpeed: 3.2
+    Reach: 1
+    WindupSeconds: 0.38
+    RecoverSeconds: 0.4
+    CooldownSeconds: 0.9
+    Exp: 26
+    HoverHeight: 0
+    Aggression: 0.85
+    Caution: 0.2
+  Prefab: {fileID: 7781207041753394493, guid: 85c4530026c4f1f438daf5e30d866767, type: 3}

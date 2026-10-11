@@ -43,7 +43,8 @@ fight with Parasite Eve's real-time/pause Active Time Battle.
   Parasite Mutant's segmented "Active Time Chains".
 - **Not a mobile game.** There are no touch controls and no portrait layout.
 - **Not built on paid or non-redistributable assets.** That means no Mixamo, no Asset Store packs and no ripped game files.
-- **Not a full game.** It has one street, two interiors and three encounters, and no saves or music yet.
+- **Not a full game.** It has a street, the Market district, two interiors, six fixed encounters plus random
+  re-entry encounters, and no saves or music yet.
 
 ## 4. Architecture canon {#UE-§4}
 
@@ -107,7 +108,7 @@ Every third-party file is CC0 or OFL and listed in CREDITS.md. Missing sounds ar
 Edit `DemoContentBuilder`, then re-run it. A hand edit to `Generated/` or `Demo.unity` is lost on the next build.
 
 ## 6. Verified state {#UE-§6}
-- `dotnet test Tests/Core.Tests`: 46 passing.
+- `dotnet test Tests/Core.Tests`: 52 passing.
 - Unity 6000.4.3f1 batch-mode compile: clean.
 - `UnityEve.exe -batchmode -autoplay`: PASS, with 46-47 screenshots (the enemy-buff shot appears when a
   creature happens to power up) covering:

@@ -79,10 +79,17 @@ namespace UnityEve.Cameras
             if (holdShot != null) Cut(holdShot);
         }
 
+        /// <summary>Raised when the player's screen (the winning camera zone) changes.</summary>
+        public event System.Action<CameraZone> ZoneChanged;
+        public CameraZone ActiveZone { get; private set; }
+
         private void ApplySelection()
         {
-            if (_selector.ActiveZone >= 0 && _zones.TryGetValue(_selector.ActiveZone, out var zone) && zone.Shot != _active)
-                Cut(zone.Shot);
+            if (_selector.ActiveZone < 0 || !_zones.TryGetValue(_selector.ActiveZone, out var zone)) return;
+            if (zone.Shot != _active) Cut(zone.Shot);
+            if (zone == ActiveZone) return;
+            ActiveZone = zone;
+            ZoneChanged?.Invoke(zone);
         }
 
         public void Cut(CameraShot shot)

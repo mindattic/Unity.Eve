@@ -139,7 +139,7 @@ docs/          BIBLE.md (design canon), USER_STORIES.md (status + evidence)
 
 ## Limitations
 
-- This is a proof of concept with one street, two interiors, three encounters and seven creature types. There is no save system, title flow beyond a title card, or music.
+- This is a proof of concept with Ashgrove Street, the Market district, two interiors, six fixed encounters plus random re-entry encounters, and eleven creature types (seven mutated animals, four aliens). There is no save system, title flow beyond a title card, or music.
 - Enemies move by transform with simple separation, not a navmesh. Arena walls keep fights contained.
 - Bonus Points are spent automatically on Active Time rather than through a menu.
 - The shotgun pickup uses the survival kit's axe mesh as a stand-in.

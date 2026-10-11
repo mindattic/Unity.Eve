@@ -18,8 +18,9 @@ namespace UnityEve.Editor
 {
     /// <summary>
     /// The Demo level: Ashgrove Street at night. A bus stop, a street of shuttered houses, an alley to a
-    /// service yard, and two buildings to enter: the Mercer house (living room, kitchen, bathroom) and a
-    /// locked shed. Three encounters, rummageable containers, fixed / CCTV / rail cameras throughout.
+    /// service yard, two buildings to enter (the Mercer house and a locked shed), and east past the
+    /// broken barricade the Market district (DemoContentBuilder.Market). Six encounters plus random
+    /// encounters on returning to a screen, rummageable containers, fixed / CCTV / rail cameras.
     /// </summary>
     public static partial class DemoContentBuilder
     {
@@ -32,6 +33,8 @@ namespace UnityEve.Editor
             public Transform Level, Cameras, Zones, Lights, Interact;
             public Material Asphalt, Sidewalk, Ground, Brick, Plaster, Siding, Wood, Floor, Tile, Ceiling, Trim, Window, WindowLit, DoorMat, Metal;
             public int ShotCount;
+            /// <summary>Camera zones by name: the screens random encounters hang off.</summary>
+            public readonly Dictionary<string, CameraZone> Screens = new Dictionary<string, CameraZone>();
         }
 
         private static void BuildScene(Content content)
@@ -49,6 +52,8 @@ namespace UnityEve.Editor
             BuildStreet(k, out var spawn, out var spawnShot);
             BuildHouse(k);
             BuildShed(k);
+            BuildMarket(k);
+            BuildRoaming(k);
 
             var player = (GameObject)PrefabUtility.InstantiatePrefab(content.PlayerPrefab);
             player.transform.SetPositionAndRotation(spawn.position, spawn.rotation);
@@ -198,6 +203,7 @@ namespace UnityEve.Editor
             box.size = new Vector3(max.x - min.x, 4f, max.z - min.z);
             var zone = go.AddComponent<CameraZone>();
             zone.Configure(shot, priority);
+            k.Screens[name] = zone;
             return zone;
         }
 
@@ -305,12 +311,11 @@ namespace UnityEve.Editor
             Block(k.Level, "YardWallNE", new Vector3(18f, 0f, -21f), new Vector3(25f, 3f, -20f), k.Brick);
             // Street ends: police barriers and a broken wall so the play space reads as closed.
             Block(k.Level, "EndWest", new Vector3(-27f, 0f, -6.5f), new Vector3(-26f, 2.5f, 6.5f), k.Brick);
-            Block(k.Level, "EndEast", new Vector3(26f, 0f, -6.5f), new Vector3(27f, 2.5f, 6.5f), k.Brick);
             for (var z = -3f; z <= 3f; z += 1.6f)
-            {
                 Model(k.Level, Urban("detail-barrier-strong-type-a"), new Vector3(-24.5f, 0.02f, z), 90f, size: 1.6f, name: "Barrier");
-                Model(k.Level, Urban("detail-barrier-strong-damaged"), new Vector3(24.5f, 0.02f, z), 90f, size: 1.6f, name: "Barrier");
-            }
+            // East: the police barricade has been smashed through; the road runs on to the Market district.
+            Model(k.Level, Urban("detail-barrier-strong-damaged"), new Vector3(24.5f, 0.02f, -3.4f), 70f, size: 1.6f, name: "Barrier");
+            Model(k.Level, Urban("detail-barrier-strong-damaged"), new Vector3(25f, 0.02f, 3.2f), 120f, size: 1.6f, name: "Barrier");
 
             // Doors: Mercer house front door and the shed roll door.
             Block(k.Level, "MercerDoor", new Vector3(-6.7f, 0.14f, 6.42f), new Vector3(-5.3f, 2.4f, 6.5f), k.DoorMat, false);
@@ -368,9 +373,9 @@ namespace UnityEve.Editor
 
             // Encounters.
             Encounter(k, "1_Street", "Ashgrove Street", new Vector3(-2f, 0f, -4f), new Vector3(12f, 0f, 4f),
-                ("rat", new Vector3(4f, 0f, 1.5f)), ("rat", new Vector3(5f, 0f, -2f)), ("bat", new Vector3(3f, 0f, 0f)));
+                ("rat", new Vector3(4f, 0f, 1.5f)), ("crawler", new Vector3(5f, 0f, -2f)), ("bat", new Vector3(3f, 0f, 0f)));
             Encounter(k, "2_Yard", "Service Yard", new Vector3(6.5f, 0f, -29.5f), new Vector3(23.5f, 0f, -21.5f),
-                ("spider", new Vector3(3f, 0f, -1.5f)), ("frog", new Vector3(-3f, 0f, 1f)), ("rat", new Vector3(0f, 0f, -3f)));
+                ("spider", new Vector3(3f, 0f, -1.5f)), ("sporesac", new Vector3(-3f, 0f, 1f)), ("rat", new Vector3(0f, 0f, -3f)));
 
             // Cameras. Neighbouring zones overlap by a metre: the overlap is the hysteresis.
             var west = Shot(k, "StreetWest", new Vector3(-24.5f, 5.5f, -6f), new Vector3(-12f, 0.6f, 1.5f), ShotMode.Fixed, 55f);

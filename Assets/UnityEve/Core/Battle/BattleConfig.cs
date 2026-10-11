@@ -55,6 +55,10 @@ namespace UnityEve.Core.Battle
         public const float EnemyBuffDamageMultiplier = 1.35f;
         public const float EnemyBuffTempo = 1.2f;
 
+        // --- Random encounters on returning to a screen ------------------------------------
+        public const float ScreenEncounterChance = 0.55f;
+        public const float ScreenEncounterCooldownSeconds = 12f;
+
         // --- Katana (BladeArts) ------------------------------------------------------------
         public const int KatanaDamage = 24;
         /// <summary>Slash reach in metres (the slash range dome).</summary>

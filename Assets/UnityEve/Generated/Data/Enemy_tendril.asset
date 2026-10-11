@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8ebecf102b133b14d9a4dfba096ede9f, type: 3}
+  m_Name: Enemy_tendril
+  m_EditorClassIdentifier: UnityEve.Runtime::UnityEve.Data.EnemyDefinition
+  Stats:
+    Id: tendril
+    DisplayName: Drain Tendril
+    Level: 3
+    MaxHp: 58
+    Defense: 2
+    AttackDamage: 14
+    MoveSpeed: 1
+    Reach: 1.9
+    WindupSeconds: 0.7
+    RecoverSeconds: 0.6
+    CooldownSeconds: 1.4
+    Exp: 40
+    HoverHeight: 0
+    Aggression: 0.5
+    Caution: 0.65
+  Prefab: {fileID: 580850172992778088, guid: 99b1167f36451ca479b0a44876effa95, type: 3}

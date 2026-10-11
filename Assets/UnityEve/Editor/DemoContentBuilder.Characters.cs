@@ -421,8 +421,9 @@ namespace UnityEve.Editor
                 model.transform.localScale = Vector3.one * scale;
                 bounds = RendererBounds(model);
                 model.transform.localPosition = new Vector3(-bounds.center.x, -bounds.min.y, -bounds.center.z);
-                ConvertRenderers(model, $"{MatDir}/{s.id}");
+                ConvertRenderers(model, $"{MatDir}/{s.id}", _ => MutationTint(s.id));
                 Rim(model, new Color(1f, 0.7f, 0.45f, 0.3f));
+                Mutate(model, s.id, System.Array.IndexOf(specs, s) * 7919 + 13);
 
                 var animator = model.GetComponent<Animator>() ?? model.AddComponent<Animator>();
                 animator.runtimeAnimatorController = CreatureAnimator(s.id, modelPath, s.flier);

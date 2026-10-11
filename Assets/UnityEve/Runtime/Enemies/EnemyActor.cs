@@ -24,6 +24,7 @@ namespace UnityEve.Enemies
         [SerializeField] private float _aimHeight = 0.4f;
 
         private Renderer[] _renderers;
+        private ProceduralCreature _procedural;
         private MaterialPropertyBlock _block;
         private EnemyAttackCycle _cycle;
         private EnemyMind _mind;
@@ -70,6 +71,7 @@ namespace UnityEve.Enemies
         private void Awake()
         {
             _renderers = GetComponentsInChildren<Renderer>();
+            _procedural = GetComponentInChildren<ProceduralCreature>();
             _block = new MaterialPropertyBlock();
             _baseScale = transform.localScale;
         }
@@ -104,6 +106,7 @@ namespace UnityEve.Enemies
         {
             _anchor = _target.position;
             if (_animator != null) _animator.SetTrigger(AnimParams.Attack);
+            _procedural?.Attack();
             AudioService.Play(SoundId.EnemyTelegraph, 0.7f);
         }
 
@@ -151,6 +154,7 @@ namespace UnityEve.Enemies
             {
                 _deathTime = Time.time;
                 if (_animator != null) _animator.SetTrigger(AnimParams.Die);
+                _procedural?.Die();
                 AudioService.Play(SoundId.EnemyDeath);
                 _mind?.Leave();
                 Died?.Invoke(this);
@@ -236,6 +240,11 @@ namespace UnityEve.Enemies
             {
                 _animator.SetFloat(AnimParams.Speed, speed, 0.08f, Mathf.Max(dt, 1e-4f));
                 _animator.speed = stunned ? 0.2f : tempo;
+            }
+            if (_procedural != null)
+            {
+                _procedural.SetSpeed(speed);
+                _procedural.Playback = stunned ? 0.2f : tempo;
             }
 
             // Rearing up before a charge: a quick crouch-and-swell the player can read.

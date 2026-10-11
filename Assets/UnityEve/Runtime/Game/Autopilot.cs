@@ -132,6 +132,8 @@ namespace UnityEve.Game
             }
             _player = session.Player;
             var failures = 0;
+            // Scripted steps teleport between screens; random encounters only run in their own step.
+            if (ScreenEncounters.Instance != null) ScreenEncounters.Instance.Enabled = false;
 
             yield return Shot("street_start");
 
@@ -159,7 +161,7 @@ namespace UnityEve.Game
             }
 
             // 3. Battles: walk into each encounter and fight it through the command menu.
-            foreach (var zone in FindObjectsByType<EncounterZone>(FindObjectsSortMode.None).OrderBy(z => z.name))
+            foreach (var zone in FindObjectsByType<EncounterZone>(FindObjectsSortMode.None).Where(z => !z.Roaming).OrderBy(z => z.name))
             {
 
 
@@ -182,6 +184,10 @@ namespace UnityEve.Game
                 }
                 yield return Real(0.5f);
             }
+
+            // 3b. Returning to a screen after going somewhere far can start a random encounter;
+            //     stepping back and forth between neighbouring screens never does.
+            yield return ReentryEncounter(() => failures++);
 
             // 4. The shed is padlocked until the key from the Mercer side table is in the bag.
             var shedDoor = FindObjectsByType<Door>(FindObjectsSortMode.None).FirstOrDefault(d => d.name == "Door_Shed_Enter");
@@ -293,6 +299,61 @@ namespace UnityEve.Game
             Application.Quit(failures == 0 ? 0 : 1);
         }
 
+        private Transform Marker(string name) => FindObjectsByType<Transform>(FindObjectsSortMode.None).FirstOrDefault(t => t.name == name);
+
+        private IEnumerator ReentryEncounter(Action fail)
+        {
+            var screens = ScreenEncounters.Instance;
+            var west = Marker("Tour_01_street_west");
+            var cctv = Marker("Tour_03_street_cctv");
+            var far = Marker("Tour_10_shed"); // an interior: far from the street, hosts no encounters itself
+            if (screens == null || west == null || cctv == null || far == null)
+            {
+                Log("FAIL re-entry encounter: missing screens");
+                fail();
+                yield break;
+            }
+            var battle = BattleDirector.Instance;
+            // Settle on the street first (still disabled) so earlier tours do not count as trips away.
+            Teleport(cctv);
+            yield return Real(0.4f);
+            Teleport(west);
+            yield return Real(0.4f);
+            screens.Enabled = true;
+            screens.Rule.Chance = 1f;
+            screens.Rule.Cooldown = 0f;
+
+            Teleport(cctv); // neighbour
+            yield return Real(0.5f);
+            Teleport(west); // straight back: must stay quiet
+            yield return Real(0.6f);
+            if (battle.InBattle)
+            {
+                Log("FAIL re-entry encounter: bouncing between neighbouring screens started a battle");
+                fail();
+                yield return FightToTheEnd(battle, "reentry_bounce");
+            }
+
+            Teleport(far); // far away
+            yield return Real(0.5f);
+            Teleport(west); // a qualifying return
+            yield return Real(0.8f);
+            if (!battle.InBattle)
+            {
+                Log("FAIL re-entry encounter: returning from a far screen did not start a battle");
+                fail();
+            }
+            else
+            {
+                yield return Real(1.2f);
+                yield return Shot("reentry_encounter");
+                yield return FightToTheEnd(battle, "reentry");
+            }
+            screens.Rule.Chance = Core.Battle.BattleConfig.ScreenEncounterChance;
+            screens.Rule.Cooldown = Core.Battle.BattleConfig.ScreenEncounterCooldownSeconds;
+            screens.Enabled = false;
+        }
+
         private IEnumerator FightToTheEnd(BattleDirector battle, string tag)
         {
             var turn = 0;
@@ -377,8 +438,9 @@ namespace UnityEve.Game
                         yield return Real(0.5f);
                     }
                 }
-                else if (turn == 3)
+                else if (turn == 3 || (_player.NeedsReload && !_player.CanReload))
                 {
+                    // Out of bullets with nothing to reload: the katana still works.
                     // Katana Slash: step up to the nearest creature and cut.
                     var nearest = battle.Enemies.Where(e => e.IsAlive)
                         .OrderBy(e => (e.transform.position - _player.transform.position).sqrMagnitude).FirstOrDefault();

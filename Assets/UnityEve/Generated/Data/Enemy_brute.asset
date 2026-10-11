@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8ebecf102b133b14d9a4dfba096ede9f, type: 3}
+  m_Name: Enemy_brute
+  m_EditorClassIdentifier: UnityEve.Runtime::UnityEve.Data.EnemyDefinition
+  Stats:
+    Id: brute
+    DisplayName: Husk Brute
+    Level: 5
+    MaxHp: 130
+    Defense: 4
+    AttackDamage: 20
+    MoveSpeed: 1.6
+    Reach: 1.6
+    WindupSeconds: 0.85
+    RecoverSeconds: 0.8
+    CooldownSeconds: 1.8
+    Exp: 90
+    HoverHeight: 0
+    Aggression: 0.6
+    Caution: 0.2
+  Prefab: {fileID: 6886215221772252378, guid: 490f2e976b8e1784089b9c4e72507aeb, type: 3}
