@@ -54,7 +54,7 @@ updated: 2026-10-10
 | US-032 | A rail camera slides along the street | ✅ | autoplay:`04_street_rail` |
 | US-033 | Stick direction holds across a cut until released | ✅ | `Movement_basis_holds_direction_across_a_cut_while_stick_held`, `Movement_basis_adopts_new_camera_instantly_on_neutral_stick` |
 | US-034 | Doors fade and move between the street and the house | ✅ | autoplay:`front_door`, `interior` |
-| US-038 | The shed door stays locked until the key from the Mercer side table is in the bag | 🟡 | Built (`Door` + `key_shed`); autoplay does not exercise the lock yet |
+| US-038 | The shed door stays locked until the key from the Mercer side table is in the bag | ✅ | autoplay:`shed_locked`, `search_container_house_sidetable`, `shed_interior`, `shed_shotgun` |
 | US-035 | Hold Interact to rummage; each container rolls its seeded loot table once | ✅ | `Loot_table_is_deterministic_and_can_roll_nothing`, autoplay:`rummage_street`, `search_container_house_fridge` |
 | US-036 | The bag has limited slots; stacks spill over and overflow is reported | ✅ | `Inventory_stacks_then_spills_into_new_slots`, `Inventory_reports_overflow_when_full` |
 | US-037 | Field menu: items, equip, controls | ✅ | autoplay:`field_menu` |
@@ -76,5 +76,5 @@ updated: 2026-10-10
 | --- | --- | --- | --- |
 | Battle core | 12 | 0 | 0 |
 | Focus | 3 | 1 | 0 |
-| Exploration | 8 | 1 | 0 |
+| Exploration | 9 | 0 | 0 |
 | Presentation | 4 | 1 | 2 |

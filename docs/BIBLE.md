@@ -4,7 +4,7 @@ project: UnityEve
 code: UE
 layer: bible
 status: living
-updated: 2026-10-10
+updated: 2026-10-11
 ---
 
 # Unity Eve (UE): Bible
@@ -97,11 +97,12 @@ Edit `DemoContentBuilder`, then re-run it. A hand edit to `Generated/` or `Demo.
 ## 6. Verified state {#UE-§6}
 - `dotnet test Tests/Core.Tests`: 31 passing.
 - Unity 6000.4.3f1 batch-mode compile: clean.
-- `UnityEve.exe -batchmode -autoplay`: PASS, with 43 screenshots covering:
+- `UnityEve.exe -batchmode -autoplay`: PASS, with 47 screenshots covering:
   - the camera tour
   - rummaging
   - 3 encounters won through the command menu, range dome, grenade and Focus
   - doors and searching the house interior
+  - the padlocked shed refusing entry, the side-table key opening it, and the shotgun pickup
   - the field menu
 
 ## 7. Active frontier {#UE-§7}

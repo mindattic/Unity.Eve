@@ -111,6 +111,13 @@ namespace UnityEve.Game
             Cameras.CameraDirector.Instance?.ResetZones();
         }
 
+        private bool IsNear(Transform spot, float metres = 2f)
+        {
+            var d = _player.transform.position - spot.position;
+            d.y = 0f;
+            return d.magnitude < metres;
+        }
+
         private IEnumerator Start()
         {
             if (Application.isBatchMode) SetupOffscreen();
@@ -175,7 +182,28 @@ namespace UnityEve.Game
                 yield return Real(0.5f);
             }
 
-            // 4. Enter the house, search everything inside.
+            // 4. The shed is padlocked until the key from the Mercer side table is in the bag.
+            var shedDoor = FindObjectsByType<Door>(FindObjectsSortMode.None).FirstOrDefault(d => d.name == "Door_Shed_Enter");
+            if (shedDoor == null)
+            {
+                Log("FAIL no Door_Shed_Enter in scene");
+                failures++;
+            }
+            else
+            {
+                Teleport(shedDoor.ApproachPoint, shedDoor.transform.position);
+                yield return Real(0.4f);
+                shedDoor.Interact(_player);
+                yield return Real(1.2f);
+                yield return Shot("shed_locked");
+                if (!shedDoor.Locked || IsNear(shedDoor.Destination))
+                {
+                    Log("FAIL shed opened without the key");
+                    failures++;
+                }
+            }
+
+            // 5. Enter the house, search everything inside, including the side table with the shed key.
             var houseDoor = FindObjectsByType<Door>(FindObjectsSortMode.None).OrderBy(d => d.name).FirstOrDefault(d => d.name.Contains("Enter"));
             if (houseDoor != null)
             {
@@ -187,6 +215,8 @@ namespace UnityEve.Game
                 yield return Shot("interior");
                 var inside = FindObjectsByType<Container>(FindObjectsSortMode.None)
                     .Where(c => c.name.Contains("House") && !c.Searched).OrderBy(c => c.name).Take(3).ToList();
+                var sideTable = FindObjectsByType<Container>(FindObjectsSortMode.None).FirstOrDefault(c => c.name == "Container_House_SideTable");
+                if (sideTable != null && !inside.Contains(sideTable)) inside.Add(sideTable);
                 foreach (var c in inside)
                 {
                     Teleport(c.transform.position + c.transform.forward * 1.0f, c.transform.position);
@@ -197,7 +227,41 @@ namespace UnityEve.Game
                 }
             }
 
-            // 5. Field menu.
+            // 6. With the key in the bag the shed opens; take the shotgun off the workbench.
+            if (shedDoor != null)
+            {
+                if (_player.Bag.CountOf("key_shed") == 0)
+                {
+                    Log("FAIL side table did not give key_shed");
+                    failures++;
+                }
+                Teleport(shedDoor.ApproachPoint, shedDoor.transform.position);
+                yield return Real(0.4f);
+                shedDoor.Interact(_player);
+                yield return Real(1.9f);
+                yield return Shot("shed_interior");
+                if (shedDoor.Locked || !IsNear(shedDoor.Destination))
+                {
+                    Log("FAIL shed did not open with the key");
+                    failures++;
+                }
+                var shotgun = FindObjectsByType<WeaponPickup>(FindObjectsSortMode.None).FirstOrDefault();
+                if (shotgun != null)
+                {
+                    Teleport(shotgun.ApproachPoint, shotgun.transform.position);
+                    yield return Real(0.5f);
+                    _player.GetComponent<Interactor>().InteractNow(shotgun);
+                    yield return Real(0.3f);
+                    yield return Shot("shed_shotgun");
+                    if (!_player.Weapons.Any(w => w != null && w.Stats.Id == "shotgun"))
+                    {
+                        Log("FAIL shotgun pickup did not add the weapon");
+                        failures++;
+                    }
+                }
+            }
+
+            // 7. Field menu.
             session.OpenFieldMenu();
             yield return Real(0.3f);
             yield return Shot("field_menu");

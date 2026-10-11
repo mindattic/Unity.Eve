@@ -23,6 +23,7 @@ namespace UnityEve.Interaction
         private bool _busy;
 
         public Transform Destination => _destination;
+        public bool Locked => _requiredKey != null && !_unlocked;
         public override string Prompt => _label;
         public override bool CanInteract => base.CanInteract && !_busy;
 
