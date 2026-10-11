@@ -125,7 +125,8 @@ Edit `DemoContentBuilder`, then re-run it. A hand edit to `Generated/` or `Demo.
   - the field menu
   - the whole story: the barred church, the grocery's two keys, a payphone save and a real
     scene-reload load (level, facts, bag, searched containers, unlocked doors, position all
-    checked), the Mito Mother and her brood waves, and the ending card
+    checked), a death and the game-over menu's Continue (a second reload), the music switching
+    between explore / battle / boss, the Mito Mother and her brood waves, and the ending card
   - the title screen
 
 ## 7. Active frontier {#UE-§7}

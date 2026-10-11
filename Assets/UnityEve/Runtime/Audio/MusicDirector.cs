@@ -18,6 +18,11 @@ namespace UnityEve
         private AudioSource _current;
         private float _fade = 1f;
 
+        public static MusicDirector Instance { get; private set; }
+        /// <summary>The loop now playing: "explore", "battle" or "boss" (autoplay checks this).</summary>
+        public string Playing => _current == null || _current.clip == null ? "none"
+            : _current.clip == _boss ? "boss" : _current.clip == _battle ? "battle" : "explore";
+
         public void Configure(AudioClip explore, AudioClip battle, AudioClip boss)
         {
             _explore = explore;
@@ -38,6 +43,7 @@ namespace UnityEve
 
         private void Awake()
         {
+            Instance = this;
             _a = Source();
             _b = Source();
         }

@@ -390,13 +390,7 @@ namespace UnityEve.Game
 
             var oldSession = GameSession.Instance;
             SaveSystem.Load();
-            var deadline = Time.realtimeSinceStartup + 20f;
-            while ((GameSession.Instance == null || GameSession.Instance == oldSession || SaveSystem.Pending != null) && Time.realtimeSinceStartup < deadline)
-                yield return null;
-            yield return Real(1.2f);
-            if (Application.isBatchMode) SetupOffscreen();
-            if (ScreenEncounters.Instance != null) ScreenEncounters.Instance.Enabled = false;
-            _player = GameSession.Instance.Player;
+            yield return WaitForReload(oldSession);
             story = StoryDirector.Instance;
             yield return Real(0.5f);
             yield return Shot("loaded");
@@ -407,6 +401,10 @@ namespace UnityEve.Game
             Check(Named<Door>("Door_Storeroom_Enter").Unlocked, "storeroom door stays unlocked");
             Check(Vector3.Distance(_player.transform.position, Named<SavePoint>("SavePoint_Grocery").ApproachPoint) < 2f, "resumed at the payphone");
 
+            // Game over: fall in a fight, see the menu, Continue back to the last save.
+            yield return GameOverAndContinue(Check);
+            story = StoryDirector.Instance;
+
             // Saint Ansel's: in through the side door, into the nave, and the Mother.
             yield return UseDoor("Door_Church_Enter", "nave");
             Check(story.Objectives.Knows("flag:church_entered"), "inside Saint Ansel's");
@@ -415,6 +413,8 @@ namespace UnityEve.Game
             Teleport(boss.Bounds.center - new Vector3(0f, boss.Bounds.extents.y - 0.1f, 3f), boss.Bounds.center + Vector3.forward * 4f);
             yield return Real(0.4f);
             Check(battle.InBattle && battle.BossFight, "the boss fight begins");
+            yield return Real(0.3f);
+            Check(MusicDirector.Instance != null && MusicDirector.Instance.Playing == "boss", "boss music plays");
             yield return Real(1.6f);
             yield return Shot("boss_encounter");
             yield return FightToTheEnd(battle, "boss", 240f);
@@ -422,6 +422,53 @@ namespace UnityEve.Game
             yield return Real(6f);
             yield return Shot("ending");
             Check(story.Ended && GameSession.Instance.OnEndScreen, "the ending plays");
+        }
+
+        private IEnumerator WaitForReload(GameSession old)
+        {
+            var deadline = Time.realtimeSinceStartup + 20f;
+            while ((GameSession.Instance == null || GameSession.Instance == old || SaveSystem.Pending != null) && Time.realtimeSinceStartup < deadline)
+                yield return null;
+            yield return Real(1.2f);
+            if (Application.isBatchMode) SetupOffscreen();
+            if (ScreenEncounters.Instance != null) ScreenEncounters.Instance.Enabled = false;
+            _player = GameSession.Instance.Player;
+        }
+
+        private IEnumerator GameOverAndContinue(Action<bool, string> check)
+        {
+            // Start a fight the honest way (a qualifying return to a screen), then fall in it.
+            var screens = ScreenEncounters.Instance;
+            var west = Marker("Tour_01_street_west");
+            var cctv = Marker("Tour_03_street_cctv");
+            var far = Marker("Tour_10_shed");
+            Teleport(cctv);
+            yield return Real(0.4f);
+            Teleport(west);
+            yield return Real(0.4f);
+            screens.Enabled = true;
+            screens.Rule.Chance = 1f;
+            screens.Rule.Cooldown = 0f;
+            Teleport(far);
+            yield return Real(0.5f);
+            Teleport(west);
+            yield return Real(1.2f);
+            var battle = BattleDirector.Instance;
+            check(battle.InBattle, "a fight to fall in");
+            check(MusicDirector.Instance != null && MusicDirector.Instance.Playing == "battle", "battle music plays");
+            screens.Enabled = false;
+            _player.TakeDamage(99999);
+            var deadline = Time.realtimeSinceStartup + 10f;
+            while (GameSession.Instance.CurrentMenu == null && Time.realtimeSinceStartup < deadline) yield return null;
+            yield return Real(0.4f);
+            yield return Shot("game_over");
+            var old = GameSession.Instance;
+            check(old.CurrentMenu != null && old.AutoChoose("Continue"), "game over offers Continue");
+            yield return WaitForReload(old);
+            yield return Shot("continued");
+            check(!_player.IsDead && Vector3.Distance(_player.transform.position, Named<SavePoint>("SavePoint_Grocery").ApproachPoint) < 2f,
+                "continued from the grocery payphone");
+            check(MusicDirector.Instance != null && MusicDirector.Instance.Playing == "explore", "exploration music after the reload");
         }
 
         private Transform Marker(string name) => FindObjectsByType<Transform>(FindObjectsSortMode.None).FirstOrDefault(t => t.name == name);

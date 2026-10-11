@@ -92,8 +92,8 @@ updated: 2026-10-11
 | US-062 | The story: Mercer house -> shed shotgun -> barred church -> grocery register (storeroom key) -> manager's desk (church key) -> the nave | ✅ | autoplay story log, `church_barred`, `grocery_inside`, `storeroom_unlocked`, `church_key`, `nave` |
 | US-063 | Boss: the Mito Mother, rooted in the nave, long tentacle reach, calls her brood at 66% and 33% health | ✅ | `Boss_calls_each_reinforcement_wave_once_as_its_health_falls`, autoplay:`boss_encounter`, `boss_victory` |
 | US-064 | Ending: the night's tally (time, creatures, saves, level), then back to the title | ✅ | `Completing_the_last_objective_ends_the_story_once`, autoplay:`ending` |
-| US-065 | Dying offers Continue from the last save or a retry at the bus stop | 🟡 | Built in `GameSession.DefeatRoutine`; autoplay never dies, so the menu is unverified by play |
-| US-066 | Music: exploration, battle and boss loops crossfade with the fights | 🟡 | `MusicDirector` + synthesized loops; batch autoplay has no audio to check by ear |
+| US-065 | Dying offers Continue from the last save or a retry at the bus stop | ✅ | autoplay:`game_over` (falls in a re-entry fight, chooses Continue), `continued` (back at the grocery payphone) |
+| US-066 | Music: exploration, battle and boss loops crossfade with the fights | ✅ | autoplay checks the playing loop: battle in a fight, explore after Continue, boss against the Mother (by ear: owner) |
 | US-067 | Ashgrove Heights: Willow Lane's seeded houses, cars, signs, benches facing the street; Kingsport Foods and its parking lot | ✅ | autoplay:`16_willow_junction` ... `22_storefront` |
 | US-068 | Kingsport Foods interior: checkout, aisles, produce, freezers, locked staff storeroom, two fights | ✅ | autoplay:`23_grocery_checkout` ... `26_storeroom`, `encounter_9_grocery_*`, `encounter_10_storeroom_*` |
 
@@ -105,4 +105,4 @@ updated: 2026-10-11
 | Focus | 3 | 1 | 0 |
 | Exploration | 10 | 0 | 0 |
 | Presentation | 9 | 1 | 0 |
-| Vertical slice | 7 | 2 | 0 |
+| Vertical slice | 9 | 0 | 0 |

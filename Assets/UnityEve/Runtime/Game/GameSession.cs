@@ -274,6 +274,17 @@ namespace UnityEve.Game
 
         private bool _endScreen;
         public bool OnEndScreen => _endScreen;
+        public MenuModel CurrentMenu => _menu;
+
+        /// <summary>Selects and confirms the first menu entry starting with <paramref name="prefix"/> (autoplay).</summary>
+        public bool AutoChoose(string prefix)
+        {
+            if (_menu == null) return false;
+            var index = _menu.Entries.FindIndex(e => e.Label.TrimStart().StartsWith(prefix, System.StringComparison.OrdinalIgnoreCase));
+            if (index < 0) return false;
+            _menu.Select(index);
+            return _menu.Confirm();
+        }
 
         public void OnPlayerDefeated(EncounterZone zone)
         {
@@ -285,11 +296,6 @@ namespace UnityEve.Game
             var hud = GameHud.Instance;
             hud?.ShowBanner("YOU DIED", "Kingsport keeps her... for now.", 0f);
             yield return new WaitForSecondsRealtime(1.5f);
-            if (Autopilot.Requested)
-            {
-                yield return RetryAtBusStop();
-                yield break;
-            }
             // Continue from the last save, or wake at the bus stop.
             _endScreen = true;
             var save = SaveSystem.Read();
