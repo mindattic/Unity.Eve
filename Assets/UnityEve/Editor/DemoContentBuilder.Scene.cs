@@ -187,6 +187,7 @@ namespace UnityEve.Editor
         private static string Furn(string n) => $"{Art}/Models/furniture/{n}.glb";
         private static string Surv(string n) => $"{Art}/Models/survival/{n}.glb";
         private static string Car(string n) => $"{Art}/Models/car-kit/{n}.glb";
+        private static string Weap(string n) => $"{Art}/Models/weapons/{n}.glb";
 
         private static CameraShot Shot(SceneKit k, string name, Vector3 position, Vector3 lookAt, ShotMode mode, float fov = 50f, float maxYaw = 55f, float maxPitch = 25f)
         {
@@ -616,7 +617,7 @@ namespace UnityEve.Editor
             Model(k.Interact, Surv("barrel-open"), o + new Vector3(-2.4f, 0f, 3.2f), 40f, size: 1.1f, name: "Barrel");
             var chest = Model(k.Interact, Surv("chest"), o + new Vector3(2.3f, 0f, 3.8f), 270f, size: 1.1f, name: "Container_Shed_Chest");
             Attach<Container>(chest, o + new Vector3(1.2f, 0f, 3.8f), 1.6f).Configure("tool chest", c.Loot["garage"]);
-            var shotgun = Model(k.Interact, Surv("tool-axe"), o + new Vector3(0.3f, 1.05f, 4.4f), 90f, size: 0.9f, collider: false, name: "WeaponPickup_Shotgun");
+            var shotgun = Model(k.Interact, Weap("Shotgun"), o + new Vector3(0.3f, 1.05f, 4.4f), 90f, size: 1.0f, collider: false, name: "WeaponPickup_Shotgun");
             Attach<WeaponPickup>(shotgun, o + new Vector3(0.3f, 0f, 3.2f), 1.8f, 0f).Configure(c.Weapons["shotgun"], c.Items["ammo_shells"], 2);
             Glint(k, shotgun.transform);
 
