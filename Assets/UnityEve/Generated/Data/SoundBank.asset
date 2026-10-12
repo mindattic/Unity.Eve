@@ -126,6 +126,36 @@ MonoBehaviour:
     - {fileID: 8300000, guid: 24e60821201f6b74097f70402c16342d, type: 3}
     Volume: 0.8
     PitchRange: {x: 0.95, y: 1.05}
+  - Id: 38
+    Clips:
+    - {fileID: 8300000, guid: 05f5fce1d8429ed4694a60a547327a9e, type: 3}
+    Volume: 0.7
+    PitchRange: {x: 0.95, y: 1.05}
+  - Id: 39
+    Clips:
+    - {fileID: 8300000, guid: 1806d8a7c922fc7469407f5726913733, type: 3}
+    Volume: 0.7
+    PitchRange: {x: 0.95, y: 1.05}
+  - Id: 40
+    Clips:
+    - {fileID: 8300000, guid: 8cb8750de994ba442a18174a1196bc10, type: 3}
+    Volume: 0.7
+    PitchRange: {x: 0.95, y: 1.05}
+  - Id: 41
+    Clips:
+    - {fileID: 8300000, guid: ea25bdb9cde3af242800352ff1c80064, type: 3}
+    Volume: 0.6
+    PitchRange: {x: 0.95, y: 1.05}
+  - Id: 42
+    Clips:
+    - {fileID: 8300000, guid: 9e910e1ce1a0c3246ba4adedbdbd927c, type: 3}
+    Volume: 0.8
+    PitchRange: {x: 0.95, y: 1.05}
+  - Id: 43
+    Clips:
+    - {fileID: 8300000, guid: 02ca55c863cef4842a49ccf2ed13cbbd, type: 3}
+    Volume: 0.8
+    PitchRange: {x: 0.95, y: 1.05}
   - Id: 15
     Clips:
     - {fileID: 8300000, guid: 65790214321377241971d8dd4e0a3b3f, type: 3}

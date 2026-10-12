@@ -37,13 +37,24 @@ namespace UnityEve.Player
         private int _suppressDodgeFrame = -1;
         private Vector3 _animLastPosition;
         private bool _backpedaling;
+        private bool _shootdodging;
+        private float _shootdodgeVerticalSpeed;
+        private Vector3 _shootdodgeDirection;
+        private float _shootdodgeReadyAt = -999f;
+        private Vector3 _currentWish;
 
         public Animator Animator => _animator;
         public bool IsDodging => Time.time < _dodgeEnds;
-        public bool IsInvulnerable => Time.time < _invulnerableUntil;
+        /// <summary>Max Payne shootdodge: airborne, committed to a straight leap, untouchable, firing.</summary>
+        public bool IsShootdodging => _shootdodging;
+        public bool ShootdodgeReady => Time.time >= _shootdodgeReadyAt;
+        /// <summary>This frame's camera-relative movement direction (what the stick is asking for right
+        /// now), for BattleDirector to hand back as the leap direction when it starts a shootdodge.</summary>
+        public Vector3 CurrentWish => _currentWish;
+        public bool IsInvulnerable => Time.time < _invulnerableUntil || _shootdodging;
         /// <summary>Scaled seconds since the most recent dodge started (for perfect-dodge timing).</summary>
         public float SecondsSinceDodge => Time.time - _dodgeStarted;
-        public bool CanAct => _locks == 0 && Time.time >= _rootedUntil && !IsDodging && (_character == null || !_character.IsDead);
+        public bool CanAct => _locks == 0 && Time.time >= _rootedUntil && !IsDodging && !_shootdodging && (_character == null || !_character.IsDead);
         /// <summary>0..1 of Kat's silhouette a cover prop blocks from the nearest living threat; 0 outside
         /// battle or with nothing alive to hide from.</summary>
         public float CoverFraction
@@ -114,9 +125,24 @@ namespace UnityEve.Player
             _basis.Tick(dt, cameraYaw, stick.sqrMagnitude > 0.0001f);
             var (wx, wz) = _basis.ToWorld(stick.x, stick.y);
             var wish = new Vector3(wx, 0f, wz);
+            _currentWish = wish;
 
             if (input != null && input.CancelPressed && DodgeEnabled && CanAct && _locks == 0 && Time.frameCount != _suppressDodgeFrame && Time.time >= _dodgeReadyAt && !IsDodging)
                 StartDodge(wish);
+
+            if (_shootdodging)
+            {
+                // Real time, not scaled: the dive itself stays at normal speed while bullet time (a
+                // WorldTime scale the battle director applies for its duration) slows everything else,
+                // the same way Max's own leap never slows down around him.
+                var udt = Time.unscaledDeltaTime;
+                _shootdodgeVerticalSpeed -= BattleConfig.ShootdodgeGravity * udt;
+                var step = (_shootdodgeDirection * BattleConfig.ShootdodgeSpeed + Vector3.up * _shootdodgeVerticalSpeed) * udt;
+                _body.Move(step);
+                if (_body.isGrounded && _shootdodgeVerticalSpeed <= 0f) EndShootdodge();
+                _animLastPosition = transform.position;
+                return;
+            }
 
             Vector3 horizontal;
             if (IsDodging)
@@ -194,11 +220,7 @@ namespace UnityEve.Player
         private float ApproachSlowdown(Vector3 wish)
         {
             if (_awareness == null || wish.sqrMagnitude < 0.0001f) return 1f;
-            if (!_awareness.TryGetNearest(transform.position, out var point, out var dist)) return 1f;
-            var toObstacle = point - transform.position;
-            toObstacle.y = 0f;
-            if (toObstacle.sqrMagnitude < 0.0001f) return _obstacleMinSpeedFactor;
-            if (Vector3.Dot(wish.normalized, toObstacle.normalized) < 0.3f) return 1f; // not heading that way
+            if (!_awareness.TryGetNearest(transform.position, wish, out _, out var dist)) return 1f;
             var k = Mathf.Clamp01(dist / _awareness.Radius);
             return Mathf.Lerp(_obstacleMinSpeedFactor, 1f, k);
         }
@@ -243,6 +265,32 @@ namespace UnityEve.Player
             _velocity = Vector3.zero;
             if (_animator != null) _animator.SetTrigger(AnimParams.Dodge);
             AudioService.Play(SoundId.Dodge);
+        }
+
+        /// <summary>Max Payne shootdodge: leaps in <paramref name="wish"/> (or her facing, with no stick
+        /// input), untouchable and free to fire for as long as she's airborne. BattleDirector gates when
+        /// this is allowed (battle active, a ranged weapon equipped, off cooldown) and owns the bullet-time
+        /// scale and the landing damage; this only owns the leap itself.</summary>
+        public bool TryStartShootdodge(Vector3 wish)
+        {
+            if (_shootdodging || IsDodging || !CanAct || !ShootdodgeReady) return false;
+            _shootdodging = true;
+            _shootdodgeDirection = wish.sqrMagnitude > 0.01f ? wish.normalized : transform.forward;
+            _shootdodgeVerticalSpeed = BattleConfig.ShootdodgeRiseSpeed;
+            _velocity = Vector3.zero;
+            transform.rotation = Quaternion.LookRotation(_shootdodgeDirection);
+            if (_animator != null) _animator.SetTrigger(AnimParams.Dodge);
+            AudioService.Play(SoundId.Shootdodge);
+            return true;
+        }
+
+        private void EndShootdodge()
+        {
+            _shootdodging = false;
+            _shootdodgeReadyAt = Time.time + BattleConfig.ShootdodgeCooldownSeconds;
+            Root(BattleConfig.ShootdodgeLandStunSeconds);
+            if (_animator != null) _animator.SetTrigger(AnimParams.Hit);
+            AudioService.Play(SoundId.HardLand);
         }
     }
 }

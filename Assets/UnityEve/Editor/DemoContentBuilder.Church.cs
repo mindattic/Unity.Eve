@@ -138,6 +138,7 @@ namespace UnityEve.Editor
             enter.Configure("Enter Saint Ansel's", naveIn, c.Items["key_church"],
                 "Barred from inside. A note is pinned to the door: 'Spare side-door key is with Frank at Kingsport Foods. - Fr. Ames'");
             enter.SetStoryFacts("flag:church_tried", "flag:church_entered");
+            Locks.Edge("Street", "ChurchInside", "key_church");
             var leave = Attach<Door>(Marker(k, "Door_Church_Exit", o + new Vector3(0f, 0f, 0.1f), 0f), o + new Vector3(0f, 0f, 1.1f), 1.6f, 1.2f);
             leave.Configure("Go back out to the square", squareOut);
 

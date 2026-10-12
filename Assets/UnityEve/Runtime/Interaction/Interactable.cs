@@ -25,6 +25,15 @@ namespace UnityEve.Interaction
 
         public abstract void Interact(PlayerCharacter player);
 
+        /// <summary>Called once per <see cref="HoldSeconds"/> elapsed while Interact stays held. The base
+        /// behaviour finishes in one stage; a container overrides this to keep rummaging for more while
+        /// the player keeps holding. Returns true to start another stage, false to end the hold.</summary>
+        public virtual bool InteractStage(PlayerCharacter player)
+        {
+            Interact(player);
+            return false;
+        }
+
         protected virtual void OnEnable() => Interactor.Register(this);
         protected virtual void OnDisable() => Interactor.Unregister(this);
 

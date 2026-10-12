@@ -34,6 +34,15 @@ namespace UnityEve.Core.Battle
             return (sx + dx * k, sz + dz * k);
         }
 
+        /// <summary>Where a rush aimed in direction (dx, dz) from (sx, sz) ends, at the given range — Line
+        /// Rush's hand-aimed counterpart to <see cref="RushEnd"/>'s lock-on-and-extend-through-the-target.</summary>
+        public static (float x, float z) AimedRushEnd(float sx, float sz, float dx, float dz, float range)
+        {
+            var len = (float)Math.Sqrt(dx * dx + dz * dz);
+            if (len < 1e-5f) return (sx, sz);
+            return (sx + dx / len * range, sz + dz / len * range);
+        }
+
         /// <summary>True when a creature at (px, pz) with body radius r is cut by a rush from s to e.</summary>
         public static bool OnRushPath(float sx, float sz, float ex, float ez, float px, float pz, float bodyRadius)
         {

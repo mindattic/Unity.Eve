@@ -110,5 +110,11 @@ namespace UnityEve.Core.Battle
         public float Caution = 0.3f;
         /// <summary>A boss: calls reinforcement waves as its health falls, gets the boss music.</summary>
         public bool Boss;
+        /// <summary>Attacks at range instead of lunging into melee on its strike (a large <see cref="Reach"/>
+        /// is what actually gives it distance; this only changes how the strike itself is presented).</summary>
+        public bool Ranged;
+        /// <summary>A ranged hit that lands leaves a damage-over-time puddle where she was standing
+        /// (acid/slime spit); a ranged hit without this is a clean hit with no aftermath (a sting).</summary>
+        public bool LeavesPuddle;
     }
 }

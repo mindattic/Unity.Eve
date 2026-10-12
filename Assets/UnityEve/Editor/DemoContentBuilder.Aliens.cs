@@ -85,6 +85,8 @@ namespace UnityEve.Editor
             BuildTendril(c);
             BuildSporeSac(c);
             BuildBrute(c);
+            BuildSpitter(c);
+            BuildWarden(c);
         }
 
         /// <summary>Mito Crawler: a low six-legged skitterer with a glowing eye cluster.</summary>
@@ -228,6 +230,70 @@ namespace UnityEve.Editor
                 limbs.Add(new CreatureLimb { Segments = new[] { shoulder, elbow }, Style = LimbStyle.Arm, Phase = side < 0 ? Mathf.PI : 0f, Amplitude = 24f, SwingAxis = Vector3.right, LiftAxis = Vector3.right });
             }
             FinishAlien(c, "brute", root, model, body, limbs, stride: 1.1f, bob: 0.07f, pulse: false, bodyRadius: 0.85f, aim: 1.5f);
+        }
+
+        /// <summary>Bloat Spitter: a hovering bladder with a nozzle that lobs acid from range instead of
+        /// closing to melee (<see cref="EnemyStats.Ranged"/>).</summary>
+        private static void BuildSpitter(Content c)
+        {
+            var p = AlienPalette("spitter", new Color(0.42f, 0.58f, 0.28f), new Color(0.2f, 0.28f, 0.14f), new Color(0.75f, 0.8f, 0.55f), new Color(0.6f, 1f, 0.3f));
+            var (root, model, body) = AlienRoot("spitter", 0f);
+            Part(body, PrimitiveType.Sphere, "Bladder", Vector3.zero, new Vector3(0.9f, 0.8f, 0.9f), p.Skin);
+            Part(body, PrimitiveType.Sphere, "Cap", new Vector3(0f, 0.3f, -0.1f), new Vector3(0.6f, 0.4f, 0.6f), p.Dark);
+            Part(body, PrimitiveType.Sphere, "Nozzle", new Vector3(0f, -0.05f, 0.48f), new Vector3(0.22f, 0.22f, 0.3f), p.Belly);
+            Part(body, PrimitiveType.Sphere, "NozzleTip", new Vector3(0f, -0.05f, 0.64f), Vector3.one * 0.14f, p.Glow);
+            for (var i = 0; i < 6; i++)
+            {
+                var a = i * Mathf.PI * 2f / 6f;
+                Part(body, PrimitiveType.Sphere, "Spot", new Vector3(Mathf.Cos(a) * 0.4f, -0.1f + (i % 2) * 0.12f, Mathf.Sin(a) * 0.4f), Vector3.one * 0.07f, p.Glow);
+            }
+            var limbs = new List<CreatureLimb>();
+            for (var t = 0; t < 4; t++)
+            {
+                var a = t * Mathf.PI * 2f / 4f + 0.6f;
+                var j = Joint(body, "Tendril", new Vector3(Mathf.Cos(a) * 0.3f, -0.3f, Mathf.Sin(a) * 0.3f), new Vector3(90f, 0f, 0f));
+                var segs = new List<Transform>();
+                for (var i = 0; i < 4; i++)
+                {
+                    segs.Add(j);
+                    j = Bone(j, "Tendril", 0.18f, Mathf.Lerp(0.07f, 0.03f, i / 3f), i % 2 == 0 ? p.Dark : p.Skin, Vector3.zero);
+                }
+                limbs.Add(new CreatureLimb { Segments = segs.ToArray(), Style = LimbStyle.Tentacle, Phase = t * 1.4f, Amplitude = 14f, SwingAxis = Vector3.right, LiftAxis = Vector3.up });
+            }
+            FinishAlien(c, "spitter", root, model, body, limbs, stride: 1.3f, bob: 0.08f, pulse: true, bodyRadius: 0.5f, aim: 0.3f);
+        }
+
+        /// <summary>Husk Warden: a slow, armour-plated knuckle-walker built to block a hallway, not race her.</summary>
+        private static void BuildWarden(Content c)
+        {
+            var p = AlienPalette("warden", new Color(0.3f, 0.32f, 0.36f), new Color(0.14f, 0.15f, 0.17f), new Color(0.5f, 0.5f, 0.52f), new Color(1f, 0.6f, 0.15f));
+            var (root, model, body) = AlienRoot("warden", 1.35f);
+            var torso = Joint(body, "Torso", Vector3.zero, new Vector3(12f, 0f, 0f));
+            Part(torso, PrimitiveType.Sphere, "Chest", Vector3.zero, new Vector3(1.4f, 1.3f, 1.1f), p.Skin);
+            Part(torso, PrimitiveType.Sphere, "Plate", new Vector3(0f, 0.05f, 0.42f), new Vector3(1.1f, 1f, 0.3f), p.Dark);
+            Part(torso, PrimitiveType.Sphere, "ShoulderL", new Vector3(-0.68f, 0.3f, 0.05f), Vector3.one * 0.55f, p.Dark);
+            Part(torso, PrimitiveType.Sphere, "ShoulderR", new Vector3(0.68f, 0.3f, 0.05f), Vector3.one * 0.55f, p.Dark);
+            for (var i = 0; i < 3; i++)
+                Part(torso, PrimitiveType.Sphere, "Rivet", new Vector3(-0.3f + i * 0.3f, 0.1f, 0.56f), Vector3.one * 0.08f, p.Glow);
+            var head = Joint(torso, "Head", new Vector3(0f, 0.4f, 0.45f), Vector3.zero);
+            Part(head, PrimitiveType.Sphere, "Skull", Vector3.zero, new Vector3(0.36f, 0.3f, 0.34f), p.Belly);
+            foreach (var x in new[] { -0.09f, 0.09f })
+                Part(head, PrimitiveType.Sphere, "Eye", new Vector3(x, 0.02f, 0.16f), Vector3.one * 0.065f, p.Glow);
+
+            var limbs = new List<CreatureLimb>();
+            foreach (var side in new[] { -1f, 1f })
+            {
+                var hip = Joint(body, "Hip", new Vector3(side * 0.38f, -0.45f, -0.1f), new Vector3(90f, 0f, 0f));
+                var knee = Bone(hip, "Thigh", 0.5f, 0.32f, p.Skin, new Vector3(-12f, 0f, 0f));
+                Bone(knee, "Shin", 0.5f, 0.27f, p.Dark, Vector3.zero);
+                limbs.Add(new CreatureLimb { Segments = new[] { hip, knee }, Style = LimbStyle.Leg, Phase = side < 0 ? 0f : Mathf.PI, Amplitude = 18f, SwingAxis = Vector3.right, LiftAxis = Vector3.right });
+
+                var shoulder = Joint(torso, "Shoulder", new Vector3(side * 0.7f, 0.2f, 0.1f), new Vector3(65f, side * 10f, 0f));
+                var elbow = Bone(shoulder, "UpperArm", 0.65f, 0.25f, p.Skin, new Vector3(-8f, 0f, 0f));
+                Bone(elbow, "Forearm", 0.68f, 0.3f, p.Dark, Vector3.zero);
+                limbs.Add(new CreatureLimb { Segments = new[] { shoulder, elbow }, Style = LimbStyle.Arm, Phase = side < 0 ? Mathf.PI : 0f, Amplitude = 18f, SwingAxis = Vector3.right, LiftAxis = Vector3.right });
+            }
+            FinishAlien(c, "warden", root, model, body, limbs, stride: 0.9f, bob: 0.05f, pulse: false, bodyRadius: 0.95f, aim: 1.6f);
         }
 
         // ------------------------------------------------------------------ mutated animals

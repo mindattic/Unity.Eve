@@ -17,6 +17,7 @@ namespace UnityEve.Input
     /// | Cancel/Dodge| B (East)         | Space / X           |
     /// | Interact    | X (West)         | E                   |
     /// | Focus moves | X / Y / A        | 1 / 2 / 3           |
+    /// | Shootdodge  | Right shoulder   | Left Ctrl           |
     /// | Menu        | Start            | Esc / Tab           |
     /// | Navigate    | D-pad / stick    | Arrows / WASD       |
     /// </remarks>
@@ -25,7 +26,7 @@ namespace UnityEve.Input
         public const float StickDeadzone = 0.25f;
 
         private InputActionMap _map;
-        private InputAction _move, _navigate, _confirm, _cancel, _interact, _menu, _walk;
+        private InputAction _move, _navigate, _confirm, _cancel, _interact, _menu, _walk, _shootdodge;
         private InputAction _focusHeal, _focusVitals, _focusCounter;
         private Vector2 _lastNavigate;
         private Coroutine _rumble;
@@ -40,6 +41,9 @@ namespace UnityEve.Input
         public bool InteractPressed => _interact.WasPressedThisFrame();
         public bool InteractHeld => _interact.IsPressed();
         public bool MenuPressed => _menu.WasPressedThisFrame();
+        /// <summary>Max Payne shootdodge: leap in the chosen direction, firing in bullet time. Unused
+        /// shoulder button, distinct from the everyday Cancel/Dodge roll.</summary>
+        public bool ShootdodgePressed => _shootdodge.WasPressedThisFrame() || Consume(ref _shootdodgeOverride);
         public bool FocusHealPressed => _focusHeal.WasPressedThisFrame();
         public bool FocusVitalsPressed => _focusVitals.WasPressedThisFrame();
         public bool FocusCounterPressed => _focusCounter.WasPressedThisFrame();
@@ -52,6 +56,7 @@ namespace UnityEve.Input
 
         private bool _dodgeOverride;
         private bool _confirmOverride;
+        private bool _shootdodgeOverride;
 
         /// <summary>Scripted input for the autopilot: presses Cancel/Dodge for exactly one read, through
         /// the real input path so timing against an enemy strike can land a genuine perfect dodge.</summary>
@@ -60,6 +65,9 @@ namespace UnityEve.Input
         /// <summary>Scripted input for the autopilot: presses Confirm for exactly one read, through the
         /// real input path so timing an active reload's sweet spot works the same way a human's does.</summary>
         public void TriggerConfirm() => _confirmOverride = true;
+
+        /// <summary>Scripted input for the autopilot: presses Shootdodge for exactly one read.</summary>
+        public void TriggerShootdodge() => _shootdodgeOverride = true;
 
         private static bool Consume(ref bool flag)
         {
@@ -97,6 +105,7 @@ namespace UnityEve.Input
             _interact = Button("Interact", "<Gamepad>/buttonWest", "<Keyboard>/e");
             _menu = Button("Menu", "<Gamepad>/start", "<Keyboard>/escape", "<Keyboard>/tab");
             _walk = Button("Walk", "<Gamepad>/leftStickPress", "<Keyboard>/leftShift");
+            _shootdodge = Button("Shootdodge", "<Gamepad>/rightShoulder", "<Keyboard>/leftCtrl");
             _focusHeal = Button("FocusHeal", "<Gamepad>/buttonWest", "<Keyboard>/1");
             _focusVitals = Button("FocusVitals", "<Gamepad>/buttonNorth", "<Keyboard>/2");
             _focusCounter = Button("FocusCounter", "<Gamepad>/buttonSouth", "<Keyboard>/3");

@@ -62,6 +62,8 @@ namespace UnityEve.Battle
             var affordable = _player.Pe.CanAfford(cost);
             menu.Add(new MenuEntry($"Rush  {cost:0} PE", () => BeginTargeting(BattleConfig.KatanaRushRange, target => Execute(RushRoutine(target), 0.9f)), affordable,
                 $"Dash through a target up to {BattleConfig.KatanaRushRange:0}m away, cutting everything in the way. Untouchable mid-dash."));
+            menu.Add(new MenuEntry($"Line Rush  {cost:0} PE", () => BeginAiming(BattleConfig.KatanaRushRange, end => Execute(RushLineRoutine(end), 0.9f)), affordable,
+                $"Aim the dash yourself: rotate the line with the stick, confirm to cut everything it crosses, up to {BattleConfig.KatanaRushRange:0}m. Same cut, your aim."));
             return menu;
         }
 
@@ -137,6 +139,15 @@ namespace UnityEve.Battle
             _menuStack.Clear();
             _dome.Hide();
             GameHud.Instance?.ShowMenu(null);
+            // Defensive: Aiming can be left behind by paths that don't go through EndAiming (the player
+            // dying or the battle ending outright while the aim line is up), which would otherwise leak
+            // its LineRenderer and leave "Rotate to aim..." stuck on screen through Victory/Defeat.
+            if (_aimLine != null)
+            {
+                Destroy(_aimLine.gameObject);
+                _aimLine = null;
+            }
+            GameHud.Instance?.ShowPrompt(null);
             WorldTime.Instance?.Resume(PauseKey);
             ReleaseMenuLock();
         }
@@ -233,6 +244,100 @@ namespace UnityEve.Battle
                 Phase = BattlePhase.Command;
                 GameHud.Instance?.ShowMenu(_menu);
             }
+        }
+
+        // ------------------------------------------------------------------ aiming (Line Rush)
+
+        private void BeginAiming(float range, System.Action<Vector3> onChosen)
+        {
+            _aimRange = range;
+            _onAimChosen = onChosen;
+            _aimDirection = _player.transform.forward;
+            Phase = BattlePhase.Aiming;
+            GameHud.Instance?.ShowMenu(null);
+            GameHud.Instance?.ShowPrompt("Rotate to aim — [A] dash  [B] cancel");
+            _dome.Show(_player.transform.position, range);
+            EnsureAimLine();
+            RefreshAimLine();
+        }
+
+        private void EnsureAimLine()
+        {
+            if (_aimLine != null) return;
+            var go = new GameObject("RushAimLine");
+            _aimLine = go.AddComponent<LineRenderer>();
+            _aimLine.sharedMaterial = BattleFx.Instance != null ? BattleFx.Instance.Additive : null;
+            _aimLine.positionCount = 2;
+            _aimLine.startWidth = BattleConfig.KatanaRushHalfWidth * 2f;
+            _aimLine.endWidth = BattleConfig.KatanaRushHalfWidth * 2f;
+            _aimLine.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+        }
+
+        /// <summary>Redraws the aim line from Kat out to <see cref="_aimRange"/>, brightening it while it
+        /// currently crosses at least one enemy so lining up a multi-cut reads clearly before committing.</summary>
+        private void RefreshAimLine()
+        {
+            var start = _player.transform.position;
+            var (ex, ez) = BladeArts.AimedRushEnd(start.x, start.z, _aimDirection.x, _aimDirection.z, _aimRange);
+            var end = new Vector3(ex, start.y, ez);
+            _aimLine.SetPosition(0, start + Vector3.up * 1.0f);
+            _aimLine.SetPosition(1, end + Vector3.up * 1.0f);
+            var crosses = _enemies.Any(e => e.IsAlive && BladeArts.OnRushPath(start.x, start.z, ex, ez, e.transform.position.x, e.transform.position.z, e.BodyRadius));
+            var color = crosses ? new Color(1f, 0.85f, 0.3f) : BladeColor;
+            _aimLine.startColor = color;
+            _aimLine.endColor = color;
+            _player.Controller.FaceTowards(end);
+        }
+
+        private void HandleAimInput(GameInput input)
+        {
+            if (input == null) return;
+            var turn = input.Move.x;
+            if (Mathf.Abs(turn) > 0.05f)
+                _aimDirection = Quaternion.Euler(0f, turn * BattleConfig.RushAimTurnDegreesPerSecond * Time.unscaledDeltaTime, 0f) * _aimDirection;
+            RefreshAimLine();
+            if (input.ConfirmPressed) ConfirmAim();
+            else if (input.CancelPressed)
+            {
+                AudioService.Play(SoundId.UiCancel);
+                EndAiming();
+                Phase = BattlePhase.Command;
+                GameHud.Instance?.ShowMenu(_menu);
+            }
+        }
+
+        private void ConfirmAim()
+        {
+            var start = _player.transform.position;
+            var (ex, ez) = BladeArts.AimedRushEnd(start.x, start.z, _aimDirection.x, _aimDirection.z, _aimRange);
+            AudioService.Play(SoundId.UiConfirm);
+            var onChosen = _onAimChosen;
+            EndAiming();
+            onChosen?.Invoke(new Vector3(ex, start.y, ez));
+        }
+
+        private void EndAiming()
+        {
+            _dome.Hide();
+            if (_aimLine != null) Destroy(_aimLine.gameObject);
+            _aimLine = null;
+            GameHud.Instance?.ShowPrompt(null);
+        }
+
+        /// <summary>Scripted use for the autopilot: aims at the nearest living enemy and confirms at once.</summary>
+        public bool AutoConfirmAim()
+        {
+            if (Phase != BattlePhase.Aiming) return false;
+            var origin = _player.transform.position;
+            var nearest = _enemies.Where(e => e.IsAlive).OrderBy(e => Flat(e.transform.position - origin)).FirstOrDefault();
+            if (nearest != null)
+            {
+                var d = nearest.transform.position - origin;
+                d.y = 0f;
+                if (d.sqrMagnitude > 0.01f) _aimDirection = d.normalized;
+            }
+            ConfirmAim();
+            return true;
         }
 
         // ------------------------------------------------------------------ actions
@@ -370,13 +475,27 @@ namespace UnityEve.Battle
             if (!_player.Pe.TrySpend(BattleConfig.KatanaRushPeCost)) yield break;
             _lastAttackAt = Time.time;
             _lastAttackTarget = chosen;
+            var start = _player.transform.position;
+            var (ex, ez) = BladeArts.RushEnd(start.x, start.z, chosen.transform.position.x, chosen.transform.position.z);
+            yield return DashCut(start, new Vector3(ex, start.y, ez));
+        }
+
+        /// <summary>Line Rush: the same dash and cut, but aimed by hand (<see cref="BeginAiming"/>)
+        /// instead of locking onto one enemy and auto-extending the line through it.</summary>
+        private IEnumerator RushLineRoutine(Vector3 end)
+        {
+            if (!_player.Pe.TrySpend(BattleConfig.KatanaRushPeCost)) yield break;
+            _lastAttackAt = Time.time;
+            _lastAttackTarget = null;
+            yield return DashCut(_player.transform.position, end);
+        }
+
+        private IEnumerator DashCut(Vector3 start, Vector3 end)
+        {
             var katana = _player.Katana;
             katana?.Draw();
             katana?.Trail(true);
 
-            var start = _player.transform.position;
-            var (ex, ez) = BladeArts.RushEnd(start.x, start.z, chosen.transform.position.x, chosen.transform.position.z);
-            var end = new Vector3(ex, start.y, ez);
             if (_zone != null)
             {
                 var b = _zone.Bounds;

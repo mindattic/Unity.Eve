@@ -44,6 +44,12 @@ namespace UnityEve
         Save,
         CoverBlock,
         ActiveReload,
+        Shove,
+        EnemySpit,
+        Stinger,
+        AcidSizzle,
+        Shootdodge,
+        HardLand,
     }
 
     /// <summary>Pooled 2D one-shot player. Sounds ignore time scale so menus stay responsive while paused.</summary>

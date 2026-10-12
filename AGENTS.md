@@ -21,7 +21,13 @@ ATB battle, built from free assets. Read `docs/BIBLE.md` for what it is, what it
    build, then `UnityEve.exe -batchmode -autoplay` exits 0. Look at the screenshots in
    `artifacts/autoplay/`. Batch mode needs the Editor closed: ask the owner to quit it, never kill it.
 6. **Every event has a sound** (`SoundId`). The content build warns about silent ids.
-7. **Free assets only,** recorded in `CREDITS.md`. Never Mixamo or store assets.
+7. **Free assets only** (CC0, OFL, or MIT with attribution), recorded in `CREDITS.md`. Never Mixamo or
+   store assets. A new kit drops into `Art/Models/<kit-name>/` (glTF/`.glb` preferred — that's what
+   `com.unity.cloud.gltfast` imports natively; `.fbx` also imports natively; raw `.obj` needs a converter
+   this project doesn't have, so avoid obj-only sources) and is placed with the `Model(...)` helper in
+   `DemoContentBuilder.Scene.cs`, which scales it to a target size, floor-centers it, runs
+   `ConvertRenderers(...)` to re-skin every material onto the project's toon shader, and adds a collider —
+   no per-kit code needed beyond a `$"{Art}/Models/<kit-name>/{n}.glb"` path helper alongside `Urban`/`Furn`/`Surv`.
 
 ## Map
 
@@ -38,3 +44,5 @@ ATB battle, built from free assets. Read `docs/BIBLE.md` for what it is, what it
 | `Core/Battle/EnemyMind.cs`, `BladeArts.cs` | Enemy tactics; katana Slash / Rush rules |
 | `Runtime/Game/Autopilot.cs` | `-autoplay` self-play verification; `-demo` loops the same tour windowed as an attract mode |
 | `Editor/DemoContentBuilder*.cs` | Generates all content and the level |
+| `Editor/DemoContentBuilder.Scene.cs`'s `Model(...)`/`ConvertRenderers(...)` | The universal glTF/FBX import pipeline: any kit's model scales, floor-centers, re-skins to the toon shader, and gets a collider the same way |
+| `Core/Story/LockGraph.cs` | Pure lock-and-key solvability check: every door/gate's key must be reachable without it, so content can never ship an unwinnable soft-lock |

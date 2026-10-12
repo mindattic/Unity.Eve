@@ -176,7 +176,7 @@ namespace UnityEve.UI
             var moves = Add(_focus, "focus-moves");
             AddLabel(moves, "focus-move", "[X/1] Quick Heal");
             AddLabel(moves, "focus-move", "[Y/2] Target Vitals");
-            AddLabel(moves, "focus-move", "[A/3] Counter");
+            AddLabel(moves, "focus-move", "[A/3] Riposte");
             _focusFill = Add(Add(_focus, "bar-track"), "bar-fill");
             _focusFill.AddToClassList("fill-focus");
 
@@ -287,7 +287,11 @@ namespace UnityEve.UI
         {
             var on = exposureBlocked > 0.05f;
             _cover.style.display = on ? DisplayStyle.Flex : DisplayStyle.None;
-            if (on) _coverText.text = $"-{Mathf.RoundToInt(exposureBlocked * BattleConfig.CoverMaxReduction * 100f)}%";
+            if (on)
+            {
+                _coverText.text = $"-{Mathf.RoundToInt(exposureBlocked * BattleConfig.CoverMaxReduction * 100f)}%";
+                _coverIcon.Fraction = exposureBlocked;
+            }
         }
 
         /// <summary>The active-reload bar: a sweet-spot band to hit as the fill crosses it.</summary>
@@ -405,25 +409,67 @@ namespace UnityEve.UI
             }
         }
 
-        /// <summary>A shield badge drawn as a vector shape (no imported icon asset).</summary>
+        /// <summary>A shield badge drawn as a vector shape (no imported icon asset): a dim crest outline
+        /// with a bright fill that rises from the base as <see cref="Fraction"/> grows, like a gauge.</summary>
         private sealed class ShieldIcon : VisualElement
         {
-            private static readonly Color32 Fill = new Color32(153, 217, 255, 255);
+            private static readonly Color32 Bright = new Color32(153, 217, 255, 255);
+            private static readonly Color32 Dim = new Color32(60, 80, 96, 140);
+            // A crest silhouette: flat shoulders, pointed base. Y runs top (small) to bottom (near 1).
+            private static readonly float[] Fx = { 0.5f, 0.92f, 0.92f, 0.5f, 0.08f, 0.08f };
+            private static readonly float[] Fy = { 0.02f, 0.2f, 0.56f, 0.98f, 0.56f, 0.2f };
+            private float _fraction;
+
+            /// <summary>0 (empty) to 1 (full): how much of the crest, filled bottom-up, is bright.</summary>
+            public float Fraction
+            {
+                get => _fraction;
+                set
+                {
+                    value = Mathf.Clamp01(value);
+                    if (Mathf.Approximately(_fraction, value)) return;
+                    _fraction = value;
+                    MarkDirtyRepaint();
+                }
+            }
 
             public ShieldIcon() => generateVisualContent += OnGenerateVisualContent;
 
-            private static void OnGenerateVisualContent(MeshGenerationContext mgc)
+            private void OnGenerateVisualContent(MeshGenerationContext mgc)
             {
-                var r = mgc.visualElement.contentRect;
+                var r = contentRect;
                 if (r.width < 2f || r.height < 2f) return;
-                // A crest silhouette: flat shoulders, pointed base.
-                var fx = new[] { 0.5f, 0.92f, 0.92f, 0.5f, 0.08f, 0.08f };
-                var fy = new[] { 0.02f, 0.2f, 0.56f, 0.98f, 0.56f, 0.2f };
-                var mwd = mgc.Allocate(fx.Length, (fx.Length - 2) * 3);
-                for (var i = 0; i < fx.Length; i++)
-                    mwd.SetNextVertex(new Vertex { position = new Vector3(fx[i] * r.width, fy[i] * r.height, Vertex.nearZ), tint = Fill });
-                var indices = new ushort[(fx.Length - 2) * 3];
-                for (ushort i = 1, k = 0; i < fx.Length - 1; i++)
+                var outline = new Vector2[Fx.Length];
+                for (var i = 0; i < Fx.Length; i++) outline[i] = new Vector2(Fx[i] * r.width, Fy[i] * r.height);
+                DrawPolygon(mgc, outline, Dim);
+                var threshold = r.height * (1f - _fraction);
+                var filled = ClipBelow(outline, threshold);
+                if (filled.Count >= 3) DrawPolygon(mgc, filled.ToArray(), Bright);
+            }
+
+            /// <summary>Sutherland-Hodgman clip of a convex polygon to the half below <paramref name="threshold"/>.</summary>
+            private static List<Vector2> ClipBelow(Vector2[] poly, float threshold)
+            {
+                var kept = new List<Vector2>();
+                for (var i = 0; i < poly.Length; i++)
+                {
+                    var cur = poly[i];
+                    var prev = poly[(i - 1 + poly.Length) % poly.Length];
+                    var curIn = cur.y >= threshold;
+                    var prevIn = prev.y >= threshold;
+                    if (curIn != prevIn) kept.Add(Vector2.Lerp(prev, cur, (threshold - prev.y) / (cur.y - prev.y)));
+                    if (curIn) kept.Add(cur);
+                }
+                return kept;
+            }
+
+            private static void DrawPolygon(MeshGenerationContext mgc, Vector2[] points, Color32 tint)
+            {
+                var mwd = mgc.Allocate(points.Length, (points.Length - 2) * 3);
+                for (var i = 0; i < points.Length; i++)
+                    mwd.SetNextVertex(new Vertex { position = new Vector3(points[i].x, points[i].y, Vertex.nearZ), tint = tint });
+                var indices = new ushort[(points.Length - 2) * 3];
+                for (ushort i = 1, k = 0; i < points.Length - 1; i++)
                 {
                     indices[k++] = 0;
                     indices[k++] = i;

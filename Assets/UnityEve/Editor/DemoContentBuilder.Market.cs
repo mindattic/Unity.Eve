@@ -32,6 +32,7 @@ namespace UnityEve.Editor
             Model(k.Level, Urban("detail-light-traffic"), new Vector3(27.5f, 0.14f, -5.6f), FaceYaw(Vector3.forward), size: 4f, collider: false, name: "TrafficLight");
             PointLight(k, "TrafficRed", new Vector3(38.5f, 3.4f, 5.2f), new Color(1f, 0.15f, 0.1f), 2.5f, 5f, flicker: true);
             Model(k.Level, Urban("truck-flat"), new Vector3(37.6f, 0.02f, 2.9f), 15f, size: 4.6f, name: "WreckedTruck");
+            Model(k.Level, Car("taxi"), new Vector3(32f, 0.02f, 1f), 100f, size: 2.3f, name: "StalledTaxi");
             Model(k.Level, Urban("detail-barrier-type-a"), new Vector3(29f, 0.02f, -2.9f), 30f, size: 1.6f, name: "Barrier");
             Model(k.Level, Urban("wall-broken-type-a"), new Vector3(26.5f, 0.14f, 5.4f), 90f, size: 2.4f, name: "BrokenBarricade");
             Model(k.Level, Urban("wall-broken-type-a"), new Vector3(26.5f, 0.14f, -5.4f), 90f, size: 2.4f, name: "BrokenBarricade");
@@ -44,7 +45,7 @@ namespace UnityEve.Editor
             Facade(k, "ArcadeWest", new Vector3(40f, 0f, -20f), new Vector3(44f, 6f, -14f), k.Siding, 14, faceSouth: false);
             Facade(k, "ArcadeEast", new Vector3(48f, 0f, -20f), new Vector3(62f, 6f, -14f), k.Siding, 15, faceSouth: false);
             // The square's old north-east wall is gone: that gap is now the way through to Ashgrove Park.
-            Block(k.Level, "SquareWallSE", new Vector3(62f, 0f, -20f), new Vector3(63f, 4f, -8f), k.Brick);
+            // Its south-east wall is gone too: that gap leads down to Ashgrove School (DemoContentBuilder.School).
             // Saint Ansel's: nave, steeple, lit rose window, dark doors.
             Block(k.Level, "Church", new Vector3(62f, 0f, -8f), new Vector3(74f, 9f, 8f), k.Plaster);
             Block(k.Level, "ChurchRoof", new Vector3(61.8f, 9f, -8.2f), new Vector3(74.2f, 9.4f, 8.2f), k.Trim);
@@ -176,6 +177,7 @@ namespace UnityEve.Editor
                 ["SquareWest"] = new[] { P("tendril", "crawler"), P("sporesac", "sporesac", "crawler") },
                 ["SquareEast"] = new[] { P("brute"), P("tendril", "sporesac") },
                 ["Park"] = new[] { P("rat", "crawler"), P("bat", "bat") },
+                ["School"] = new[] { P("warden"), P("spitter", "crawler"), P("warden", "spitter") },
                 ["BackLane"] = new[] { P("crawler", "crawler") },
                 ["Dock"] = new[] { P("brute", "crawler"), P("spider", "spider") },
                 ["WillowJunction"] = new[] { P("rat", "crawler"), P("bat", "bat") },
@@ -214,6 +216,7 @@ namespace UnityEve.Editor
                 case "Crossing": return "Market Crossing";
                 case "SquareWest": case "SquareEast": return "Market Square";
                 case "Park": return "Ashgrove Park";
+                case "School": return "Ashgrove School";
                 case "BackLane": return "Back Lane";
                 case "Dock": return "Loading Dock";
                 case "WillowJunction": case "WillowNorth": case "WillowCulDeSac": case "WillowSouth": case "WillowSouthEnd": return "Willow Lane";

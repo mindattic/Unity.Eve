@@ -44,6 +44,7 @@ namespace UnityEve.Core.Story
         public List<string> SearchedContainers = new List<string>();
         public List<string> TakenPickups = new List<string>();
         public List<string> UnlockedDoors = new List<string>();
+        public List<string> UnlockedGates = new List<string>();
 
         /// <summary>A save is usable when it is the current version and names where to resume.</summary>
         public bool IsValid => Version == CurrentVersion && !string.IsNullOrEmpty(SavePoint) && Level >= 1 && Hp > 0;

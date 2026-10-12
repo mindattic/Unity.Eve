@@ -20,6 +20,7 @@ namespace UnityEve.Interaction
         private Interactable _current;
         private Interactable _holding;
         private float _held;
+        private string _holdLabel;
 
         public Interactable Current => _current;
 
@@ -63,6 +64,7 @@ namespace UnityEve.Interaction
             {
                 _holding = _current;
                 _held = 0f;
+                _holdLabel = _current.Prompt?.Replace("Search ", "") ?? "";
                 _player.Controller.Lock();
                 _player.Controller.FaceTowards(_current.transform.position);
                 _player.Controller.Animator?.SetBool(AnimParams.Searching, true);
@@ -93,13 +95,15 @@ namespace UnityEve.Interaction
             _held += Time.deltaTime;
             var k = _held / _holding.HoldSeconds;
             hud?.ShowProgress(Mathf.Clamp01(k));
-            hud?.ShowPrompt($"Searching {_holding.Prompt.Replace("Search ", "")}...");
+            hud?.ShowPrompt($"Rummaging {_holdLabel}...");
             if (Mathf.Repeat(_held, 0.6f) < Time.deltaTime) AudioService.Play(SoundId.Rummage, 0.6f);
             if (k < 1f) return;
-            var target = _holding;
+            _held = 0f;
+            // Stays locked and held while InteractStage keeps asking for more (a container digging for
+            // extra loot); the moment it says stop, or the player lets go of Interact above, it ends.
+            if (_holding.InteractStage(_player)) return;
             CancelHold();
             hud?.ShowProgress(-1f);
-            target.Interact(_player);
         }
 
         private void CancelHold()

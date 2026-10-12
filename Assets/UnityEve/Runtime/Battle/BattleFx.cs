@@ -13,6 +13,10 @@ namespace UnityEve.Battle
 
         public static BattleFx Instance { get; private set; }
 
+        /// <summary>The shared additive material, for callers (the Line Rush aim preview) that draw
+        /// their own short-lived geometry instead of asking BattleFx for an effect.</summary>
+        public Material Additive => _additive;
+
         public void Configure(Material additive) => _additive = additive;
 
         private void Awake() => Instance = this;
@@ -90,6 +94,24 @@ namespace UnityEve.Battle
             Flash(at + Vector3.up * 0.5f, color, 8f, radius * 4f, 0.5f);
             Burst(at, color, 60, 7f, 0.14f);
             Burst(at, new Color(0.3f, 0.3f, 0.3f), 30, 3f, 0.3f);
+        }
+
+        /// <summary>A flat glowing disc that stays until its owner (<see cref="HazardPuddle"/>) destroys
+        /// it — unlike every other effect here, this one outlives the frame it was spawned on.</summary>
+        public GameObject Puddle(Vector3 at, Color color, float radius)
+        {
+            var go = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            go.name = "Puddle";
+            Destroy(go.GetComponent<Collider>());
+            go.transform.position = at + Vector3.up * 0.02f;
+            go.transform.localScale = new Vector3(radius * 2f, 0.02f, radius * 2f);
+            var r = go.GetComponent<Renderer>();
+            r.sharedMaterial = _additive;
+            r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            var block = new MaterialPropertyBlock();
+            block.SetColor("_BaseColor", color);
+            r.SetPropertyBlock(block);
+            return go;
         }
 
         public void Aura(Transform around, Color color)

@@ -20,7 +20,7 @@ MonoBehaviour:
     Defense: 0
     AttackDamage: 9
     MoveSpeed: 3.2
-    Reach: 1
+    Reach: 5
     WindupSeconds: 0.4
     RecoverSeconds: 0.5
     CooldownSeconds: 1
@@ -29,5 +29,7 @@ MonoBehaviour:
     Aggression: 0.75
     Caution: 0.25
     Boss: 0
-  Prefab: {fileID: 1902602076745061454, guid: a12025dd5ce96bf43b5dcfa61f79ed17, type: 3}
+    Ranged: 1
+    LeavesPuddle: 0
+  Prefab: {fileID: 69806113009795802, guid: a12025dd5ce96bf43b5dcfa61f79ed17, type: 3}
   Brood: {fileID: 0}

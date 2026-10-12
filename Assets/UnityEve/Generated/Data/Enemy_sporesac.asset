@@ -29,5 +29,7 @@ MonoBehaviour:
     Aggression: 0.45
     Caution: 0.75
     Boss: 0
-  Prefab: {fileID: 9107627091756043862, guid: 11d5c4af843a9c745ad9db6fc155d93e, type: 3}
+    Ranged: 0
+    LeavesPuddle: 0
+  Prefab: {fileID: 2313407470347492630, guid: 11d5c4af843a9c745ad9db6fc155d93e, type: 3}
   Brood: {fileID: 0}

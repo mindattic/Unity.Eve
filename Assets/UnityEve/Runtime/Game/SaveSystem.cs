@@ -82,6 +82,7 @@ namespace UnityEve.Game
             s.TakenPickups.AddRange(All<Pickup>().Where(p => !p.gameObject.activeSelf).Select(p => p.name));
             s.TakenPickups.AddRange(All<WeaponPickup>().Where(p => !p.gameObject.activeSelf).Select(p => p.name));
             s.UnlockedDoors.AddRange(All<Door>().Where(d => d.Unlocked).Select(d => d.name));
+            s.UnlockedGates.AddRange(All<Gate>().Where(g => g.Unlocked).Select(g => g.name));
             return s;
         }
 
@@ -125,6 +126,7 @@ namespace UnityEve.Game
             foreach (var p in All<Pickup>()) if (save.TakenPickups.Contains(p.name)) p.gameObject.SetActive(false);
             foreach (var p in All<WeaponPickup>()) if (save.TakenPickups.Contains(p.name)) p.gameObject.SetActive(false);
             foreach (var d in All<Door>()) if (save.UnlockedDoors.Contains(d.name)) d.Unlock();
+            foreach (var g in All<Gate>()) if (save.UnlockedGates.Contains(g.name)) g.Unlock();
             StoryDirector.Instance?.Restore(save.Facts, save.Kills, save.PlaySeconds);
 
             var point = All<SavePoint>().FirstOrDefault(p => p.name == save.SavePoint);

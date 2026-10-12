@@ -195,7 +195,7 @@ namespace UnityEve.Editor
             var ac = AnimatorController.CreateAnimatorControllerAtPath(path);
             foreach (var p in new[] { "Speed" }) ac.AddParameter(p, AnimatorControllerParameterType.Float);
             foreach (var p in new[] { "InBattle", "Searching", "Backpedal" }) ac.AddParameter(p, AnimatorControllerParameterType.Bool);
-            foreach (var p in new[] { "Shoot", "Hit", "Dodge", "Cast", "Throw", "Die", "Revive", "Slash", "Rush" }) ac.AddParameter(p, AnimatorControllerParameterType.Trigger);
+            foreach (var p in new[] { "Shoot", "Hit", "Dodge", "Cast", "Throw", "Die", "Revive", "Slash", "Rush", "Shove" }) ac.AddParameter(p, AnimatorControllerParameterType.Trigger);
 
             var sm = ac.layers[0].stateMachine;
             BlendTree Locomotion(string name, AnimationClip idle)
@@ -242,6 +242,8 @@ namespace UnityEve.Editor
             TriggerFromAny(sm, AddState(sm, "Throw", C("Punch_Cross", false), new Vector3(600, 240), 1.6f), "Throw", battle);
             TriggerFromAny(sm, AddState(sm, "Slash", C("Sword_Attack", false), new Vector3(900, 0), 1.7f), "Slash", battle, 0.8f);
             TriggerFromAny(sm, AddState(sm, "Rush", C("Sprint_Loop", true), new Vector3(900, 60), 1.8f), "Rush", battle, 0.95f);
+            // Shove and the Focus Riposte share this punch: a free, no-ammo strike rather than a throw.
+            TriggerFromAny(sm, AddState(sm, "Shove", C("Punch_Cross", false), new Vector3(900, 120), 1.6f), "Shove", battle, 0.9f);
             var die = AddState(sm, "Die", C("Death01", false), new Vector3(600, 300));
             TriggerFromAny(sm, die, "Die", null);
             var revive = die.AddTransition(explore);

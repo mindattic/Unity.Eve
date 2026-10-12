@@ -43,8 +43,12 @@ fight with Parasite Eve's real-time/pause Active Time Battle.
   Parasite Mutant's segmented "Active Time Chains".
 - **Not a mobile game.** There are no touch controls and no portrait layout.
 - **Not built on paid or non-redistributable assets.** That means no Mixamo, no Asset Store packs and no ripped game files.
-- **Not a full game.** It is a vertical slice: one night with a beginning, a boss and an ending, every
-  system working together, in a small town (Ashgrove Street, Ashgrove Heights, the Market district).
+- **Not a full game — yet.** It started as a vertical slice: one night with a beginning, a boss and an
+  ending, every system working together, in a small town (Ashgrove Street, Ashgrove Heights, the Market
+  district). The owner directed (2026-10-11) growing it into a fuller game from there — more districts
+  (Ashgrove Park, a school, and beyond), more enemies and player moves, and the progression bones (keys,
+  locked doors and gates, and eventually a plot and conversations) a bigger game needs — built the same
+  deliberate way as the slice: generated, tested, and verified, not bolted on.
 
 ## 4. Architecture canon {#UE-§4}
 
@@ -104,30 +108,30 @@ A mistimed dodge still evades through i-frames, and the Focus window expires on 
 requires Focus. *(Tests `Focus_window_expires_on_real_time_so_it_is_optional`, `Strike_resolution`.)*
 
 ### {#UE-LAW-4} Free assets only
-Every third-party file is CC0 or OFL and listed in CREDITS.md. Missing sounds are synthesized, not sourced.
+Every third-party file is CC0, OFL, or MIT and listed in CREDITS.md. Missing sounds are synthesized, not
+sourced. *(Owner widened this from CC0/OFL-only to also allow MIT 2026-10-11, to pull from more
+low-poly model sources while building out the town; MIT assets carry an attribution requirement CC0/OFL
+don't, so their CREDITS.md row must say so.)*
 
 ### {#UE-LAW-5} Generated content is regenerated, not hand-edited
 Edit `DemoContentBuilder`, then re-run it. A hand edit to `Generated/` or `Demo.unity` is lost on the next build.
 
 ## 6. Verified state {#UE-§6}
-- `dotnet test Tests/Core.Tests`: 59 passing.
+- `dotnet test Tests/Core.Tests`: 66 passing.
 - Unity 6000.4.3f1 batch-mode compile: clean.
-- `UnityEve.exe -batchmode -autoplay`: PASS, with 46-47 screenshots (the enemy-buff shot appears when a
-  creature happens to power up) covering:
-  - the camera tour
-  - rummaging
-  - 3 encounters won through the command menu, range dome, grenade and Focus
-  - doors and searching the house interior
-  - the padlocked shed refusing entry, the side-table key opening it, and the shotgun pickup
-  - walking out of combat playing the walk/jog cycle
-  - the Blade menu, a katana Rush and a Slash
-  - the enemy intents each fight actually used (logged)
-  - the field menu
-  - the whole story: the barred church, the grocery's two keys, a payphone save and a real
-    scene-reload load (level, facts, bag, searched containers, unlocked doors, position all
-    checked), a death and the game-over menu's Continue (a second reload), the music switching
-    between explore / battle / boss, the Mito Mother and her brood waves, and the ending card
-  - the title screen
+- `UnityEve.exe -batchmode -autoplay`: PASS, with ~230 screenshots (count varies with the enemy-buff
+  shot and which random encounters fire) covering everything in the original slice (above) plus, as of
+  the 2026-10-11 town-expansion pass:
+  - Ashgrove Park (cel-shaded fountain water) and Ashgrove School (two new alien enemies, the warden and
+    the spitter)
+  - the demo attract-mode loop (`-demo`) surviving a failed ending and playing its own perfect dodges
+  - the active-reload minigame, raycast-measured cover, backpedal, and obstacle-aware movement
+  - the free Shove and the Focus Riposte (upgraded from Counter); the hand-aimed Line Rush alongside
+    the original lock-on Rush; the ranged Spitter's DOT puddle; the Wasp's dodgeable ranged sting
+  - multi-stage "Rummaging..." containers (up to 3 items) with a glint marking anything still searchable
+  - the lock-and-key solvability check (`Core/Story/LockGraph.cs`) passing for every door in the game
+  - `-demo` smoke-checked separately (continuous loop, no batch exit — spot-checked, not run to a full lap
+    every pass)
 
 ## 7. Active frontier {#UE-§7}
 - Navmesh enemy movement

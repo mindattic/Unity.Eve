@@ -8,8 +8,8 @@ namespace UnityEve.Core.Battle
         QuickHeal,
         /// <summary>A free, guaranteed critical shot at the attacker's weak point.</summary>
         TargetVitals,
-        /// <summary>Shove and stun the attacker.</summary>
-        Counter,
+        /// <summary>A guaranteed full-damage counter-strike: knocks the attacker back and stuns it.</summary>
+        Riposte,
     }
 
     /// <summary>
@@ -25,7 +25,7 @@ namespace UnityEve.Core.Battle
         public const float SlowTimeScale = 0.15f;
         public const int QuickHealAmount = 25;
         public const float VitalsMultiplier = 3f;
-        public const float CounterStunSeconds = 2f;
+        public const float RiposteStunSeconds = 2f;
 
         private float _remaining;
 

@@ -27,15 +27,23 @@ namespace UnityEve.Player
 
         private void OnTriggerExit(Collider other) => _nearby.Remove(other);
 
-        /// <summary>The closest point of solid geometry inside the warning radius, if anything is there.</summary>
-        public bool TryGetNearest(Vector3 from, out Vector3 point, out float distance)
+        /// <summary>The closest point of solid geometry inside the warning radius that's actually roughly
+        /// ahead of <paramref name="direction"/> — not just the closest point overall. With several props
+        /// in the (small) warning bubble at once, as is common now with benches/trees/cars dotted around
+        /// town, the globally-closest one is often off to the side; picking that instead of whatever's
+        /// actually in her path would miss the one she's about to walk into.</summary>
+        public bool TryGetNearest(Vector3 from, Vector3 direction, out Vector3 point, out float distance)
         {
             point = default;
             distance = float.MaxValue;
             _nearby.RemoveWhere(c => c == null);
+            var dir = direction.sqrMagnitude > 0.0001f ? direction.normalized : Vector3.zero;
             foreach (var c in _nearby)
             {
                 var p = c.ClosestPoint(from);
+                var toP = p - from;
+                toP.y = 0f;
+                if (dir != Vector3.zero && toP.sqrMagnitude > 0.0001f && Vector3.Dot(dir, toP.normalized) < 0.3f) continue;
                 var d = Vector3.Distance(from, p);
                 if (d < distance)
                 {

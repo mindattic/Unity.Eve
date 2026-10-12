@@ -128,6 +128,7 @@ namespace UnityEve.Editor
             var desk = Model(k.Interact, Furn("desk"), s + new Vector3(1.4f, 0f, 2f), 90f, size: 1.6f, name: "Container_Storeroom_Desk");
             Attach<Container>(desk, s + new Vector3(2.6f, 0f, 2f), 1.6f)
                 .Configure("manager's desk", c.Loot["drawer"], "Under a schedule taped with a church flyer...", c.Items["key_church"]);
+            Locks.Key("Storeroom", "key_church");
             var log = Marker(k, "Readable_ManagersLog", s + new Vector3(1.4f, 0.9f, 3.4f), 90f);
             Attach<Readable>(log, s + new Vector3(2.6f, 0f, 3.4f), 1.4f, 0f).Configure("Read the manager's log",
                 "'Frank - Father Ames left the side-door key with us for the food drive. Keep it in the desk. Whatever is in the back freezer is NOT spoiled meat. Don't open it.'");
@@ -143,6 +144,7 @@ namespace UnityEve.Editor
             var roomOut = Marker(k, "Spawn_StoreroomOutside", o + new Vector3(9.3f, 0f, 24.6f), 180f).transform;
             var staff = Attach<Door>(Marker(k, "Door_Storeroom_Enter", o + new Vector3(9.3f, 0f, 25.8f), 0f), o + new Vector3(9.3f, 0f, 24.6f), 1.6f, 1.2f);
             staff.Configure("Open the staff door", roomIn, c.Items["key_storeroom"], "STAFF ONLY. Locked. The manager will have a key - or the registers will.");
+            Locks.Edge("Street", "Storeroom", "key_storeroom");
             var staffBack = Attach<Door>(Marker(k, "Door_Storeroom_Exit", s + new Vector3(5.3f, 0f, 0.1f), 0f), s + new Vector3(5.3f, 0f, 1.1f), 1.6f, 1.2f);
             staffBack.Configure("Back to the shop floor", roomOut);
 
@@ -150,6 +152,7 @@ namespace UnityEve.Editor
             var register = Marker(k, "Container_Grocery_Register", o + new Vector3(-7f, 1.1f, 3.4f), 0f);
             Attach<Container>(register, o + new Vector3(-6.2f, 0f, 3.4f), 1.4f, 0f)
                 .Configure("register", c.Loot["dumpster"], "The drawer is jammed with receipts.", c.Items["key_storeroom"]);
+            Locks.Key("Street", "key_storeroom");
             var shelf = Marker(k, "Container_Grocery_Shelf", o + new Vector3(-4f, 1f, 11f), 0f);
             Attach<Container>(shelf, o + new Vector3(-2.8f, 0f, 11f), 1.4f, 0f).Configure("shelf", c.Loot["kitchen"], "Most of it is gone, but not all.");
             var freezer = Marker(k, "Container_Grocery_Freezer", o + new Vector3(-0.6f, 1f, 24.8f), 0f);

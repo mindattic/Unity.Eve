@@ -216,11 +216,13 @@ namespace UnityEve.Game
             var menu = new MenuModel("CONTROLS  (gamepad / keyboard)");
             menu.Add(new MenuEntry("Move: left stick / WASD", null, true,
                 "Explore in real time. Fixed and CCTV cameras cut as you move; 'up' keeps its meaning across cuts until you let go."));
-            menu.Add(new MenuEntry("Interact / search: X / E", null, true, "Hold to rummage through drawers, fridges and crates."));
+            menu.Add(new MenuEntry("Interact / search: X / E", null, true, "Hold to rummage through drawers, fridges and crates. In battle, the same button shoves whatever's in front of her: free, no ammo, knocks back and staggers."));
             menu.Add(new MenuEntry("Battle command: A / Enter", null, true,
                 "When the AT gauge is full, time stops. Attack raises the range dome: only enemies inside can be hit."));
             menu.Add(new MenuEntry("Dodge / back: B / Space", null, true,
-                "Dodge just as a glowing enemy strikes for FOCUS: slow motion and a free Quick Heal, Target Vitals or Counter. Optional, never required."));
+                "Dodge just as a glowing enemy strikes for FOCUS: slow motion and a free Quick Heal, Target Vitals or Riposte. Optional, never required."));
+            menu.Add(new MenuEntry("Shootdodge: RB / Left Ctrl", null, true,
+                "Leap in the direction you're holding, untouchable in the air. Time slows around you — press Battle Command to fire while you fly. Landing hits hard and roots you a moment: strategic, not free."));
             menu.Add(new MenuEntry("Menu: Start / Esc", null, true, "Items, equipment, this screen."));
             return menu;
         }

@@ -54,6 +54,7 @@ namespace UnityEve.Editor
             BuildShed(k);
             BuildMarket(k);
             BuildPark(k);
+            BuildSchool(k);
             BuildHeights(k);
             BuildGrocery(k);
             BuildChurch(k);
@@ -185,6 +186,7 @@ namespace UnityEve.Editor
         private static string Urban(string n) => $"{Art}/Models/retro-urban/{n}.glb";
         private static string Furn(string n) => $"{Art}/Models/furniture/{n}.glb";
         private static string Surv(string n) => $"{Art}/Models/survival/{n}.glb";
+        private static string Car(string n) => $"{Art}/Models/car-kit/{n}.glb";
 
         private static CameraShot Shot(SceneKit k, string name, Vector3 position, Vector3 lookAt, ShotMode mode, float fov = 50f, float maxYaw = 55f, float maxPitch = 25f)
         {
@@ -239,6 +241,9 @@ namespace UnityEve.Editor
             i.SetRadius(radius);
             i.SetFocusOffset(new Vector3(0f, focusHeight, 0f));
             i.SetApproachWorld(approach);
+            // Every rummageable container gets its own glint, so there's worth-searching is visible from
+            // a distance and not only once the interact prompt is already up close (owner direction 2026-10-11).
+            if (i is Container container) container.SetGlint(ContainerGlint(host.transform, focusHeight));
             return i;
         }
 
@@ -271,6 +276,22 @@ namespace UnityEve.Editor
         {
             var l = PointLight(k, "Glint", host.position + Vector3.up * 0.3f, new Color(0.6f, 0.9f, 1f), 1.2f, 1.6f);
             l.transform.SetParent(host, true);
+            return l;
+        }
+
+        /// <summary>A container's own glint: amber rather than a pickup's cyan, so the two read apart.
+        /// Parented directly to the host (no <see cref="SceneKit"/> needed, unlike <see cref="Glint"/>),
+        /// since <c>Attach&lt;T&gt;</c> adds this automatically and doesn't carry the kit around.</summary>
+        private static Light ContainerGlint(Transform host, float height)
+        {
+            var l = new GameObject("Glint").AddComponent<Light>();
+            l.type = LightType.Point;
+            l.color = new Color(1f, 0.85f, 0.3f);
+            l.intensity = 0.8f;
+            l.range = 1.6f;
+            l.shadows = LightShadows.None;
+            l.transform.SetParent(host, false);
+            l.transform.localPosition = Vector3.up * Mathf.Max(0.3f, height);
             return l;
         }
 
@@ -373,6 +394,7 @@ namespace UnityEve.Editor
             mercerDoor.Configure("Enter the Mercer house", houseEntry);
             var shedDoor = Attach<Door>(Marker(k, "Door_Shed_Enter", new Vector3(6.25f, 0.14f, 6.4f), 180f), new Vector3(6.25f, 0.14f, 5.2f), 1.8f, 1.2f);
             shedDoor.Configure("Open the shed", shedEntry, c.Items["key_shed"], "The roll door is padlocked. The Mercers kept the shed key somewhere.");
+            Locks.Edge("Street", "ShedInside", "key_shed");
 
             // Street furniture.
             for (var x = -20f; x <= 20f; x += 10f)
@@ -382,6 +404,8 @@ namespace UnityEve.Editor
             }
             Model(k.Level, Urban("truck-grey-cargo"), new Vector3(-14f, 0.02f, 2.2f), 90f, size: 5.5f, name: "ParkedTruck");
             Model(k.Level, Urban("truck-green"), new Vector3(19f, 0.02f, -2.4f), -90f, size: 5f, name: "AbandonedTruck");
+            // x=9 sits clear of both neighbouring lamp posts (x=5, x=15) and the alley mouth at x=12..17.
+            Model(k.Level, Car("sedan"), new Vector3(9f, 0.02f, -5.9f), -90f, size: 4.2f, name: "ParkedSedan");
             Bench(k, new Vector3(-18f, 0.14f, -5.9f), Vector3.forward).name = "BusStopBench"; // faces the road
             Model(k.Level, Urban("pallet"), new Vector3(10.5f, 0.14f, 5.5f), 20f, size: 1.3f, name: "Pallet");
             Model(k.Level, Urban("planks"), new Vector3(-2f, 0.14f, -5.6f), 80f, size: 1.6f, name: "Planks");
@@ -530,6 +554,7 @@ namespace UnityEve.Editor
             var sideTable = Furniture(k, "sideTableDrawers", new Vector3(-4.5f, 0f, 2.4f), 90f, name: "Container_House_SideTable");
             Attach<Container>(sideTable, o + new Vector3(-3.4f, 0f, 2.4f), 1.6f)
                 .Configure("side table", c.Loot["drawer"], "Under a stack of unpaid bills...", c.Items["key_shed"]);
+            Locks.Key("Street", "key_shed");
             var desk = Furniture(k, "desk", new Vector3(1.5f, 0f, 0.6f), 0f, name: "Readable_Desk");
             Attach<Readable>(desk, o + new Vector3(1.5f, 0f, 1.7f), 1.6f).Configure("Read the letter on the desk",
                 "'Dana - the thing in the basement drain is getting bigger. I locked the good shotgun in the shed. Key's in the side table. - Tom'");

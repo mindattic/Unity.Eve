@@ -71,6 +71,8 @@ namespace UnityEve.Core.Battle
         public const float KatanaRushOvershoot = 1.4f;
         public const float KatanaRushDamageMultiplier = 0.85f;
         public const float KatanaRushSeconds = 0.26f;
+        /// <summary>How fast the stick rotates Line Rush's aim line, degrees per second at full deflection.</summary>
+        public const float RushAimTurnDegreesPerSecond = 150f;
 
         // --- Player defence ----------------------------------------------------------------
         public const float DodgeSeconds = 0.34f;
@@ -83,6 +85,36 @@ namespace UnityEve.Core.Battle
         /// <summary>Stepping away from a target within this long of her last attack backpedals (faces the
         /// target, walks backward); past it, stepping away turns and runs like ordinary retreat.</summary>
         public const float BackpedalWindowSeconds = 3f;
+
+        // --- Shove (free melee: Interact in battle, no ATB cost, no ammo) --------------------
+        public const float ShoveReach = 1.6f;
+        public const float ShoveCooldownSeconds = 2.5f;
+        public const float ShoveRootSeconds = 0.3f;
+        public const float ShoveKnockbackMetres = 1.8f;
+        public const float ShoveStunSeconds = 1.2f;
+        /// <summary>Fraction of her current weapon's damage a shove lands: control, not a damage option.</summary>
+        public const float ShoveDamageFraction = 0.25f;
+
+        // --- Shootdodge (Max Payne-style dive: leap, fire in bullet time, land hard) ----------
+        /// <summary>Horizontal dive speed, metres/second of real (unscaled) time — the dive itself isn't
+        /// slowed by its own bullet time, only the world around it is, same as Max's own dive.</summary>
+        public const float ShootdodgeSpeed = 6.5f;
+        public const float ShootdodgeRiseSpeed = 4.5f;
+        public const float ShootdodgeGravity = 11f;
+        /// <summary>The world (enemy attacks, their windups) runs at this fraction of normal speed while
+        /// she's airborne — bullet time, via WorldTime's scale key, never Time.timeScale directly.</summary>
+        public const float ShootdodgeTimeScale = 0.3f;
+        public const float ShootdodgeCooldownSeconds = 6f;
+        /// <summary>Rooted this long after landing — "you need time to stand up," the move's real cost.</summary>
+        public const float ShootdodgeLandStunSeconds = 1.4f;
+        /// <summary>Flat self-damage from landing hard, regardless of defense: minor, but real.</summary>
+        public const int ShootdodgeLandDamage = 6;
+
+        // --- Hazard puddles (a ranged hit that leaves acid/slime behind) ---------------------
+        public const float PuddleDurationSeconds = 6f;
+        public const float PuddleRadius = 1.3f;
+        public const float PuddleTickSeconds = 1f;
+        public const int PuddleDamagePerTick = 4;
 
         // --- Cover (benches, streetlamps, mailboxes) ----------------------------------------
         /// <summary>Damage reduction at full (1.0) exposure-blocked, scaled by how much of Kat's

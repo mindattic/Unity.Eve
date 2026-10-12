@@ -36,6 +36,12 @@ namespace UnityEve.Editor
             Write(folder, "save", Arpeggio(new[] { 659f, 880f, 1319f }, 0.12f, 0.35f));
             Write(folder, "cover_block", Mix(Chord(new[] { 880f, 1320f }, 0.1f), Sweep(600f, 150f, 0.14f, 0.35f)));
             Write(folder, "active_reload", Arpeggio(new[] { 1047f, 1568f, 2093f }, 0.045f, 0.4f));
+            Write(folder, "shove", Mix(Whoosh(0.18f), Sweep(220f, 80f, 0.15f, 0.4f)));
+            Write(folder, "enemy_spit", Sweep(900f, 300f, 0.3f, 0.35f, noise: 0.6f));
+            Write(folder, "stinger", Sweep(2400f, 1800f, 0.08f, 0.45f));
+            Write(folder, "acid_sizzle", Sweep(500f, 350f, 0.2f, 0.3f, noise: 0.85f));
+            Write(folder, "shootdodge", Mix(Whoosh(0.3f), Sweep(1200f, 2200f, 0.25f, 0.4f)));
+            Write(folder, "hard_land", Sweep(220f, 60f, 0.18f, 0.5f, noise: 0.3f));
             WriteMusic(folder);
             Write(folder, "katana_rush", Mix(Whoosh(0.4f), Sweep(900f, 3200f, 0.4f, 0.22f, noise: 0.2f)));
         }

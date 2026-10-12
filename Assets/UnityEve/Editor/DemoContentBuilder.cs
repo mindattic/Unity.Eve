@@ -52,6 +52,7 @@ namespace UnityEve.Editor
             // Re-import the models now that URP is the active pipeline, so glTFast picks URP shaders.
             AssetDatabase.ImportAsset(Art + "/Models", ImportAssetOptions.ImportRecursive | ImportAssetOptions.ForceUpdate);
 
+            Locks = new UnityEve.Core.Story.LockGraph();
             var content = new Content();
             BuildData(content);
             BuildAudio(content);
@@ -62,8 +63,56 @@ namespace UnityEve.Editor
             AssetDatabase.SaveAssets();
             BuildScene(content);
             AssetDatabase.SaveAssets();
+            ValidateLocks();
+            ValidateMaterials();
             Debug.Log("[UnityEve] Demo content built.");
             if (Application.isBatchMode) EditorApplication.Exit(0);
+        }
+
+        // The particle shader is first-party too: FxAdditive/KatanaTrail/RangeRing are built straight from
+        // code (TransparentMaterial/SimpleMaterial), never imported, so there's nothing for them to have
+        // skipped converting — they're meant to glow additively, not read as cel-shaded geometry. Signage
+        // text (SignText(...)) is Unity's built-in TextMesh, also never imported, also exempt.
+        private static readonly HashSet<string> ApprovedShaders = new HashSet<string>
+        {
+            "UnityEve/Toon", "UnityEve/HexDome", "UnityEve/ToonWater",
+            "Universal Render Pipeline/Particles/Unlit", "GUI/Text Shader",
+        };
+
+        /// <summary>
+        /// Every model placed in the level — any third-party kit, any format — goes through
+        /// <c>Model(...)</c>, which scales it and runs <c>ConvertRenderers(...)</c> to re-skin it onto the
+        /// toon shader; nothing should ever reach the saved scene still wearing its imported material.
+        /// This is the enforcement for that rule: a renderer caught on anything else means some import
+        /// path skipped the pipeline (owner direction 2026-10-11, "every single asset... needs to be
+        /// converted and scaled and saved as the correct format").
+        /// </summary>
+        private static void ValidateMaterials()
+        {
+            foreach (var r in Object.FindObjectsByType<Renderer>(FindObjectsInactive.Include))
+            foreach (var m in r.sharedMaterials)
+            {
+                if (m == null) continue;
+                var shaderName = m.shader != null ? m.shader.name : null;
+                if (shaderName != null && ApprovedShaders.Contains(shaderName)) continue;
+                Debug.LogWarning($"[UnityEve] '{r.name}' uses material '{m.name}' with shader '{shaderName ?? "(none)"}' — " +
+                    "it should have been re-skinned onto the toon shader by Model()/ConvertRenderers() when it was placed.");
+            }
+        }
+
+        /// <summary>
+        /// Every door and gate placed while building the scene registers itself here (see the `Street`
+        /// region doors/keys in Scene.cs, Grocery.cs and Church.cs); failing this means some lock in the
+        /// game has no reachable key, which would trap the player with no way through.
+        /// </summary>
+        private static UnityEve.Core.Story.LockGraph Locks;
+
+        private static void ValidateLocks()
+        {
+            var report = Locks.Validate("Street");
+            if (report.Solvable) return;
+            foreach (var region in report.UnreachableRegions)
+                Debug.LogError($"[UnityEve] '{region}' is unreachable: its lock's key is missing or itself behind another unreachable lock.");
         }
 
         // ------------------------------------------------------------------ helpers
@@ -106,6 +155,7 @@ namespace UnityEve.Editor
             Item(c, "grenade", "Grenade", ItemEffect.Explosive, 45, "Thrown. 45 damage to everything within 3 m of the target.", 3, radius: 3f);
             Item(c, "flash", "Flash Grenade", ItemEffect.Flash, 0, "Thrown. Stuns everything within 3.5 m for 4 s.", 3, radius: 3.5f, stun: 4f);
             Item(c, "pe_tonic", "Mito Tonic", ItemEffect.RestorePe, 0, "Fully restores Parasite Energy.", 3);
+            Item(c, "brick", "Loose Brick", ItemEffect.Explosive, 16, "Thrown. A solid knock to one target and anything within reach of the impact.", 6, radius: 1.3f);
             Item(c, "key_shed", "Shed Key", ItemEffect.Key, 0, "A brass key on a fish-shaped fob. 'SHED'.", 1, battle: false);
             Item(c, "key_storeroom", "Storeroom Key", ItemEffect.Key, 0, "A key on a Kingsport Foods lanyard. 'STOREROOM - STAFF ONLY'.", 1, battle: false);
             Item(c, "key_church", "Church Key", ItemEffect.Key, 0, "A heavy iron key tagged 'St. Ansel's - side door'.", 1, battle: false);
@@ -150,7 +200,8 @@ namespace UnityEve.Editor
             Ability("barrier", "Barrier", AbilityEffect.Barrier, 30, 0, 20, "Incoming damage is halved for 20 s.", new Color(0.6f, 0.9f, 1f));
 
             EnemyDefinition Enemy(string id, string name, int level, int hp, int def, int dmg, float speed, float reach,
-                float windup, float recover, float cooldown, int exp, float aggression, float caution, float hover = 0f)
+                float windup, float recover, float cooldown, int exp, float aggression, float caution, float hover = 0f,
+                bool ranged = false, bool puddle = false)
             {
                 // Kat must always be able to walk away from a creature that isn't actively charging
                 // (BattleConfig.PlayerRunSpeed), or distance stops being a real defensive option.
@@ -162,7 +213,7 @@ namespace UnityEve.Editor
                 {
                     Id = id, DisplayName = name, Level = level, MaxHp = hp, Defense = def, AttackDamage = dmg, MoveSpeed = speed,
                     Reach = reach, WindupSeconds = windup, RecoverSeconds = recover, CooldownSeconds = cooldown, Exp = exp,
-                    HoverHeight = hover, Aggression = aggression, Caution = caution,
+                    HoverHeight = hover, Aggression = aggression, Caution = caution, Ranged = ranged, LeavesPuddle = puddle,
                 };
                 e = SaveAsset(e, $"{DataDir}/Enemy_{id}.asset");
                 c.Enemies[id] = e;
@@ -175,13 +226,20 @@ namespace UnityEve.Editor
             Enemy("frog", "Gutterspawn", 2, 52, 2, 10, 1.7f, 1.1f, 0.52f, 0.5f, 1.2f, 28, 0.55f, 0.35f);
             Enemy("snake", "Gutter Serpent", 3, 46, 1, 13, 1.9f, 1.35f, 0.62f, 0.55f, 1.3f, 32, 0.6f, 0.55f);
             Enemy("slime", "Drain Coil", 3, 64, 3, 12, 1.1f, 1.15f, 0.72f, 0.7f, 1.5f, 38, 0.3f, 0.7f);
-            Enemy("wasp", "Steeple Drone", 2, 26, 0, 9, 3.2f, 1.0f, 0.4f, 0.5f, 1.0f, 22, 0.75f, 0.25f, hover: 1.25f);
+            // A clean ranged poke from range (no puddle): the windup telegraph gives the same dodge window
+            // as any other strike, so a well-timed roll avoids it like it would a melee swing.
+            Enemy("wasp", "Steeple Drone", 2, 26, 0, 9, 3.2f, 5f, 0.4f, 0.5f, 1.0f, 22, 0.75f, 0.25f, hover: 1.25f, ranged: true);
             Enemy("bat", "Steeple Bat", 1, 22, 0, 5, 3.5f, 0.95f, 0.3f, 0.4f, 0.9f, 16, 0.7f, 0.35f, hover: 1.6f);
             // The aliens (procedural, see DemoContentBuilder.Aliens).
             Enemy("crawler", "Mito Crawler", 2, 34, 1, 9, 3.2f, 1.0f, 0.38f, 0.4f, 0.9f, 26, 0.85f, 0.2f);
             Enemy("tendril", "Drain Tendril", 3, 58, 2, 14, 1.0f, 1.9f, 0.7f, 0.6f, 1.4f, 40, 0.5f, 0.65f);
             Enemy("sporesac", "Spore Sac", 2, 30, 0, 10, 1.9f, 1.1f, 0.5f, 0.5f, 1.1f, 30, 0.45f, 0.75f, hover: 1.3f);
             Enemy("brute", "Husk Brute", 5, 130, 4, 20, 1.6f, 1.6f, 0.85f, 0.8f, 1.8f, 90, 0.6f, 0.2f);
+            // Two more aliens (owner direction 2026-10-11): a ranged spitter (Ranged uses its Reach as
+            // spit range rather than closing to melee; a hit leaves a DOT puddle she has to step out of)
+            // and a tanky corridor-blocking warden for the school.
+            Enemy("spitter", "Bloat Spitter", 3, 40, 1, 12, 1.4f, 6f, 0.6f, 0.65f, 1.6f, 34, 0.5f, 0.6f, hover: 0.4f, ranged: true, puddle: true);
+            Enemy("warden", "Husk Warden", 4, 150, 5, 16, 1.3f, 1.7f, 0.75f, 0.75f, 1.6f, 70, 0.4f, 0.75f);
             // The boss: rooted to her nest, her tentacles reach most of the nave; she calls her brood.
             var mother = Enemy("mother", "Mito Mother", 8, 420, 4, 22, 0f, 6f, 0.95f, 1f, 2.2f, 320, 1f, 0f);
             mother.Stats.Boss = true;
@@ -249,6 +307,12 @@ namespace UnityEve.Editor
             Map(SoundId.Save, 0.7f, Gen("save"));
             Map(SoundId.CoverBlock, 0.7f, Gen("cover_block"));
             Map(SoundId.ActiveReload, 0.8f, Gen("active_reload"));
+            Map(SoundId.Shove, 0.7f, Gen("shove"));
+            Map(SoundId.EnemySpit, 0.7f, Gen("enemy_spit"));
+            Map(SoundId.Stinger, 0.7f, Gen("stinger"));
+            Map(SoundId.AcidSizzle, 0.6f, Gen("acid_sizzle"));
+            Map(SoundId.Shootdodge, 0.8f, Gen("shootdodge"));
+            Map(SoundId.HardLand, 0.8f, Gen("hard_land"));
             Map(SoundId.Dodge, 0.6f, Gen("dodge"));
             Map(SoundId.PerfectDodge, 0.9f, Gen("perfect_dodge"));
             Map(SoundId.PeCast, 0.7f, Gen("pe_cast"));

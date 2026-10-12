@@ -580,6 +580,7 @@ namespace UnityEve.Game
             var focusShown = false;
             var buffShown = false;
             var chargeShown = false;
+            var shootdodgeShown = false;
             var intents = new System.Collections.Generic.HashSet<EnemyIntent>();
             var timeout = Time.realtimeSinceStartup + seconds;
             while (battle.InBattle && battle.Phase != BattlePhase.Victory && Time.realtimeSinceStartup < timeout)
@@ -640,6 +641,28 @@ namespace UnityEve.Game
                 if (_demo && battle.CurrentReload != null && battle.CurrentReload.InSweetSpot)
                     Input.GameInput.Instance?.TriggerConfirm();
 
+                // Shootdodge: real time, not ATB-gated, so it's exercised here rather than in the
+                // command-menu turn chain below. TriggerShootdodge/TriggerConfirm press the real inputs so
+                // the whole leap-fire-land sequence runs through the same path a human's does.
+                if (!shootdodgeShown && !_demo && battle.Phase == BattlePhase.Active && turn == 6 &&
+                    _player.Weapon != null && !_player.Weapon.Stats.Melee)
+                {
+                    shootdodgeShown = true;
+                    Input.GameInput.Instance?.TriggerShootdodge();
+                    yield return Real(0.08f);
+                    if (_player.Controller.IsShootdodging)
+                    {
+                        yield return Shot($"{tag}_shootdodge");
+                        for (var i = 0; i < 3 && _player.Controller.IsShootdodging; i++)
+                        {
+                            Input.GameInput.Instance?.TriggerConfirm();
+                            yield return Real(0.15f);
+                        }
+                        while (_player.Controller.IsShootdodging) yield return null;
+                        yield return Shot($"{tag}_shootdodge_land");
+                    }
+                }
+
                 if (battle.Phase != BattlePhase.Active || !battle.Atb.IsFull)
                 {
                     yield return null;
@@ -683,6 +706,24 @@ namespace UnityEve.Game
                         battle.AutoConfirmTarget();
                         yield return Real(0.12f);
                         yield return Shot($"{tag}_rush");
+                        yield return Real(0.5f);
+                    }
+                }
+                else if (turn == 4 && _player.Pe.CanAfford(BattleConfig.KatanaRushPeCost))
+                {
+                    // Line Rush: the hand-aimed dash. AutoConfirmAim aims at the nearest enemy and
+                    // confirms at once, standing in for a human rotating the stick then pressing Confirm.
+                    battle.AutoChoose("Blade");
+                    yield return Real(0.2f);
+                    yield return Shot($"{tag}_blade_menu2");
+                    battle.AutoChoose("Line Rush");
+                    yield return Real(0.3f);
+                    if (battle.Phase == BattlePhase.Aiming)
+                    {
+                        yield return Shot($"{tag}_line_rush_aim");
+                        battle.AutoConfirmAim();
+                        yield return Real(0.12f);
+                        yield return Shot($"{tag}_line_rush");
                         yield return Real(0.5f);
                     }
                 }

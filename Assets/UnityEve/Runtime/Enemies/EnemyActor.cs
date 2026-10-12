@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEve.Battle;
 using UnityEve.Core.Battle;
 using UnityEve.Core.Util;
 using UnityEve.Data;
@@ -98,6 +99,12 @@ namespace UnityEve.Enemies
             _cycle.WindupStarted += OnWindup;
             _cycle.StrikeLanded += () =>
             {
+                if (Stats.Ranged)
+                {
+                    var color = Stats.LeavesPuddle ? new Color(0.6f, 1f, 0.3f) : new Color(1f, 0.85f, 0.2f);
+                    BattleFx.Instance?.Tracer(AimPoint, _target.position + Vector3.up * 0.9f, color);
+                    AudioService.Play(Stats.LeavesPuddle ? SoundId.EnemySpit : SoundId.Stinger, 0.7f);
+                }
                 Struck?.Invoke(this);
                 _mind.Struck();
             };
@@ -139,7 +146,13 @@ namespace UnityEve.Enemies
         {
             var d = transform.position - from;
             d.y = 0f;
-            if (d.sqrMagnitude > 0.0001f) transform.position += d.normalized * metres;
+            if (d.sqrMagnitude <= 0.0001f) return;
+            transform.position += d.normalized * metres;
+            // Shove and Riposte knock back 1.8m — several times farther than a blade hit or grenade ever
+            // did — and immediately stun, which skips Move()/KeepInArena() for its whole duration. Without
+            // this, a shove near a wall in a tight room (the shed, the storeroom) could leave the creature
+            // visibly outside the arena until the stun wears off.
+            KeepInArena();
         }
 
         /// <returns>Damage dealt.</returns>
@@ -300,6 +313,8 @@ namespace UnityEve.Enemies
                     break;
                 case AttackPhase.Strike:
                 {
+                    // A ranged creature spits from where it stood at the windup; only melee lunges in.
+                    if (Stats.Ranged) break;
                     var lunge = _anchor - transform.position;
                     lunge.y = 0f;
                     if (lunge.magnitude > Stats.Reach * 0.5f)

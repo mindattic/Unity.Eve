@@ -23,6 +23,8 @@ namespace UnityEve.Battle
         Command,
         /// <summary>World paused: range dome up, choosing a target.</summary>
         Targeting,
+        /// <summary>World paused: Line Rush's free-rotating aim line, not a target lock-on.</summary>
+        Aiming,
         /// <summary>Real time, player rooted: the chosen action plays out.</summary>
         Executing,
         Victory,
@@ -39,6 +41,7 @@ namespace UnityEve.Battle
     {
         private static readonly object PauseKey = new object();
         private static readonly object FocusKey = new object();
+        private static readonly object ShootdodgeKey = new object();
 
         [SerializeField] private PlayerCharacter _player;
         [SerializeField] private RangeDome _dome;
@@ -58,12 +61,18 @@ namespace UnityEve.Battle
         private int _targetIndex;
         private float _targetRange;
         private System.Action<EnemyActor> _onTargetChosen;
+        private float _aimRange;
+        private Vector3 _aimDirection;
+        private System.Action<Vector3> _onAimChosen;
+        private LineRenderer _aimLine;
         private EnemyActor _focusAttacker;
         private int _expEarned;
         private bool _menuLocked;
         private ActiveReload _activeReload;
         private float _lastAttackAt = -999f;
         private EnemyActor _lastAttackTarget;
+        private float _shoveReadyAt = -999f;
+        private bool _wasShootdodging;
 
         public static BattleDirector Instance { get; private set; }
         public BattlePhase Phase { get; private set; } = BattlePhase.Inactive;
@@ -230,6 +239,10 @@ namespace UnityEve.Battle
                     TickRealtime(Time.deltaTime);
                     if (_focus.IsOpen) HandleFocusInput(input);
                     else if (input != null && input.ConfirmPressed && _atb.IsFull && _player.Controller.CanAct) OpenCommandMenu();
+                    if (!_focus.IsOpen && input != null && input.InteractPressed && Time.time >= _shoveReadyAt && _player.Controller.CanAct) DoShove();
+                    if (!_focus.IsOpen && input != null && input.ShootdodgePressed && CanShootdodge()) DoShootdodge();
+                    if (_player.Controller.IsShootdodging && input != null && input.ConfirmPressed) FireDuringShootdodge();
+                    TrackShootdodgeLanding();
                     break;
                 case BattlePhase.Executing:
                     TickRealtime(Time.deltaTime);
@@ -239,6 +252,9 @@ namespace UnityEve.Battle
                     break;
                 case BattlePhase.Targeting:
                     HandleTargetInput(input);
+                    break;
+                case BattlePhase.Aiming:
+                    HandleAimInput(input);
                     break;
             }
 
@@ -346,6 +362,7 @@ namespace UnityEve.Battle
                     _player.Controller.Animator?.SetTrigger(AnimParams.Hit);
                     CameraDirector.Instance?.AddTrauma(0.25f + 0.3f * severity);
                     GameInput.Instance?.Rumble(0.9f, 1f, 0.18f);
+                    if (enemy.Stats.LeavesPuddle) HazardPuddle.Spawn(_player.transform.position, _player);
                     break;
             }
         }
@@ -355,7 +372,7 @@ namespace UnityEve.Battle
             if (input == null) return;
             if (input.FocusHealPressed) UseFocusMove(FocusMove.QuickHeal);
             else if (input.FocusVitalsPressed) UseFocusMove(FocusMove.TargetVitals);
-            else if (input.FocusCounterPressed) UseFocusMove(FocusMove.Counter);
+            else if (input.FocusCounterPressed) UseFocusMove(FocusMove.Riposte);
         }
 
         /// <summary>Spends the open Focus window on a free move. No ATB cost.</summary>
@@ -379,15 +396,111 @@ namespace UnityEve.Battle
                     ShotVisual(_focusAttacker);
                     DealDamage(_focusAttacker, hit.Amount, critical: true, label: "VITALS");
                     break;
-                case FocusMove.Counter:
+                case FocusMove.Riposte:
                     if (!_focusAttacker.IsAlive) break;
-                    _focusAttacker.Knockback(_player.transform.position, 1.6f);
-                    _focusAttacker.ApplyStun(FocusWindow.CounterStunSeconds);
-                    _player.Controller.Animator?.SetTrigger(AnimParams.Throw);
-                    DealDamage(_focusAttacker, Mathf.Max(1, WeaponDamage() / 2), false, "COUNTER");
+                    _focusAttacker.Knockback(_player.transform.position, BattleConfig.ShoveKnockbackMetres);
+                    _focusAttacker.ApplyStun(FocusWindow.RiposteStunSeconds);
+                    _player.Controller.Animator?.SetTrigger(AnimParams.Shove);
+                    DealDamage(_focusAttacker, WeaponDamage(), critical: true, label: "RIPOSTE");
                     break;
             }
             return true;
+        }
+
+        /// <summary>Free melee (Interact, no ATB cost, no ammo): a short-reach shove that knocks back and
+        /// staggers whatever's in front of her. Control, not damage — real weapons still do the killing.</summary>
+        private void DoShove()
+        {
+            var origin = _player.transform.position;
+            var facing = _player.transform.forward;
+            EnemyActor best = null;
+            var bestDot = 0.3f; // roughly in front; nothing closer to her side counts as a target
+            foreach (var e in _enemies.Where(e => e.IsAlive))
+            {
+                var d = e.transform.position - origin;
+                d.y = 0f;
+                var dist = d.magnitude;
+                if (dist > BattleConfig.ShoveReach + e.BodyRadius) continue;
+                var dot = dist > 0.0001f ? Vector3.Dot(facing, d.normalized) : 1f;
+                if (dot < bestDot) continue;
+                bestDot = dot;
+                best = e;
+            }
+            _shoveReadyAt = Time.time + BattleConfig.ShoveCooldownSeconds;
+            _player.Controller.Root(BattleConfig.ShoveRootSeconds);
+            _player.Controller.Animator?.SetTrigger(AnimParams.Shove);
+            AudioService.Play(SoundId.Shove);
+            if (best == null)
+            {
+                GameHud.Instance?.Popup(origin + Vector3.up * 1.8f, "MISS", new Color(0.7f, 0.9f, 1f));
+                return;
+            }
+            best.Knockback(origin, BattleConfig.ShoveKnockbackMetres);
+            best.ApplyStun(BattleConfig.ShoveStunSeconds);
+            var dmg = Mathf.Max(1, Mathf.RoundToInt(WeaponDamage() * BattleConfig.ShoveDamageFraction));
+            DealDamage(best, dmg, critical: false, label: "SHOVE");
+            CameraDirector.Instance?.AddTrauma(0.15f);
+            GameInput.Instance?.Rumble(0.3f, 0.5f, 0.1f);
+        }
+
+        // ------------------------------------------------------------------ shootdodge (Max Payne dive)
+
+        private bool CanShootdodge()
+        {
+            var w = _player.Weapon;
+            return w != null && !w.Stats.Melee && _player.Controller.CanAct && _player.Controller.ShootdodgeReady;
+        }
+
+        private void DoShootdodge()
+        {
+            if (!_player.Controller.TryStartShootdodge(_player.Controller.CurrentWish)) return;
+            // The world (enemy windups, their strikes) slows to a crawl for as long as she's airborne;
+            // her own leap runs on real time regardless (see PlayerController.TryStartShootdodge).
+            WorldTime.Instance?.SetScale(ShootdodgeKey, BattleConfig.ShootdodgeTimeScale);
+        }
+
+        /// <summary>One aimed round at the nearest target in weapon range, spent from her real clip —
+        /// mashed as fast as the player can press Confirm while she's still in the air.</summary>
+        private void FireDuringShootdodge()
+        {
+            var w = _player.Weapon;
+            if (w == null || w.Stats.Melee || _player.RoundsInClip <= 0)
+            {
+                AudioService.Play(SoundId.UiDeny);
+                return;
+            }
+            var origin = _player.transform.position;
+            var target = _enemies.Where(e => e.IsAlive && Flat(e.transform.position - origin) <= w.Stats.Range + e.BodyRadius)
+                .OrderBy(e => Flat(e.transform.position - origin)).FirstOrDefault();
+            if (target == null)
+            {
+                AudioService.Play(SoundId.UiDeny);
+                return;
+            }
+            _player.Controller.FaceTowards(target.transform.position);
+            ShotVisual(target);
+            var hit = DamageCalculator.Roll(WeaponDamage(), 1f, target.Stats.Defense, _rng);
+            DealDamage(target, hit.Amount, hit.Critical);
+            if (hit.Critical) target.Knockback(origin, 0.3f);
+            _player.SpendRounds(1);
+            _lastAttackAt = Time.time;
+            _lastAttackTarget = target;
+        }
+
+        /// <summary>Edge-detects landing (IsShootdodging true → false) to end bullet time and apply the
+        /// hard-landing cost; PlayerController owns the leap itself and already applied the landing root.</summary>
+        private void TrackShootdodgeLanding()
+        {
+            var now = _player.Controller.IsShootdodging;
+            if (_wasShootdodging && !now)
+            {
+                WorldTime.Instance?.SetScale(ShootdodgeKey, 1f);
+                var dealt = _player.TakeDamage(BattleConfig.ShootdodgeLandDamage);
+                GameHud.Instance?.Hurt(0.12f);
+                GameHud.Instance?.Popup(_player.transform.position + Vector3.up * 1.6f, dealt > 0 ? $"-{dealt}" : "LANDED", new Color(1f, 0.7f, 0.3f));
+                CameraDirector.Instance?.AddTrauma(0.3f);
+            }
+            _wasShootdodging = now;
         }
 
         // ------------------------------------------------------------------ damage

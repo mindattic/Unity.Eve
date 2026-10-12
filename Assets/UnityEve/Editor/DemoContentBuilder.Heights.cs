@@ -485,6 +485,8 @@ namespace UnityEve.Editor
             Bench(k, new Vector3(-44f, 0.14f, -94.3f), Vector3.forward);
 
             // ---- Things to find.
+            // The trunk marker already sits on the lot-loop's own procedural car above (x=-63, z=-83.5)
+            // — no separate car model needed here; one was mistakenly added on top of it and overlapped.
             var trunk = Marker(k, "Container_Lot_Trunk", new Vector3(-63f, 0.6f, -85.8f), 0f);
             Attach<Container>(trunk, new Vector3(-63f, 0.02f, -86.8f), 1.6f, 0f).Configure("car trunk", c.Loot["garage"], "The trunk pops open. Someone was packing to leave.");
             var cooler = Model(k.Interact, Surv("chest"), new Vector3(-38f, 0.14f, -94.5f), 180f, size: 0.9f, name: "Container_Store_Cooler");
