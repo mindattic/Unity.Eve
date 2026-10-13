@@ -140,6 +140,10 @@ Build/Windows/UnityEve.exe -demo
 Builds/Capture/UnityEve.exe -autoplay -artifacts artifacts/autoplay   # or -demo
 ```
 
+MindAttic.Capture also auto-starts in plain Editor Play sessions and dev builds (not gated by
+`-capture`). Currently disabled project-wide: `"enabled": false` in `capture.json`. Flip it to
+`true` (or remove the key) to re-enable.
+
 Unity batch mode needs the Editor closed on this project; `tools/unity.ps1` refuses to run if it's open.
 
 ## How it's built
