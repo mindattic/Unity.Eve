@@ -106,3 +106,13 @@ updated: 2026-10-11
 | Exploration | 10 | 0 | 0 |
 | Presentation | 9 | 1 | 0 |
 | Vertical slice | 9 | 0 | 0 |
+
+## Tickets
+> Permanent log of every change and fix — this repo's ticket system. Rows are append-only: never
+> delete or reword one; only move its Status (open → closed / wont-do) and fill in Ref. Status is
+> a word, not a glyph, so tickets don't count toward the story index. Keep this section last.
+
+| ID | Date | Type | Status | Summary | Ref |
+|---|---|---|---|---|---|
+| UE-T1 | 2026-10-12 | docs | closed | Start the permanent ticket log in USER_STORIES.md | — |
+| UE-T2 | 2026-10-12 | chore | closed | Add deploy.ps1 to rebuild and publish a fresh standalone copy to C:\Apps\UnityEve | tools/deploy.ps1 |
