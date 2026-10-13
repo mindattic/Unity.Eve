@@ -36,7 +36,11 @@ namespace UnityEve.Interaction
                 return;
             }
             AudioService.Play(SoundId.ItemFound);
-            GameHud.Instance?.ShowMessage($"Got {_item.Stats.DisplayName}" + (_count > 1 ? $" x{_count - overflow}." : "."));
+            var taken = _count - overflow;
+            GameHud.Instance?.ShowMessage($"Got {_item.Stats.DisplayName}" + (taken > 1 ? $" x{taken}." : ".")
+                + (overflow > 0 ? " The bag is full." : ""));
+            // Leftovers that didn't fit stay here to pick up later, instead of vanishing with the pickup.
+            if (overflow > 0) { _count = overflow; return; }
             gameObject.SetActive(false);
         }
     }

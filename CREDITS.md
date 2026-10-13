@@ -12,6 +12,7 @@ since Adobe's terms forbid redistributing its raw files.
 | Furniture Kit (house interiors) | Kenney, https://kenney.nl/assets/furniture-kit | CC0 1.0 | `Assets/UnityEve/Art/Models/furniture/` |
 | Survival Kit (crates, barrels, chest, workbench) | Kenney, https://kenney.nl/assets/survival-kit | CC0 1.0 | `Assets/UnityEve/Art/Models/survival/` |
 | Car Kit (sedan, SUV, taxi, police, ambulance, van, delivery, firetruck) | Kenney, https://kenney.nl/assets/car-kit | CC0 1.0 | `Assets/UnityEve/Art/Models/car-kit/` |
+| Ultimate Gun Pack (shotgun, SMG, sniper rifle) | Quaternius, https://opengameart.org/content/low-poly-guns-pack | CC0 1.0 | `Assets/UnityEve/Art/Models/weapons/` |
 | Impact Sounds, Interface Sounds | Kenney | CC0 1.0 | `Assets/UnityEve/Art/Audio/` |
 | Bangers font | The Bangers Project Authors (Vernon Adams), Google Fonts | SIL OFL 1.1 | `Assets/UnityEve/Art/Fonts/` |
 

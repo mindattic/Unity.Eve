@@ -15,7 +15,7 @@ namespace UnityEve.Editor
             foreach (var guid in AssetDatabase.FindAssets("", new[] { "Assets/UnityEve/Art/Models" }))
             {
                 var path = AssetDatabase.GUIDToAssetPath(guid);
-                if (!path.EndsWith(".glb") && !path.EndsWith(".gltf")) continue;
+                if (!path.EndsWith(".glb") && !path.EndsWith(".gltf") && !path.EndsWith(".fbx")) continue;
                 var all = AssetDatabase.LoadAllAssetsAtPath(path);
                 sb.AppendLine($"== {path} importer={AssetImporter.GetAtPath(path)?.GetType().Name}");
                 foreach (var clip in all.OfType<AnimationClip>())
@@ -46,6 +46,7 @@ namespace UnityEve.Editor
                     }
                 }
             }
+            System.IO.Directory.CreateDirectory("Logs");
             System.IO.File.WriteAllText("Logs/asset-probe.txt", sb.ToString());
             Debug.Log("[UnityEve] probe written to Logs/asset-probe.txt");
         }

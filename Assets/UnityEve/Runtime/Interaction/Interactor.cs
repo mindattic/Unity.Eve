@@ -79,7 +79,7 @@ namespace UnityEve.Interaction
         /// <summary>Scripted use for the autopilot: interacts immediately, skipping the hold.</summary>
         public bool InteractNow(Interactable target)
         {
-            if (target == null || !target.CanInteract) return false;
+            if (target == null || !target.CanInteract || target.Prompt == null) return false;
             target.Interact(_player);
             return true;
         }

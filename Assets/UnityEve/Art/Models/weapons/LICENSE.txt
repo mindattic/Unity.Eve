@@ -1,0 +1,11 @@
+Ultimate Gun Pack by Quaternius (https://quaternius.com)
+CC0 1.0 Universal (Public Domain Dedication)
+https://creativecommons.org/publicdomain/zero/1.0/
+
+Source (OpenGameArt): https://opengameart.org/content/low-poly-guns-pack
+
+  Shotgun.fbx        - "Shotgun_1" from the pack
+  SubmachineGun.fbx  - "SubmachineGun_1" from the pack
+  SniperRifle.fbx    - "SniperRifle_1" from the pack
+
+Renamed from the pack's numbered originals; otherwise unmodified.

@@ -160,7 +160,7 @@ namespace UnityEve.Editor
             var asset = AssetDatabase.LoadAssetAtPath<GameObject>(assetPath);
             if (asset == null)
             {
-                Debug.LogWarning($"[UnityEve] missing model {assetPath}");
+                Debug.LogError($"[UnityEve] missing model {assetPath}");
                 return new GameObject(name ?? "Missing");
             }
             var wrapper = new GameObject(name ?? asset.name);

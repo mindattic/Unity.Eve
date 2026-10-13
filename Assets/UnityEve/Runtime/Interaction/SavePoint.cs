@@ -33,6 +33,12 @@ namespace UnityEve.Interaction
             var battle = Battle.BattleDirector.Instance;
             if (battle != null && battle.InBattle) return;
             var save = SaveSystem.Save(this);
+            if (save == null)
+            {
+                AudioService.Play(SoundId.UiDeny);
+                GameHud.Instance?.ShowMessage("Couldn't save.", 3f);
+                return;
+            }
             AudioService.Play(SoundId.Save);
             GameHud.Instance?.ShowMessage($"Progress saved at {_location}. ({save.Summary})", 3f);
         }

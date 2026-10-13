@@ -23,5 +23,7 @@ MonoBehaviour:
     Burst: 0
     RootSeconds: 0.45
     Melee: 0
+    BurstFireRounds: 0
+    BurstFireAccuracy: 1
   Ammo: {fileID: 11400000, guid: 640d7bee9bd9bf547bb6964d25c8a0ae, type: 2}
   FireSound: 6

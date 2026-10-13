@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e543a8558a7cda94fbc075202c7dcf81, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEve.Runtime::UnityEve.Data.WeaponDefinition
+  Stats:
+    Id: smg
+    DisplayName: SMG
+    Damage: 8
+    Range: 7
+    AtbMultiplier: 1.3
+    ClipSize: 24
+    RoundsPerTurn: 3
+    Burst: 0
+    RootSeconds: 0.35
+    Melee: 0
+    BurstFireRounds: 8
+    BurstFireAccuracy: 0.55
+  Ammo: {fileID: 11400000, guid: 640d7bee9bd9bf547bb6964d25c8a0ae, type: 2}
+  FireSound: 6

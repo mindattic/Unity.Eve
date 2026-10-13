@@ -44,7 +44,7 @@ namespace UnityEve.Editor
             foreach (var z in new[] { 6f, 14f, 22f })
             {
                 LocalBox(R(), "LightPanel", new Vector3(x - 1.2f, 4.12f, z - 0.25f), new Vector3(x + 1.2f, 4.18f, z + 0.25f), panel, false);
-                if ((x + z) % 16 != 0) PointLight(k, "Fluorescent", o + new Vector3(x, 3.9f, z), new Color(0.82f, 0.95f, 1f), 4f, 9f, flicker: (x * z) % 3 == 0);
+                PointLight(k, "Fluorescent", o + new Vector3(x, 3.9f, z), new Color(0.82f, 0.95f, 1f), 4f, 9f, flicker: (x * z) % 3 == 0);
             }
 
             // Entrance: the sliding doors (exit), mats, the customer service sign.
@@ -129,6 +129,9 @@ namespace UnityEve.Editor
             Attach<Container>(desk, s + new Vector3(2.6f, 0f, 2f), 1.6f)
                 .Configure("manager's desk", c.Loot["drawer"], "Under a schedule taped with a church flyer...", c.Items["key_church"]);
             Locks.Key("Storeroom", "key_church");
+            var smg = Model(k.Interact, Weap("SubmachineGun"), s + new Vector3(5f, 1f, 1f), 0f, size: 0.55f, collider: false, name: "WeaponPickup_Smg");
+            Attach<WeaponPickup>(smg, s + new Vector3(5f, 0f, 2.2f), 1.6f, 0.8f).Configure(c.Weapons["smg"], c.Items["ammo_9mm"], 2);
+            Glint(k, smg.transform);
             var log = Marker(k, "Readable_ManagersLog", s + new Vector3(1.4f, 0.9f, 3.4f), 90f);
             Attach<Readable>(log, s + new Vector3(2.6f, 0f, 3.4f), 1.4f, 0f).Configure("Read the manager's log",
                 "'Frank - Father Ames left the side-door key with us for the food drive. Keep it in the desk. Whatever is in the back freezer is NOT spoiled meat. Don't open it.'");

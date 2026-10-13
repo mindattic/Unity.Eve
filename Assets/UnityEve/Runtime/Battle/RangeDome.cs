@@ -28,6 +28,7 @@ namespace UnityEve.Battle
         {
             transform.position = centre;
             _radius = radius;
+            if (_dome == null) return;
             if (!_dome.gameObject.activeSelf) _grow = 0f;
             _dome.gameObject.SetActive(true);
         }
@@ -40,6 +41,7 @@ namespace UnityEve.Battle
 
         public void Mark(Vector3? point)
         {
+            if (_marker == null) return;
             _marker.gameObject.SetActive(point.HasValue);
             if (point.HasValue) _marker.position = point.Value + Vector3.up * 0.6f;
         }
@@ -47,14 +49,14 @@ namespace UnityEve.Battle
         private void Update()
         {
             // Unscaled: the dome blooms in, and its hexagons scan, while the world is paused.
-            if (_dome.gameObject.activeSelf)
+            if (_dome != null && _dome.gameObject.activeSelf)
             {
                 Shader.SetGlobalFloat(UnscaledTime, Time.unscaledTime);
                 _grow = Mathf.Min(1f, _grow + Time.unscaledDeltaTime * 2.5f);
                 var s = 1f - Mathf.Pow(1f - _grow, 3f);
                 _dome.localScale = Vector3.one * (_radius * 2f * s);
             }
-            if (_marker.gameObject.activeSelf)
+            if (_marker != null && _marker.gameObject.activeSelf)
             {
                 _marker.Rotate(0f, 180f * Time.unscaledDeltaTime, 0f, Space.World);
                 _marker.localScale = Vector3.one * (0.22f + Mathf.Sin(Time.unscaledTime * 8f) * 0.03f);

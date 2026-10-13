@@ -150,6 +150,7 @@ namespace UnityEve.Editor
             // Items. Ammo lives in the bag like PE1, so bullets compete with medicine for slots.
             var ammo9 = Item(c, "ammo_9mm", "9mm Rounds", ItemEffect.Ammo, 10, "A magazine's worth of 9mm. Reload loads one.", 6, battle: false);
             var shells = Item(c, "ammo_shells", "Shotgun Shells", ItemEffect.Ammo, 5, "Five 12-gauge shells.", 6, battle: false);
+            var rifleRounds = Item(c, "ammo_rifle", "Rifle Rounds", ItemEffect.Ammo, 5, "Five rounds of heavy rifle ammunition.", 6, battle: false);
             Item(c, "medicine", "Medicine", ItemEffect.RestoreHp, 50, "Restores 50 HP.", 5);
             Item(c, "cola", "Cola", ItemEffect.RestoreHp, 20, "Flat, warm, and somehow restores 20 HP.", 5);
             Item(c, "grenade", "Grenade", ItemEffect.Explosive, 45, "Thrown. 45 damage to everything within 3 m of the target.", 3, radius: 3f);
@@ -161,13 +162,14 @@ namespace UnityEve.Editor
             Item(c, "key_church", "Church Key", ItemEffect.Key, 0, "A heavy iron key tagged 'St. Ansel's - side door'.", 1, battle: false);
 
             WeaponDefinition Weapon(string id, string name, int dmg, float range, float atb, int clip, int rof, bool burst, bool melee,
-                ItemDefinition ammo, SoundId sound, float root)
+                ItemDefinition ammo, SoundId sound, float root, int burstFireRounds = 0, float burstFireAccuracy = 1f)
             {
                 var w = ScriptableObject.CreateInstance<WeaponDefinition>();
                 w.Stats = new WeaponStats
                 {
                     Id = id, DisplayName = name, Damage = dmg, Range = range, AtbMultiplier = atb, ClipSize = clip,
                     RoundsPerTurn = rof, Burst = burst, Melee = melee, RootSeconds = root,
+                    BurstFireRounds = burstFireRounds, BurstFireAccuracy = burstFireAccuracy,
                 };
                 w.Ammo = ammo;
                 w.FireSound = sound;
@@ -179,6 +181,12 @@ namespace UnityEve.Editor
             Weapon("pistol", "Service Pistol", 12, 7f, 1f, 10, 2, false, false, ammo9, SoundId.Gunshot, 0.45f);
             Weapon("shotgun", "Pump Shotgun", 20, 4.5f, 0.8f, 5, 1, true, false, shells, SoundId.ShotgunBlast, 0.7f);
             Weapon("pipe", "Steel Pipe", 14, 1.9f, 2f, 0, 1, false, true, null, SoundId.HitFlesh, 0.5f);
+            // SMG: a quick, light single shot each turn, or spray Burst Fire — many rounds at one target,
+            // each only a coin flip to connect, for burst-damage potential at the cost of ammo and misses.
+            Weapon("smg", "SMG", 8, 7f, 1.3f, 24, 3, false, false, ammo9, SoundId.Gunshot, 0.35f,
+                burstFireRounds: 8, burstFireAccuracy: 0.55f);
+            // Bolt-action rifle: one heavy, precise round, long range, slow to cycle (low AT multiplier).
+            Weapon("rifle", "Bolt-Action Rifle", 40, 14f, 0.6f, 4, 1, false, false, rifleRounds, SoundId.Gunshot, 0.9f);
 
             AbilityDefinition Ability(string id, string name, AbilityEffect effect, float cost, int power, float duration, string desc, Color tint)
             {

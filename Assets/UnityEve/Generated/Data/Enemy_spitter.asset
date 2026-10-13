@@ -31,5 +31,5 @@ MonoBehaviour:
     Boss: 0
     Ranged: 1
     LeavesPuddle: 1
-  Prefab: {fileID: 8639340126331838788, guid: 265a053416a03504aa0f1b4f9b7b4fcf, type: 3}
+  Prefab: {fileID: 5441746786031514439, guid: 265a053416a03504aa0f1b4f9b7b4fcf, type: 3}
   Brood: {fileID: 0}

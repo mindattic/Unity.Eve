@@ -22,6 +22,11 @@ namespace UnityEve.Core.Battle
         public float RootSeconds = 0.45f;
         /// <summary>Melee weapons never use ammo.</summary>
         public bool Melee;
+        /// <summary>Rounds a "Burst Fire" special attack sprays at one target, trading accuracy for
+        /// volume (Shadowrun Returns-style); 0 disables the special attack for this weapon.</summary>
+        public int BurstFireRounds;
+        /// <summary>Per-round hit chance for Burst Fire. Ignored when <see cref="BurstFireRounds"/> is 0.</summary>
+        public float BurstFireAccuracy = 1f;
     }
 
     public enum ItemEffect

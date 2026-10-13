@@ -23,17 +23,19 @@ namespace UnityEve.Editor
         {
             const float seconds = 24f;
             var b = Buffer(seconds);
-            uint seed = 777;
-            float wind = 0f, wind2 = 0f;
             for (var i = 0; i < b.Length; i++)
             {
                 var t = i / (double)Rate;
                 // Drone on A (55 Hz) and E (82.5 Hz): whole cycles in 24 s, with a slow swell.
                 var swell = 0.75f + 0.25f * Sine(1.0 / 12.0, t);
                 var drone = (Sine(55, t) * 0.5f + Sine(82.5, t) * 0.25f + Sine(110, t) * 0.12f) * swell;
-                wind += (Noise(ref seed) - wind) * 0.02f;
-                wind2 += (wind - wind2) * 0.05f;
-                b[i] = drone * 0.32f + wind2 * 1.6f * (0.6f + 0.4f * Sine(1.0 / 8.0, t));
+                // Wind: incommensurate low-frequency sines, each completing whole cycles in 24 s like
+                // every other oscillator here, summed for a shifting texture. A filtered-noise random
+                // walk was used before, but it has no relationship between its value at sample 0 and at
+                // the last sample, so it clicked at the loop seam.
+                var wind = Sine(7.0 / 24.0, t + 3.1) * 0.4f + Sine(11.0 / 24.0, t + 7.4) * 0.3f
+                         + Sine(17.0 / 24.0, t + 1.7) * 0.2f + Sine(29.0 / 24.0, t + 5.2) * 0.15f;
+                b[i] = drone * 0.32f + wind * 1.6f * (0.6f + 0.4f * Sine(1.0 / 8.0, t));
             }
             // Sparse bells from A minor pentatonic, each fully decayed before the loop ends.
             var notes = new[] { 440f, 523.25f, 587.33f, 659.25f, 783.99f, 880f };

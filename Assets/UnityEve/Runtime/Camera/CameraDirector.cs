@@ -76,6 +76,10 @@ namespace UnityEve.Cameras
         public void ResetZones(CameraShot holdShot = null)
         {
             _selector.Clear();
+            // Forget the zone itself too: otherwise re-entering the same CameraZone instance at the
+            // destination (e.g. a door that loops back into the room it left) short-circuits in
+            // ApplySelection's `zone == ActiveZone` check and ZoneChanged never re-fires.
+            ActiveZone = null;
             if (holdShot != null) Cut(holdShot);
         }
 

@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEve.Cameras;
+using UnityEve.Interaction;
 
 namespace UnityEve.Editor
 {
@@ -51,6 +52,11 @@ namespace UnityEve.Editor
             Tree(k, new Vector3(76f, 0.02f, 42f), 6f, 105);
             StreetLamp(k, new Vector3(65f, 0.02f, 32f), 90f);
             StreetLamp(k, new Vector3(87f, 0.02f, 32f), 270f);
+
+            // A long gun left on a bench, for the overlook across the plaza — fits the fountain's long sightline.
+            var rifle = Model(k.Interact, Weap("SniperRifle"), centre + new Vector3(4.2f, 0.95f, -1.4f), 90f, size: 1.3f, collider: false, name: "WeaponPickup_Rifle");
+            Attach<WeaponPickup>(rifle, centre + new Vector3(3.2f, 0f, -1.4f), 1.6f, 0.6f).Configure(k.Content.Weapons["rifle"], k.Content.Items["ammo_rifle"], 2);
+            Glint(k, rifle.transform);
 
             // ---- Screen.
             var parkShot = Shot(k, "Park", new Vector3(76f, 6.5f, 15f), new Vector3(76f, 0.5f, 29f), ShotMode.Fixed, 55f);

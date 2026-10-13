@@ -97,10 +97,28 @@ namespace UnityEve
             if (entry == null || entry.Clips.Length == 0) return;
             var clip = entry.Clips[Random.Range(0, entry.Clips.Length)];
             if (clip == null) return;
-            var src = _pool[_next];
-            _next = (_next + 1) % _pool.Count;
+            var src = _pool[NextVoice()];
             src.pitch = Random.Range(entry.PitchRange.x, entry.PitchRange.y);
             src.PlayOneShot(clip, entry.Volume * volumeScale);
+        }
+
+        /// <summary>
+        /// Round-robins voices, but prefers one that's finished playing: setting <c>pitch</c> on a source
+        /// that's still mid one-shot would retroactively warp that sound, so reusing a free source first
+        /// avoids stepping on it.
+        /// </summary>
+        private int NextVoice()
+        {
+            for (var n = 0; n < _pool.Count; n++)
+            {
+                var idx = (_next + n) % _pool.Count;
+                if (_pool[idx].isPlaying) continue;
+                _next = (idx + 1) % _pool.Count;
+                return idx;
+            }
+            var fallback = _next;
+            _next = (_next + 1) % _pool.Count;
+            return fallback;
         }
     }
 }

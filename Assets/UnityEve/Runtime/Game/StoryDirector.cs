@@ -37,7 +37,10 @@ namespace UnityEve.Game
         private void Awake()
         {
             Instance = this;
-            _objectives = new Objectives(_texts.Select((t, i) => new Objective(t, _facts[i])));
+            if (_texts.Length != _facts.Length)
+                Debug.LogError($"[UnityEve] StoryDirector has {_texts.Length} objective texts but {_facts.Length} facts; truncating to the shorter length.");
+            var count = Math.Min(_texts.Length, _facts.Length);
+            _objectives = new Objectives(Enumerable.Range(0, count).Select(i => new Objective(_texts[i], _facts[i])));
             _objectives.Changed += OnChanged;
             _objectives.Completed += OnCompleted;
         }
