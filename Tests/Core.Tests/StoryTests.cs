@@ -79,6 +79,15 @@ namespace UnityEve.Core.Tests
         }
 
         [Fact]
+        public void A_save_with_a_nulled_list_field_is_invalid()
+        {
+            var s = new SaveGame { SavePoint = "SavePoint_BusStop", Hp = 40, Level = 3, Location = "Ashgrove Street" };
+            Assert.True(s.IsValid);
+            s.Bag = null;
+            Assert.False(s.IsValid);
+        }
+
+        [Fact]
         public void Restore_puts_progression_health_pe_and_the_bag_back_exactly()
         {
             var p = new Progression();

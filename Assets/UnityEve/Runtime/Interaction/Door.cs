@@ -24,6 +24,7 @@ namespace UnityEve.Interaction
 
         private bool _unlocked;
         private bool _busy;
+        private PlayerCharacter _transitioningPlayer;
 
         public Transform Destination => _destination;
         public bool Locked => _requiredKey != null && !_unlocked;
@@ -49,6 +50,11 @@ namespace UnityEve.Interaction
 
         public override void Interact(PlayerCharacter player)
         {
+            if (_destination == null)
+            {
+                Debug.LogError($"[UnityEve] Door '{name}' has no destination configured; ignoring interact.", this);
+                return;
+            }
             if (_requiredKey != null && !_unlocked)
             {
                 if (player.Bag.CountOf(_requiredKey.Id) == 0)
@@ -69,6 +75,7 @@ namespace UnityEve.Interaction
         private IEnumerator Transition(PlayerCharacter player)
         {
             _busy = true;
+            _transitioningPlayer = player;
             var hud = GameHud.Instance;
             player.Controller.Lock();
             AudioService.Play(SoundId.DoorOpen);
@@ -92,6 +99,18 @@ namespace UnityEve.Interaction
             hud?.SetFade(0f);
             player.Controller.Unlock();
             _busy = false;
+            _transitioningPlayer = null;
+        }
+
+        private void OnDisable()
+        {
+            // If this door is disabled/destroyed mid-transition, don't leave the player frozen
+            // behind a black screen with a permanently incremented lock count.
+            if (!_busy) return;
+            _transitioningPlayer?.Controller.Unlock();
+            GameHud.Instance?.SetFade(0f);
+            _busy = false;
+            _transitioningPlayer = null;
         }
     }
 }

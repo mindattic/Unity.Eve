@@ -165,6 +165,12 @@ namespace UnityEve.Battle
             var go = Instantiate(definition.Prefab, at, Quaternion.identity);
             go.transform.LookAt(new Vector3(_player.transform.position.x, go.transform.position.y, _player.transform.position.z));
             var actor = go.GetComponent<EnemyActor>();
+            if (actor == null)
+            {
+                Debug.LogError($"[UnityEve] enemy prefab for '{definition.name}' has no EnemyActor component; skipping spawn.");
+                Destroy(go);
+                return null;
+            }
             actor.Begin(_player.transform, MayCommit, initialCooldown, _rng.NextUInt(), _zone.Bounds,
                 () => _enemies.Count(e => e.IsAlive), _tokens);
             actor.Struck += OnEnemyStrike;
@@ -207,6 +213,8 @@ namespace UnityEve.Battle
         {
             CloseMenus();
             _focus.Close();
+            WorldTime.Instance?.SetScale(ShootdodgeKey, 1f);
+            _wasShootdodging = false;
             _dome.Hide();
             if (won) _zone.MarkCleared();
             else _zone.MarkEscaped();
@@ -273,7 +281,7 @@ namespace UnityEve.Battle
         private void CheckOutcome()
         {
             if (Phase == BattlePhase.Victory || Phase == BattlePhase.Defeat) return;
-            if (_player.IsDead)
+            if (_player.IsDead && Phase != BattlePhase.Executing)
             {
                 Phase = BattlePhase.Defeat;
                 CloseMenus();

@@ -43,14 +43,28 @@ namespace UnityEve.Game
             }
         }
 
+        /// <returns>The saved state, or null if writing to disk failed.</returns>
         public static SaveGame Save(SavePoint point)
         {
             var save = Capture(point);
-            var previous = Read();
-            save.Saves = (previous?.Saves ?? 0) + 1;
-            Directory.CreateDirectory(System.IO.Path.GetDirectoryName(FilePath) ?? ".");
-            File.WriteAllText(FilePath, JsonUtility.ToJson(save, true));
-            return save;
+            try
+            {
+                var previous = Read();
+                save.Saves = (previous?.Saves ?? 0) + 1;
+                Directory.CreateDirectory(System.IO.Path.GetDirectoryName(FilePath) ?? ".");
+                // Write to a temp file and swap it in, so a crash/kill mid-write can never truncate
+                // the real save (File.Replace/Move are atomic renames on the same volume).
+                var tempPath = FilePath + ".tmp";
+                File.WriteAllText(tempPath, JsonUtility.ToJson(save, true));
+                if (File.Exists(FilePath)) File.Replace(tempPath, FilePath, null);
+                else File.Move(tempPath, FilePath);
+                return save;
+            }
+            catch (Exception e)
+            {
+                Debug.LogWarning($"[UnityEve] save failed: {e.Message}");
+                return null;
+            }
         }
 
         public static SaveGame Capture(SavePoint point)

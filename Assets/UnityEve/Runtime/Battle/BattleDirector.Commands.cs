@@ -18,7 +18,7 @@ namespace UnityEve.Battle
 
         public void OpenCommandMenu()
         {
-            if (Phase != BattlePhase.Active || !_atb.IsFull) return;
+            if (Phase != BattlePhase.Active || !_atb.IsFull || _focus.IsOpen) return;
             Phase = BattlePhase.Command;
             WorldTime.Instance?.Pause(PauseKey);
             _player.Controller.Lock();
@@ -41,6 +41,11 @@ namespace UnityEve.Battle
                 var ammo = w != null && !w.Stats.Melee ? $" ({_player.RoundsInClip}/{w.Stats.ClipSize})" : "";
                 menu.Add(new MenuEntry("Attack" + ammo, BeginAttackTargeting, w != null,
                     w != null ? $"{w.Stats.DisplayName}: {w.Stats.Damage} dmg, range {w.Stats.Range:0}m" + (w.Stats.Burst ? ", hits all in range" : "") : null));
+                if (w != null && w.Stats.BurstFireRounds > 0)
+                {
+                    menu.Add(new MenuEntry("Burst Fire", BeginBurstFireTargeting, _player.RoundsInClip > 0,
+                        $"Spray {w.Stats.BurstFireRounds} rounds at one target, {Mathf.RoundToInt(w.Stats.BurstFireAccuracy * 100)}% per round. Burns ammo fast."));
+                }
             }
             menu.Add(new MenuEntry("Blade", () => PushMenu(BuildBladeMenu()), _player.Katana != null, "Katana arts: Slash and Rush."));
             menu.Add(new MenuEntry("PE", () => PushMenu(BuildPeMenu()), _player.Abilities.Length > 0, "Parasite Energy abilities."));
@@ -106,7 +111,8 @@ namespace UnityEve.Battle
                     GameHud.Instance?.ShowMessage($"{w.Stats.DisplayName} ready.");
                     _menuStack.Clear();
                     PushMenu(BuildCommandMenu());
-                }, true, $"Dmg {w.Stats.Damage}  Range {w.Stats.Range:0}m  AT x{w.Stats.AtbMultiplier:0.0}" + (w.Stats.Burst ? "  Burst" : "")));
+                }, true, $"Dmg {w.Stats.Damage}  Range {w.Stats.Range:0}m  AT x{w.Stats.AtbMultiplier:0.0}"
+                    + (w.Stats.Burst ? "  Burst" : "") + (w.Stats.BurstFireRounds > 0 ? "  Burst Fire" : "")));
             }
             return menu;
         }
@@ -348,6 +354,12 @@ namespace UnityEve.Battle
             BeginTargeting(w.Stats.Range, target => Execute(AttackRoutine(target), w.Stats.RootSeconds + 0.1f));
         }
 
+        private void BeginBurstFireTargeting()
+        {
+            var w = _player.Weapon;
+            BeginTargeting(w.Stats.Range, target => Execute(BurstFireRoutine(target), w.Stats.RootSeconds + 0.3f));
+        }
+
         private void ChooseAbility(AbilityDefinition ability)
         {
             if (ability.Stats.NeedsTarget)
@@ -432,6 +444,40 @@ namespace UnityEve.Battle
                 yield return new WaitForSeconds(w.Stats.Burst ? 0.04f : 0.16f);
             }
             _player.SpendRounds(w.Stats.Burst ? 1 : plan.Count);
+            yield return new WaitForSeconds(w.Stats.RootSeconds * 0.5f);
+        }
+
+        /// <summary>Burst Fire: a special attack some rapid-fire weapons (SMG) offer instead of a measured
+        /// shot — many rounds at one target, each a coin flip at <see cref="WeaponStats.BurstFireAccuracy"/>,
+        /// trading accuracy for volume (Shadowrun Returns-style). Stops early if the target dies.</summary>
+        private IEnumerator BurstFireRoutine(EnemyActor chosen)
+        {
+            _lastAttackAt = Time.time;
+            _lastAttackTarget = chosen;
+            var w = _player.Weapon;
+            var rounds = Mathf.Min(w.Stats.BurstFireRounds, _player.RoundsInClip);
+            var share = DamageCalculator.RoundShare(w.Stats.BurstFireRounds);
+            _player.Controller.FaceTowards(chosen.transform.position);
+
+            var fired = 0;
+            for (var i = 0; i < rounds && chosen.IsAlive; i++)
+            {
+                fired++;
+                _player.Controller.Animator?.SetTrigger(AnimParams.Shoot);
+                ShotVisual(chosen);
+                if (_rng.Chance(w.Stats.BurstFireAccuracy))
+                {
+                    var hit = DamageCalculator.Roll(WeaponDamage(), share, chosen.Stats.Defense, _rng);
+                    DealDamage(chosen, hit.Amount, hit.Critical);
+                    if (hit.Critical) chosen.Knockback(_player.transform.position, 0.2f);
+                }
+                else
+                {
+                    GameHud.Instance?.Popup(chosen.AimPoint, "MISS", new Color(0.7f, 0.7f, 0.7f));
+                }
+                yield return new WaitForSeconds(0.05f);
+            }
+            _player.SpendRounds(fired);
             yield return new WaitForSeconds(w.Stats.RootSeconds * 0.5f);
         }
 

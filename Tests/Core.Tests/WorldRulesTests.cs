@@ -84,6 +84,19 @@ namespace UnityEve.Core.Tests
         }
 
         [Fact]
+        public void Camera_selector_does_not_double_cut_on_a_redundant_re_entry()
+        {
+            var s = new CameraZoneSelector();
+            s.Enter(1, 1); // cut to zone 1
+            s.Enter(2, 0); // lower priority: zone 1 stays active, no cut
+            Assert.Equal(1, s.CutCount);
+            // A second overlapping collider on the already-active zone re-enters it.
+            s.Enter(1, 1);
+            Assert.Equal(1, s.CutCount);
+            Assert.Equal(1, s.ActiveZone);
+        }
+
+        [Fact]
         public void Movement_basis_holds_direction_across_a_cut_while_stick_held()
         {
             var b = new MovementBasis();

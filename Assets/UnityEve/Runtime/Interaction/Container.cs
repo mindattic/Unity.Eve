@@ -29,6 +29,9 @@ namespace UnityEve.Interaction
         private bool _searched;
         private bool _done;
         private int _stage;
+        /// <summary>Guaranteed items not yet delivered (bag was full when first offered). Re-offered on
+        /// every later search attempt instead of being dropped, so a quest/door key is never lost for good.</summary>
+        private List<ItemDefinition> _pendingFixed;
 
         public bool Searched => _searched;
         /// <summary>Loading a save: it was already emptied.</summary>
@@ -76,10 +79,12 @@ namespace UnityEve.Interaction
             // stray direct call (Interact()/InteractStage() outside the normal held-Interactor sequence,
             // e.g. a second InteractNow on the same container) must never roll the loot table again.
             if (_done) return false;
+            _pendingFixed ??= new List<ItemDefinition>(_fixedItems);
             _stage++;
             _searched = true;
-            var found = new List<(string id, int count)>();
-            if (_stage == 1) foreach (var item in _fixedItems) found.Add((item.Id, 1));
+            // fixedItem is null for a loot-table roll; non-null entries are re-offered until delivered.
+            var found = new List<(ItemDefinition fixedItem, string id, int count)>();
+            foreach (var item in _pendingFixed) found.Add((item, item.Id, 1));
             var rolled = false;
             if (_loot != null)
             {
@@ -87,7 +92,7 @@ namespace UnityEve.Interaction
                 var roll = _loot.Table.RollOne(new Rng(seed));
                 if (roll.HasValue)
                 {
-                    found.Add(roll.Value);
+                    found.Add((null, roll.Value.itemId, roll.Value.count));
                     rolled = true;
                 }
             }
@@ -102,20 +107,34 @@ namespace UnityEve.Interaction
             }
 
             var parts = new List<string>();
-            foreach (var (id, count) in found)
+            var full = false;
+            foreach (var (fixedItem, id, count) in found)
             {
                 var overflow = player.Bag.Add(id, count);
-                var name = player.Items.NameOf(id);
-                parts.Add(count > 1 ? $"{name} x{count - overflow}" : name);
-                if (overflow > 0) hud?.ShowMessage("The bag is full.");
+                var kept = count - overflow;
+                if (kept > 0)
+                {
+                    var name = player.Items.NameOf(id);
+                    parts.Add(kept > 1 ? $"{name} x{kept}" : name);
+                }
+                if (overflow > 0) full = true;
+                else if (fixedItem != null) _pendingFixed.Remove(fixedItem);
             }
             AudioService.Play(SoundId.ItemFound);
-            hud?.ShowMessage((_stage == 1 && _flavour != null ? _flavour + " " : "") + "Found: " + string.Join(", ", parts) + ".", 3.4f);
+            // Build one message instead of two: a "bag is full" warning set above would otherwise be
+            // clobbered by this call right after it, since ShowMessage has no queue.
+            var message = parts.Count > 0
+                ? (_stage == 1 && _flavour != null ? _flavour + " " : "") + "Found: " + string.Join(", ", parts) + "."
+                : "The bag is full.";
+            if (full && parts.Count > 0) message += " The bag is full.";
+            if (full && _pendingFixed.Count > 0) message += " Come back for the rest once there's room.";
+            hud?.ShowMessage(message, 3.4f);
 
-            // Keep going only while there's still a table to roll from, something was actually found this
-            // stage (a dry pull means she's scraped the bottom), and the stage cap isn't reached.
-            var continues = _loot != null && rolled && _stage < MaxStages;
-            if (!continues) _done = true;
+            // Keep going only while the stage cap isn't reached and there's still something to chase:
+            // a guaranteed item still owed, or a loot table that just paid out. Bounding on the stage cap
+            // even for pending guaranteed items keeps this finite if the bag stays full the whole search.
+            var continues = _stage < MaxStages && (_pendingFixed.Count > 0 || (_loot != null && rolled));
+            if (!continues && _pendingFixed.Count == 0) _done = true;
             return continues;
         }
     }

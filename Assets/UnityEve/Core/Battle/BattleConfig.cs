@@ -133,6 +133,11 @@ namespace UnityEve.Core.Battle
         public const float EscapeMinChance = 0.15f;
         public const float EscapeMaxChance = 0.95f;
 
+        // --- Stagger (burst damage in a short window interrupts a creature's turn) ----------
+        public const float StaggerDamageFloor = 20f;
+        public const float StaggerDamageFraction = 0.35f;
+        public const float StaggerStunSeconds = 1.8f;
+
         // --- Experience --------------------------------------------------------------------
         public const int ExpPerLevelBase = 60;
         public const float ExpCurveGrowth = 1.45f;

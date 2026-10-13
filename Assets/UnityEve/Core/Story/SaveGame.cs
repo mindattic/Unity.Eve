@@ -46,8 +46,11 @@ namespace UnityEve.Core.Story
         public List<string> UnlockedDoors = new List<string>();
         public List<string> UnlockedGates = new List<string>();
 
-        /// <summary>A save is usable when it is the current version and names where to resume.</summary>
-        public bool IsValid => Version == CurrentVersion && !string.IsNullOrEmpty(SavePoint) && Level >= 1 && Hp > 0;
+        /// <summary>A save is usable when it is the current version, names where to resume, and every
+        /// list field a corrupted/hand-edited file could have nulled out is still present.</summary>
+        public bool IsValid => Version == CurrentVersion && !string.IsNullOrEmpty(SavePoint) && Level >= 1 && Hp > 0
+            && Bag != null && Weapons != null && Facts != null && ClearedEncounters != null
+            && SearchedContainers != null && TakenPickups != null && UnlockedDoors != null && UnlockedGates != null;
 
         /// <summary>"LV 3  Kingsport Foods  0:14:05" for the title screen's Continue entry.</summary>
         public string Summary

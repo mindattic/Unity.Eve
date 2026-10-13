@@ -11,9 +11,16 @@ namespace UnityEve.Data
 
         private Dictionary<string, ItemDefinition> _byId;
 
+        // Rebuilding on a count mismatch alone is wrong both ways: an in-place swap at the same
+        // index never changes the count (stale lookup survives), and two entries sharing an id
+        // collapse the dictionary below Items.Count, forcing a full rebuild on every single call.
+        // OnValidate() covers edits made through the inspector/asset deserialization; Find() itself
+        // just builds the cache once and keeps it.
+        private void OnValidate() => _byId = null;
+
         public ItemDefinition Find(string id)
         {
-            if (_byId == null || _byId.Count != Items.Count)
+            if (_byId == null)
             {
                 _byId = new Dictionary<string, ItemDefinition>();
                 foreach (var item in Items)

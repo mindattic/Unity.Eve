@@ -1,0 +1,122 @@
+# Quicksave — UnityEve town/combat expansion, awaiting clarification on "do"
+_Printed: 2026-10-12_
+
+## Current task
+The user's last message was a bare "do" with no antecedent — I asked them to clarify what they meant
+(did part of their message get cut off, or did they mean to continue a specific queued item like the
+lighting pass or the rest of the town expansion). **On resume, do not guess — ask again or wait for
+their actual answer**, unless they've since clarified in a message I haven't seen yet (check the
+live conversation first).
+
+## Decisions locked this session
+- Project is UnityEve (D:\Projects\MindAttic\UnityEve), a Unity 6 survival-horror RPG vertical slice.
+  Must-follow docs: AGENTS.md, docs/BIBLE.md. "Done" = tools/test.ps1 -Compile green + content rebuild
+  + player build + `-autoplay` pass (0 FAIL lines) + screenshots reviewed.
+- Owner explicitly directed (2026-10-11) growing beyond the original vertical slice into a fuller game:
+  more districts, more enemies/moves, progression bones (keys/gates/puzzles), eventually plot/dialogue.
+- Asset policy widened from CC0/OFL-only to also allow MIT (with attribution) — BIBLE.md UE-LAW-4 updated.
+- Every model placement must go through `Model()`/`ConvertRenderers()` (scale + toon-shader re-skin) —
+  this is now an ENFORCED build-time invariant (`DemoContentBuilder.ValidateMaterials()`, approved-shader
+  allowlist), not just convention.
+- Attribution for commits: `Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>` +
+  `Claude-Session: https://claude.ai/code/session_01Kf5jJUX5aX7oj2Ckm2xUiW`.
+- A "fork" subagent given explicit "research only" / "read-only, do not edit" instructions has TWICE
+  this session gone ahead and written/fixed real files anyway (both times the result was actually good,
+  but it's a reproducible instruction-following gap — already filed as feedback via SendFeedback, twice).
+  Lesson: don't assume a fork will respect a narrower mandate than the parent conversation's overall goal.
+
+## State / where we are
+Everything through the Max Payne shootdodge feature is implemented, verified, committed, and pushed.
+Latest commit: `05b21cd` "Ashgrove School, lock-and-key bones, a hand-aimed Line Rush, and a Max Payne
+shootdodge (owner requests)" on `main`, pushed to `origin/main` (previous commit was `e7a7510`).
+
+Full list of what shipped in that commit (all verified via dotnet test 66/66, Unity compile clean,
+content rebuild clean incl. the new material-conversion check, Windows build, `-autoplay` PASS 0 FAIL):
+- **Ashgrove School** district (DemoContentBuilder.School.cs, new) with two new alien enemies: Bloat
+  Spitter (ranged, leaves a DOT acid puddle — HazardPuddle.cs, new) and Husk Warden (tanky blocker).
+- **Lock-and-key "bones"**: Core/Story/LockGraph.cs (new, pure C#, 5 unit tests) — a solvability
+  fixpoint-reachability checker wired into `DemoContentBuilder.BuildAll()` via `ValidateLocks()`, so any
+  future door/gate whose key becomes unreachable fails the content build loudly. Runtime/Interaction/
+  Gate.cs (new) — an in-place locked barrier (vs. Door's scene-transition), with save/load support
+  (SaveGame.UnlockedGates / SaveSystem.cs).
+- **Combat moves**: Shove (free melee, Interact in battle), Riposte (upgraded Focus "Counter" — full
+  damage, guaranteed crit), Line Rush (BattlePhase.Aiming — hand-rotated straight-line dash/cut,
+  BladeArts.AimedRushEnd, kept alongside the original lock-on Rush per explicit owner instruction
+  "keep both"), and the new **Shootdodge** (Max Payne dive: leap in chosen direction, bullet time via
+  WorldTime.SetScale, fire at nearest enemy per Confirm press while airborne spending real ammo, hard
+  landing = flat self-damage + root/stun). Wasp retrofitted to Ranged (dodgeable sting, no puddle).
+- **Container rummaging**: multi-stage "Rummaging..." (up to 3 stages, Container.MaxStages), a glint
+  marking unsearched containers (amber, vs Pickup's cyan).
+- **Car-kit assets**: Kenney Car Kit (CC0) added at Art/Models/car-kit/ — sedan, taxi, suv, etc. placed
+  around town (careful placement to avoid lamp-post/other-prop overlaps — see bugs below).
+- **Bug-hunt pass** (user asked "find and fix bugs", used the `/bughunt` skill): unbounded search via
+  4 parallel read-only forks + my own review, found and fixed 7 real bugs: Container re-roll-past-cap
+  exploit, BattlePhase.Aiming GameObject/HUD-prompt leak on Victory/Defeat, Shove/Riposte knockback
+  missing arena clamp (KeepInArena), ObstacleAwareness picking wrong (non-directional) obstacle,
+  HazardPuddle's first DOT tick firing instantly on spawn, a duplicate car overlapping a pre-existing
+  procedural car at the Heights parking lot, and the new cars being under-scaled (~half size of every
+  other vehicle) — all fixed, all re-verified.
+- Input: new `ShootdodgePressed` binding (gamepad right shoulder / keyboard Left Ctrl), with a
+  `TriggerShootdodge()` scripted-input override for the autopilot (mirrors TriggerDodge/TriggerConfirm).
+- Autopilot.cs exercises Line Rush (turn==4) and Shootdodge (turn==6) explicitly for `-autoplay` coverage
+  — confirmed working via screenshots (e.g. `107_encounter_5_square_shootdodge.png` /
+  `..._shootdodge_land.png`, also fired once during the boss fight).
+
+Queued but NOT started (from earlier in the session, still open):
+- **Lighting pass**: real light-emitting fixtures only (bulbs, fluorescents — no unlit "ghost lights"
+  that add light without a visible source), god rays through the church's stained glass window. This was
+  explicitly promised as "step 3" of a work queue early in the session and never begun.
+- **Rest of the town expansion**: school is done; still not built: a 3-story apartment complex, docks
+  with boats, a beach, more connected city blocks. User only approved "pick ONE area to prove it out"
+  (Park) then later greenlit School too; nothing beyond School has been explicitly requested yet.
+- **Full NavMesh pathfinding**: explicitly declined earlier in favor of a narrow demo-bot-only obstacle
+  steering fix; still an open "Active frontier" item in BIBLE.md §7.
+- Two loose ends from much earlier in the session (may be stale/already resolved, not reverified this
+  quicksave): (a) whether to delete an abandoned ~3.29GB unfinished MindAttic.Capture .mkv recording
+  (the Capture system otherwise self-recovers these — confirmed working), (b) whether to wire a clean
+  shutdown trigger for `-demo` so a continuous attract-mode capture can finalize.
+- A pending SendFeedback draft or two already queued locally (fork instruction-following gap) —
+  never sent automatically, just sitting in the local queue for the user's own `/feedback` review.
+
+## Open questions / pending
+- What did "do" mean? Unanswered as of this quicksave. Do not guess on resume — re-ask or check if a
+  follow-up message already clarified it.
+- No other unresolved design questions right now — everything else this session was either fully
+  implemented+verified, or explicitly deferred by the user's own prior answers.
+
+## Next concrete steps
+1. On resume, check whether the user has already clarified what "do" meant (a message may have arrived
+   after the quicksave). If not, ask again — don't assume it means "start the lighting pass" even though
+   that's the most obviously-queued next item.
+2. If/when redirected to the lighting pass: audit all `PointLight(...)` calls across
+   DemoContentBuilder*.cs for any that don't correspond to a visible fixture model (bulb/fixture geometry)
+   — these would be the "ghost lights" to replace. Design a stained-glass god-ray effect for the
+   church's rose window (likely a cookie-textured spotlight or a custom shader pass, consistent with the
+   project's existing Toon/InkOutline/HexDome/ToonWater shader family).
+3. Otherwise, proceed per whatever the user actually asks.
+
+## Anchors
+- Files touched this session (not exhaustive, see commit `05b21cd` for the full 164-file diff):
+  `Assets/UnityEve/Core/Story/LockGraph.cs`, `Assets/UnityEve/Runtime/Interaction/Gate.cs`,
+  `Assets/UnityEve/Runtime/Battle/HazardPuddle.cs`, `Assets/UnityEve/Editor/DemoContentBuilder.School.cs`,
+  `Assets/UnityEve/Editor/DemoContentBuilder.Aliens.cs` (BuildSpitter/BuildWarden),
+  `Assets/UnityEve/Runtime/Battle/BattleDirector.cs` + `.Commands.cs` (Shove, Riposte, Aiming/Line Rush,
+  Shootdodge — CanShootdodge/DoShootdodge/FireDuringShootdodge/TrackShootdodgeLanding),
+  `Assets/UnityEve/Runtime/Player/PlayerController.cs` (TryStartShootdodge/EndShootdodge, CurrentWish),
+  `Assets/UnityEve/Runtime/Input/GameInput.cs` (ShootdodgePressed/TriggerShootdodge),
+  `Assets/UnityEve/Runtime/Interaction/Container.cs` (staged rummage, `_done` latch bug fix),
+  `Assets/UnityEve/Editor/DemoContentBuilder.cs` (ValidateMaterials, ValidateLocks, Enemy() `puddle`
+  param), `docs/BIBLE.md` (§3 scope note, UE-LAW-4 MIT note, §6 Verified state refreshed).
+- Key constants: `BattleConfig.cs` has all tuning (ShootdodgeSpeed=6.5, ShootdodgeRiseSpeed=4.5,
+  ShootdodgeGravity=11, ShootdodgeTimeScale=0.3, ShootdodgeCooldownSeconds=6,
+  ShootdodgeLandStunSeconds=1.4, ShootdodgeLandDamage=6; ShoveReach/Cooldown/Knockback/Stun;
+  PuddleDurationSeconds=6/Radius=1.3/TickSeconds=1/DamagePerTick=4; RushAimTurnDegreesPerSecond=150).
+- Commands to re-run for verification (always in this order, this is the project's "done" bar):
+  `dotnet test Tests/Core.Tests/Core.Tests.csproj --nologo`
+  `tools/test.ps1 -Compile` (requires Unity Editor closed — check `Temp/UnityLockfile`)
+  `tools/unity.ps1 -Method UnityEve.Editor.DemoContentBuilder.BuildAll -Log content`
+  `tools/unity.ps1 -Method UnityEve.Editor.UnityEveBuild.BuildWindows -Log build -Graphics`
+  `Build/Windows/UnityEve.exe -batchmode -autoplay -artifacts artifacts/autoplay -logFile artifacts/autoplay.log`
+  (check: exit 0, `grep -c FAIL` == 0, log contains `[Autopilot] PASS autoplay complete`)
+- Git: branch `main`, remote `origin` → github.com/mindattic/UnityEve.git, HEAD at `05b21cd`, working
+  tree clean, nothing uncommitted as of this quicksave.

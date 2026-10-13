@@ -63,18 +63,23 @@ namespace UnityEve.Game
         /// The HUD already composites the PS1 render target, so one readback captures the whole frame.
         /// </summary>
         private RenderTexture _offscreen;
+        private UnityEngine.UIElements.PanelSettings _panel;
 
         private void SetupOffscreen()
         {
             var doc = FindAnyObjectByType<UnityEngine.UIElements.UIDocument>();
             if (doc == null) return;
+            // Called again on every scene reload (WaitForReload): release what the previous scene's
+            // call made, or each reload orphans another render texture and panel-settings instance.
+            if (_offscreen != null) { _offscreen.Release(); Destroy(_offscreen); }
+            if (_panel != null) Destroy(_panel);
             _offscreen = new RenderTexture(1600, 900, 24, RenderTextureFormat.ARGB32);
             if (UI.GameHud.Instance != null) UI.GameHud.Instance.RenderSizeOverride = new Vector2Int(1600, 900);
-            var panel = Instantiate(doc.panelSettings);
-            panel.targetTexture = _offscreen;
-            panel.clearColor = true;
-            panel.colorClearValue = Color.black;
-            doc.panelSettings = panel;
+            _panel = Instantiate(doc.panelSettings);
+            _panel.targetTexture = _offscreen;
+            _panel.clearColor = true;
+            _panel.colorClearValue = Color.black;
+            doc.panelSettings = _panel;
             Log("offscreen capture via panel render texture");
         }
 
@@ -317,7 +322,7 @@ namespace UnityEve.Game
                     Log("FAIL shed did not open with the key");
                     _failures++;
                 }
-                var shotgun = FindObjectsByType<WeaponPickup>(FindObjectsSortMode.None).FirstOrDefault();
+                var shotgun = Named<WeaponPickup>("WeaponPickup_Shotgun");
                 if (shotgun != null)
                 {
                     Teleport(shotgun.ApproachPoint, shotgun.transform.position);
@@ -477,6 +482,12 @@ namespace UnityEve.Game
             var deadline = Time.realtimeSinceStartup + 20f;
             while ((GameSession.Instance == null || GameSession.Instance == old || SaveSystem.Pending != null) && Time.realtimeSinceStartup < deadline)
                 yield return null;
+            if (GameSession.Instance == null)
+            {
+                Log("FAIL scene never reloaded (GameSession.Instance stayed null)");
+                _failures++;
+                yield break;
+            }
             yield return Real(1.2f);
             if (Application.isBatchMode) SetupOffscreen();
             if (ScreenEncounters.Instance != null) ScreenEncounters.Instance.Enabled = false;
@@ -490,6 +501,11 @@ namespace UnityEve.Game
             var west = Marker("Tour_01_street_west");
             var cctv = Marker("Tour_03_street_cctv");
             var far = Marker("Tour_10_shed");
+            if (screens == null || west == null || cctv == null || far == null)
+            {
+                check(false, "missing screens/markers for game-over re-entry");
+                yield break;
+            }
             Teleport(cctv);
             yield return Real(0.4f);
             Teleport(west);

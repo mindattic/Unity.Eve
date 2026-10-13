@@ -8,6 +8,22 @@ namespace UnityEve.Core.Tests
     public class BattleRulesTests
     {
         [Fact]
+        public void Stagger_triggers_at_the_floor_for_low_health_creatures()
+        {
+            Assert.False(StaggerRule.ShouldStagger(BattleConfig.StaggerDamageFloor - 1f, maxHp: 10f));
+            Assert.True(StaggerRule.ShouldStagger(BattleConfig.StaggerDamageFloor, maxHp: 10f));
+        }
+
+        [Fact]
+        public void Stagger_triggers_at_a_fraction_of_max_hp_for_tanky_creatures()
+        {
+            var maxHp = 200f;
+            var threshold = maxHp * BattleConfig.StaggerDamageFraction;
+            Assert.False(StaggerRule.ShouldStagger(threshold - 1f, maxHp));
+            Assert.True(StaggerRule.ShouldStagger(threshold, maxHp));
+        }
+
+        [Fact]
         public void Atb_fills_in_base_time_at_base_rate()
         {
             var atb = new AtbGauge();

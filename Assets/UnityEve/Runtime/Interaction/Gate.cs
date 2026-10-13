@@ -67,6 +67,7 @@ namespace UnityEve.Interaction
                     return;
                 }
                 if (_consumeKey) player.Bag.TryRemove(_requiredKey.Id);
+                _unlocked = true;
                 GameHud.Instance?.ShowMessage($"Used the {_requiredKey.Stats.DisplayName}.");
             }
             Game.StoryDirector.Instance?.Learn(_factOnOpen);
@@ -86,7 +87,13 @@ namespace UnityEve.Interaction
                 yield return null;
             }
             if (_hinge != null) _hinge.localRotation = to;
-            _unlocked = true;
+            _busy = false;
+        }
+
+        private void OnDisable()
+        {
+            // Mirrors Door's cleanup: if the gate is disabled/destroyed mid-swing, don't leave
+            // _busy stuck true forever (CanInteract would never recover if it's re-enabled).
             _busy = false;
         }
     }

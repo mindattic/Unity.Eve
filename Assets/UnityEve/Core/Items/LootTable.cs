@@ -30,7 +30,11 @@ namespace UnityEve.Core.Items
             var pick = rng.NextFloat() * total;
             foreach (var e in Entries)
             {
-                pick -= Math.Max(0f, e.Weight);
+                var weight = Math.Max(0f, e.Weight);
+                // A zero/negative-weight entry is unselectable, full stop — it must never match even
+                // when the running pick lands exactly on the boundary before it (pick == 0f).
+                if (weight <= 0f) continue;
+                pick -= weight;
                 if (pick > 0f) continue;
                 return string.IsNullOrEmpty(e.ItemId) ? ((string, int)?)null : (e.ItemId, rng.Range(e.MinCount, e.MaxCount + 1));
             }

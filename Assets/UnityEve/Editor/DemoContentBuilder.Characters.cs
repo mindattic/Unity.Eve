@@ -256,12 +256,18 @@ namespace UnityEve.Editor
         {
             var folder = $"{AnimDir}/{species}";
             var clips = AssetDatabase.LoadAllAssetsAtPath(modelPath).OfType<AnimationClip>().Select(c => c.name).ToList();
+            // OwnedClip deletes and recreates the .anim, so a second request for the same source clip
+            // (e.g. Walk and Run both falling back to the same "_Jump" clip) would orphan the first
+            // caller's reference. Copy once per clip name, same fix as PlayerAnimator.
+            var owned = new Dictionary<string, AnimationClip>();
             AnimationClip Find(params string[] suffixes)
             {
                 foreach (var s in suffixes)
                 {
                     var name = clips.FirstOrDefault(c => c.EndsWith("_" + s));
-                    if (name != null) return OwnedClip(modelPath, name, s != "Attack" && s != "Death", folder);
+                    if (name == null) continue;
+                    if (owned.TryGetValue(name, out var clip)) return clip;
+                    return owned[name] = OwnedClip(modelPath, name, s != "Attack" && s != "Death", folder);
                 }
                 return null;
             }
@@ -372,7 +378,11 @@ namespace UnityEve.Editor
         /// </summary>
         private static void BuildKatana(GameObject rig, Dictionary<string, Transform> bones)
         {
-            if (!bones.TryGetValue("hand_r", out var hand) || !bones.TryGetValue("spine_03", out var spine)) return;
+            if (!bones.TryGetValue("hand_r", out var hand) || !bones.TryGetValue("spine_03", out var spine))
+            {
+                Debug.LogError("[UnityEve] rig is missing hand_r/spine_03; Kat will have no Katana.");
+                return;
+            }
             var steel = SimpleMaterial("KatanaSteel", new Color(0.86f, 0.9f, 0.95f), null, 0.85f);
             var wrap = SimpleMaterial("KatanaWrap", new Color(0.09f, 0.06f, 0.08f));
             var gold = SimpleMaterial("KatanaGuard", new Color(0.78f, 0.6f, 0.22f), null, 0.6f);

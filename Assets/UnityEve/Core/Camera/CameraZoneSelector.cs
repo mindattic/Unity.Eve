@@ -18,7 +18,11 @@ namespace UnityEve.Core.Camera
 
         public void Enter(int zoneId, int priority)
         {
-            Exit(zoneId);
+            // Dedupe without Exit's own Reselect: a zone with several overlapping colliders can
+            // redundantly re-enter while already active, and an intermediate reselect here would
+            // transiently drop it, cut to whatever else is inside, then cut straight back —
+            // double-counting one "entry" as two hard cuts.
+            _inside.RemoveAll(z => z.id == zoneId);
             _inside.Add((zoneId, priority, ++_enterCounter));
             Reselect();
         }

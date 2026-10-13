@@ -162,10 +162,10 @@ namespace UnityEve.Enemies
             var dealt = Health.Damage(amount);
             _hurtFlashUntil = Time.unscaledTime + 0.18f;
             _recentDamage += dealt;
-            if (_recentDamage >= Mathf.Max(20f, Stats.MaxHp * 0.35f))
+            if (StaggerRule.ShouldStagger(_recentDamage, Stats.MaxHp))
             {
                 _recentDamage = 0f;
-                ApplyStun(1.8f);
+                ApplyStun(BattleConfig.StaggerStunSeconds);
             }
             if (Health.IsDead)
             {
