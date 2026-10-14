@@ -19,7 +19,12 @@ namespace UnityEve.Editor
         }
 
         [MenuItem("Unity Eve/Build/Windows Player")]
-        public static void BuildWindows()
+        public static void BuildWindows() => Build("Build/Windows/UnityEve.exe", BuildOptions.Development);
+
+        [MenuItem("Unity Eve/Build/Windows Player (Release)")]
+        public static void BuildWindowsRelease() => Build("Build/WindowsRelease/UnityEve.exe", BuildOptions.None);
+
+        private static void Build(string output, BuildOptions buildOptions)
         {
             var versionFile = Path.Combine(Directory.GetCurrentDirectory(), "version.txt");
             if (File.Exists(versionFile)) PlayerSettings.bundleVersion = File.ReadAllText(versionFile).Trim();
@@ -34,9 +39,9 @@ namespace UnityEve.Editor
             var options = new BuildPlayerOptions
             {
                 scenes = new[] { DemoScene },
-                locationPathName = "Build/Windows/UnityEve.exe",
+                locationPathName = output,
                 target = BuildTarget.StandaloneWindows64,
-                options = BuildOptions.Development,
+                options = buildOptions,
             };
             var report = BuildPipeline.BuildPlayer(options);
             var ok = report.summary.result == BuildResult.Succeeded;

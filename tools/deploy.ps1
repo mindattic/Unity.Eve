@@ -34,7 +34,7 @@ Set-StrictMode -Version Latest
 $repoDir  = Split-Path $PSScriptRoot   # tools\ -> UnityEve\
 $out      = 'C:\Apps\UnityEve'
 $exeName  = 'UnityEve.exe'
-$buildDir = Join-Path $repoDir 'Build\Windows'
+$buildDir = Join-Path $repoDir 'Build\WindowsRelease'
 
 # ── Stop running instance ──────────────────────────────────────────────────
 Write-Host ''
@@ -49,18 +49,18 @@ if ($procs) {
 }
 
 # ── Clear build output ───────────────────────────────────────────────────────
-# Build\Windows only — never Library\, which is Unity's import/compile cache, not
+# Build\WindowsRelease only — never Library\, which is Unity's import/compile cache, not
 # build output, and must survive a redeploy exactly as it survives a normal rebuild.
 Write-Host ''
-Write-Host '  Clearing build output (Build\Windows)...' -ForegroundColor Cyan
+Write-Host '  Clearing build output (Build\WindowsRelease)...' -ForegroundColor Cyan
 if (Test-Path $buildDir) {
     Remove-Item -Recurse -Force $buildDir
 }
 
 # ── Build ────────────────────────────────────────────────────────────────────
 Write-Host ''
-Write-Host '  Building Windows player (Unity batch mode)...' -ForegroundColor Cyan
-& (Join-Path $PSScriptRoot 'unity.ps1') -Method UnityEve.Editor.UnityEveBuild.BuildWindows -Log deploy-build -Graphics
+Write-Host '  Building Windows Release player (Unity batch mode)...' -ForegroundColor Cyan
+& (Join-Path $PSScriptRoot 'unity.ps1') -Method UnityEve.Editor.UnityEveBuild.BuildWindowsRelease -Log deploy-build -Graphics
 if ($LASTEXITCODE -ne 0) {
     Write-Host "Build failed (exit $LASTEXITCODE)." -ForegroundColor Red
     exit $LASTEXITCODE
