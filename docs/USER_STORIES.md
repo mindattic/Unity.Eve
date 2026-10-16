@@ -11,7 +11,7 @@ updated: 2026-10-11
 # Unity Eve: User stories
 
 > **Status:** ✅ verified (a named test or autoplay step shows it) · 🟡 partial · ⬜ planned.
-> **Evidence:** `TestName` = xUnit in `Tests/Core.Tests`; `autoplay:NN_name` = screenshot step of
+> **Evidence:** `TestName` = NUnit in `Tests/Core.Tests`; `autoplay:NN_name` = screenshot step of
 > `UnityEve.exe -batchmode -autoplay`.
 
 **Definition of done (every story):**
@@ -128,3 +128,7 @@ updated: 2026-10-11
 | U.EVE-T11 | 2026-10-15 | chore | closed | Remove duplicate command copies (/quickload, /quicksave) now centralized at the user level (~/.claude/commands) | M.FLOW-T14 |
 | U.EVE-T12 | 2026-10-16 | chore | closed | install.ps1 adds this repo's 15 .prose/commands stubs for the shared global commands, so any LLM client finds them | mindattic-agent-standard/install.ps1 run 2026-10-16 |
 | U.EVE-T13 | 2026-10-16 | chore | closed | Core tests use NUnit instead of xUnit (the MindAttic global test rule): Tests/Core.Tests packages and every test converted, same test count | 2c44915 / Tests/Core.Tests |
+| U.EVE-T14 | 2026-10-16 | chore | open | Bug hunt: run an exhaustive /bughunt over the whole repo and fix every real bug found (each fix under its own fix ticket), then hunt again; close this only when a full pass finds nothing | user request 2026-10-16: approved repo sweep |
+| U.EVE-T15 | 2026-10-16 | chore | open | Run the full unit test suite and fix every failure (each under its own fix ticket) until it passes; put the passing run in --ref. No test project: close this wont-do saying so | user request 2026-10-16: approved repo sweep |
+| U.EVE-T16 | 2026-10-16 | chore | open | Clean up code and docs: remove dead code, stale comments and outdated or duplicated docs, and simplify where behaviour doesn't change (/simplify); tests stay green | user request 2026-10-16: approved repo sweep |
+| U.EVE-T17 | 2026-10-16 | docs | open | Bring README.md up to date with the code as it is now (what it is, setup, usage, commands, current state), following codex-standard/README-STYLE.md; README.htm regenerated if the repo has one | user request 2026-10-16: approved repo sweep |
