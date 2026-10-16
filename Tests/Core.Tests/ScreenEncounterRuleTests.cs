@@ -1,6 +1,6 @@
 using UnityEve.Core.Battle;
 using UnityEve.Core.Util;
-using Xunit;
+using NUnit.Framework;
 
 namespace UnityEve.Core.Tests
 {
@@ -16,28 +16,28 @@ namespace UnityEve.Core.Tests
             return rule;
         }
 
-        [Fact]
+        [Test]
         public void First_visits_never_trigger()
         {
             var rule = Street();
-            Assert.False(rule.Enter(1));
-            Assert.False(rule.Enter(2));
-            Assert.False(rule.Enter(3));
+            Assert.That(rule.Enter(1), Is.False);
+            Assert.That(rule.Enter(2), Is.False);
+            Assert.That(rule.Enter(3), Is.False);
         }
 
-        [Fact]
+        [Test]
         public void Bouncing_between_adjacent_screens_never_triggers()
         {
             var rule = Street();
             rule.Enter(1);
             for (var i = 0; i < 10; i++)
             {
-                Assert.False(rule.Enter(2));
-                Assert.False(rule.Enter(1));
+                Assert.That(rule.Enter(2), Is.False);
+                Assert.That(rule.Enter(1), Is.False);
             }
         }
 
-        [Fact]
+        [Test]
         public void Returning_after_going_somewhere_non_adjacent_can_trigger()
         {
             var rule = Street();
@@ -45,38 +45,38 @@ namespace UnityEve.Core.Tests
             rule.Enter(2);
             rule.Enter(3);          // not adjacent to 1: screen 1 is now "far"
             rule.Enter(2);          // adjacent to 1, but 1 was already marked far
-            Assert.True(rule.IsReturn(1));
-            Assert.True(rule.Enter(1));
-            Assert.False(rule.IsReturn(1)); // consumed: the next return needs another trip away
+            Assert.That(rule.IsReturn(1), Is.True);
+            Assert.That(rule.Enter(1), Is.True);
+            Assert.That(rule.IsReturn(1), Is.False); // consumed: the next return needs another trip away
         }
 
-        [Fact]
+        [Test]
         public void Screens_without_a_table_count_as_visits_but_never_host()
         {
             var rule = Street();
             rule.Enter(1);
             rule.Enter(99, canHost: false); // an interior, adjacent to nothing on the street
-            Assert.True(rule.Enter(1));
+            Assert.That(rule.Enter(1), Is.True);
             rule.Enter(3);
-            Assert.False(rule.Enter(99, canHost: false));
+            Assert.That(rule.Enter(99, canHost: false), Is.False);
         }
 
-        [Fact]
+        [Test]
         public void Cooldown_after_a_battle_blocks_rolls_until_it_runs_out_on_scaled_time()
         {
             var rule = Street();
             rule.BattleEnded();
             rule.Enter(1);
             rule.Enter(3);
-            Assert.False(rule.Enter(1)); // qualifying return, but still cooling down
+            Assert.That(rule.Enter(1), Is.False); // qualifying return, but still cooling down
 
             rule.Enter(3);
             rule.Tick(0f); // paused: no progress
             rule.Tick(BattleConfig.ScreenEncounterCooldownSeconds + 0.1f);
-            Assert.True(rule.Enter(1));
+            Assert.That(rule.Enter(1), Is.True);
         }
 
-        [Fact]
+        [Test]
         public void Chance_rolls_through_the_seeded_rng()
         {
             int Count(uint seed)
@@ -92,8 +92,8 @@ namespace UnityEve.Core.Tests
                 }
                 return hits;
             }
-            Assert.Equal(Count(5), Count(5));
-            Assert.InRange(Count(5), 140, 260);
+            Assert.That(Count(5), Is.EqualTo(Count(5)));
+            Assert.That(Count(5), Is.InRange(140, 260));
         }
     }
 }

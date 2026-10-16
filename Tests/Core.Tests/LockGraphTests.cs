@@ -1,11 +1,11 @@
 using UnityEve.Core.Story;
-using Xunit;
+using NUnit.Framework;
 
 namespace UnityEve.Core.Tests
 {
     public class LockGraphTests
     {
-        [Fact]
+        [Test]
         public void A_key_found_before_its_lock_makes_the_whole_graph_reachable()
         {
             var g = new LockGraph();
@@ -15,11 +15,11 @@ namespace UnityEve.Core.Tests
 
             var report = g.Validate("Street");
 
-            Assert.True(report.Solvable);
-            Assert.Contains("key_shed", report.KeysFound);
+            Assert.That(report.Solvable, Is.True);
+            Assert.That(report.KeysFound, Does.Contain("key_shed"));
         }
 
-        [Fact]
+        [Test]
         public void A_key_locked_behind_its_own_gate_strands_that_region()
         {
             var g = new LockGraph();
@@ -28,11 +28,11 @@ namespace UnityEve.Core.Tests
 
             var report = g.Validate("Street");
 
-            Assert.False(report.Solvable);
-            Assert.Equal(new[] { "Vault" }, report.UnreachableRegions);
+            Assert.That(report.Solvable, Is.False);
+            Assert.That(report.UnreachableRegions, Is.EqualTo(new[] { "Vault" }));
         }
 
-        [Fact]
+        [Test]
         public void A_key_behind_a_different_unsolvable_lock_strands_its_own_region_too()
         {
             var g = new LockGraph();
@@ -42,11 +42,11 @@ namespace UnityEve.Core.Tests
 
             var report = g.Validate("Street");
 
-            Assert.False(report.Solvable);
-            Assert.Equal(new[] { "Garage", "Attic" }, report.UnreachableRegions);
+            Assert.That(report.Solvable, Is.False);
+            Assert.That(report.UnreachableRegions, Is.EqualTo(new[] { "Garage", "Attic" }));
         }
 
-        [Fact]
+        [Test]
         public void One_key_can_legitimately_reopen_several_gates()
         {
             var g = new LockGraph();
@@ -56,10 +56,10 @@ namespace UnityEve.Core.Tests
 
             var report = g.Validate("Street");
 
-            Assert.True(report.Solvable);
+            Assert.That(report.Solvable, Is.True);
         }
 
-        [Fact]
+        [Test]
         public void An_edge_declared_one_way_does_not_grant_reachability_backwards()
         {
             var g = new LockGraph();
@@ -68,10 +68,10 @@ namespace UnityEve.Core.Tests
 
             var report = g.Validate("Cliff");
 
-            Assert.True(report.Solvable); // Beach is reached; Cliff is the start so it's never "unreachable"
+            Assert.That(report.Solvable, Is.True); // Beach is reached; Cliff is the start so it's never "unreachable"
             var reverse = g.Validate("Beach");
-            Assert.False(reverse.Solvable); // from the bottom, Cliff is never reachable again
-            Assert.Equal(new[] { "Cliff" }, reverse.UnreachableRegions);
+            Assert.That(reverse.Solvable, Is.False); // from the bottom, Cliff is never reachable again
+            Assert.That(reverse.UnreachableRegions, Is.EqualTo(new[] { "Cliff" }));
         }
     }
 }
