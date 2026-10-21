@@ -51,7 +51,7 @@ updated: 2026-10-11
 | ID | Story | Status | Evidence |
 | --- | --- | --- | --- |
 | US-020 | A dodge started ≤0.3 s before a strike opens Focus: time ×0.15 | ✅ | `Perfect_dodge_window_opens_focus_and_slows_time`, autoplay:`encounter_1_street_focus` |
-| US-021 | Focus offers one free Quick Heal / Target Vitals / Riposte, no ATB cost | ✅ | autoplay:`encounter_1_street_vitals` |
+| US-021 | Focus offers one free Quick Heal / Target Vitals / Counter, no ATB cost | ✅ | autoplay:`encounter_1_street_vitals` |
 | US-022 | Focus is optional: the window expires on real time; mistimed dodges still evade | ✅ | `Focus_window_expires_on_real_time_so_it_is_optional` |
 | US-023 | A perfect dodge triggered by a human on a gamepad, felt in play | 🟡 | Autoplay opens Focus through `DebugOpenFocus`; needs an owner playtest |
 
@@ -66,7 +66,7 @@ updated: 2026-10-11
 | US-034 | Doors fade and move between the street and the house | ✅ | autoplay:`front_door`, `interior` |
 | US-039 | The Market district east of the street: crossing, square with fountain, stalls and church, back lane, loading dock (five screens, three encounters) | ✅ | autoplay:`11_crossing` … `15_dock`, `encounter_4..6_*` |
 | US-038 | The shed door stays locked until the key from the Mercer side table is in the bag | ✅ | autoplay:`shed_locked`, `search_container_house_sidetable`, `shed_interior`, `shed_shotgun` |
-| US-035 | Hold Interact to rummage; each container rolls its seeded loot table once per stage, up to 3 stages | ✅ | `Loot_table_is_deterministic_and_can_roll_nothing`, autoplay:`rummage_street`, `search_container_house_fridge` |
+| US-035 | Hold Interact to rummage; each container rolls its seeded loot table once | ✅ | `Loot_table_is_deterministic_and_can_roll_nothing`, autoplay:`rummage_street`, `search_container_house_fridge` |
 | US-036 | The bag has limited slots; stacks spill over and overflow is reported | ✅ | `Inventory_stacks_then_spills_into_new_slots`, `Inventory_reports_overflow_when_full` |
 | US-037 | Field menu: items, equip, controls | ✅ | autoplay:`field_menu` |
 
@@ -128,9 +128,12 @@ updated: 2026-10-11
 | U.EVE-T11 | 2026-10-15 | chore | closed | Remove duplicate command copies (/quickload, /quicksave) now centralized at the user level (~/.claude/commands) | M.FLOW-T14 |
 | U.EVE-T12 | 2026-10-16 | chore | closed | install.ps1 adds this repo's 15 .prose/commands stubs for the shared global commands, so any LLM client finds them | mindattic-agent-standard/install.ps1 run 2026-10-16 |
 | U.EVE-T13 | 2026-10-16 | chore | closed | Core tests use NUnit instead of xUnit (the MindAttic global test rule): Tests/Core.Tests packages and every test converted, same test count | 2c44915 / Tests/Core.Tests |
-| U.EVE-T14 | 2026-10-16 | chore | open | Bug hunt: run an exhaustive /bughunt over the whole repo and fix every real bug found (each fix under its own fix ticket), then hunt again; close this only when a full pass finds nothing | user request 2026-10-16: approved repo sweep |
-| U.EVE-T15 | 2026-10-16 | chore | open | Run the full unit test suite and fix every failure (each under its own fix ticket) until it passes; put the passing run in --ref. No test project: close this wont-do saying so | user request 2026-10-16: approved repo sweep |
-| U.EVE-T16 | 2026-10-16 | chore | open | Clean up code and docs: remove dead code, stale comments and outdated or duplicated docs, and simplify where behaviour doesn't change (/simplify); tests stay green | user request 2026-10-16: approved repo sweep |
-| U.EVE-T17 | 2026-10-16 | docs | open | Bring README.md up to date with the code as it is now (what it is, setup, usage, commands, current state), following codex-standard/README-STYLE.md; README.htm regenerated if the repo has one | user request 2026-10-16: approved repo sweep |
+| U.EVE-T14 | 2026-10-16 | chore | closed | Bug hunt: run an exhaustive /bughunt over the whole repo and fix every real bug found (each fix under its own fix ticket), then hunt again; close this only when a full pass finds nothing | 7361162 |
+| U.EVE-T15 | 2026-10-16 | chore | closed | Run the full unit test suite and fix every failure (each under its own fix ticket) until it passes; put the passing run in --ref. No test project: close this wont-do saying so | dotnet test Tests/Core.Tests/Core.Tests.csproj: Passed - Failed: 0, Passed: 70, Skipped: 0, Total: 70 (2026-10-20) |
+| U.EVE-T16 | 2026-10-16 | chore | closed | Clean up code and docs: remove dead code, stale comments and outdated or duplicated docs, and simplify where behaviour doesn't change (/simplify); tests stay green | 77881ff |
+| U.EVE-T17 | 2026-10-16 | docs | closed | Bring README.md up to date with the code as it is now (what it is, setup, usage, commands, current state), following codex-standard/README-STYLE.md; README.htm regenerated if the repo has one | 2f723dc |
 | U.EVE-T18 | 2026-10-19 | chore | open | Convert tracked source files to LF line endings via .gitattributes, per HOUSE-LAW-13 (low priority) | — |
 | U.EVE-T19 | 2026-10-20 | docs | open | Publish UnityEve docs to GitHub Pages via the shared Toolkit DocFX pipeline: run adopt-docs-site.ps1 (README.md as home page, docs/*.md as articles, API reference only where the code builds in CI), enable Pages with build_type=workflow, set the repo homepage URL, retire tools/build-readme.ps1 and README.htm, confirm the docs Actions run is green and https://mindattic.github.io/UnityEve/ returns 200. Depends on MAT-T8. | — |
+| U.EVE-T20 | 2026-10-20 | chore | open | Rename UnityEve to Unity.Eve: part of the Unity-fleet naming pass (all Unity game repos get a Unity. prefix). Covers GitHub repo, local folder, git remote URL, ticket DB key (tickets repos rename), C# namespaces/asmdefs/class comments throughout Assets/, README/AGENTS/CLAUDE/CREDITS docs, build scripts and logs' repo-name strings, and any other repo that references UnityEve by name (grep workspace-wide). Owner-approved 2026-10-20 as part of the Unity Fleet Rename effort; run crossrepo from a General (workspace-root) window so the folder move is included. | — |
+| U.EVE-T21 | 2026-10-20 | fix | closed | DemoContentBuilder.BuildAll() exits 0 in batch mode even when ValidateLocks/ValidateMaterials/the missing-sound check find real content errors | e526b19 |
+| U.EVE-T22 | 2026-10-20 | fix | closed | DemoContentBuilder.Characters.cs CreatureAnimator(): Bat.glb has no _Attack or _Death animation clip, so Find("Attack")/Find("Death") silently return null and the generated Bat animator's Attack/Die states get a null Motion (no warning, no fallback) -- the bat shows no attack telegraph or death animation in play | 7361162 |
