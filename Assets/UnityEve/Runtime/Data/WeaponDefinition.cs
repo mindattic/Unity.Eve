@@ -1,7 +1,7 @@
 using UnityEngine;
-using UnityEve.Core.Battle;
+using Unity.Eve.Core.Battle;
 
-namespace UnityEve.Data
+namespace Unity.Eve.Data
 {
     /// <summary>Designer-editable wrapper around a pure-Core <see cref="WeaponStats"/>.</summary>
     [CreateAssetMenu(menuName = "Unity Eve/Weapon", fileName = "Weapon")]

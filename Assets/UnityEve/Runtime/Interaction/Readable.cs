@@ -1,8 +1,8 @@
 using UnityEngine;
-using UnityEve.Player;
-using UnityEve.UI;
+using Unity.Eve.Player;
+using Unity.Eve.UI;
 
-namespace UnityEve.Interaction
+namespace Unity.Eve.Interaction
 {
     /// <summary>A note, sign or poster: environmental storytelling in one line.</summary>
     public sealed class Readable : Interactable

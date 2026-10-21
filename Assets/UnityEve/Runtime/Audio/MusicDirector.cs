@@ -1,7 +1,7 @@
 using UnityEngine;
-using UnityEve.Battle;
+using Unity.Eve.Battle;
 
-namespace UnityEve
+namespace Unity.Eve
 {
     /// <summary>
     /// Music: the exploration loop while walking the town, the battle loop in a fight, the boss loop

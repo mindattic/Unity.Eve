@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace UnityEve.Core.Story
+namespace Unity.Eve.Core.Story
 {
     /// <summary>One step of the night: shown until its fact becomes true.</summary>
     public sealed class Objective

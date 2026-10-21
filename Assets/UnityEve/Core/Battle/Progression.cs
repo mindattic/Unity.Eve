@@ -1,6 +1,6 @@
 using System;
 
-namespace UnityEve.Core.Battle
+namespace Unity.Eve.Core.Battle
 {
     /// <summary>
     /// Level, experience and Bonus Points. PE1 grants BP on level-up to spend on Active Time and

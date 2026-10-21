@@ -3,12 +3,12 @@ using System.Collections;
 using System.IO;
 using System.Linq;
 using UnityEngine;
-using UnityEve.Battle;
-using UnityEve.Core.Battle;
-using UnityEve.Interaction;
-using UnityEve.Player;
+using Unity.Eve.Battle;
+using Unity.Eve.Core.Battle;
+using Unity.Eve.Interaction;
+using Unity.Eve.Player;
 
-namespace UnityEve.Game
+namespace Unity.Eve.Game
 {
     /// <summary>
     /// Self-play. Launch the player with <c>-demo [-artifacts DIR]</c> — the same flag name used for

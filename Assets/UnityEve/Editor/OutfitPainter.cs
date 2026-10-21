@@ -3,7 +3,7 @@ using System.IO;
 using UnityEditor;
 using UnityEngine;
 
-namespace UnityEve.Editor
+namespace Unity.Eve.Editor
 {
     /// <summary>
     /// Ported from ExperimentEve (babylon/src/player/outfit.ts). The CC0 base character ships a body

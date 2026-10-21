@@ -1,9 +1,9 @@
 using UnityEngine;
-using UnityEve.Battle;
-using UnityEve.Cameras;
-using UnityEve.Interaction;
+using Unity.Eve.Battle;
+using Unity.Eve.Cameras;
+using Unity.Eve.Interaction;
 
-namespace UnityEve.Editor
+namespace Unity.Eve.Editor
 {
     /// <summary>
     /// Inside Kingsport Foods: checkout lanes, four stocked aisles, a produce stand and freezers, and

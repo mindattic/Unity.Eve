@@ -1,12 +1,12 @@
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
-using UnityEve.Cameras;
-using UnityEve.Enemies;
-using UnityEve.Game;
-using UnityEve.Interaction;
+using Unity.Eve.Cameras;
+using Unity.Eve.Enemies;
+using Unity.Eve.Game;
+using Unity.Eve.Interaction;
 
-namespace UnityEve.Editor
+namespace Unity.Eve.Editor
 {
     /// <summary>
     /// The vertical slice's spine: Saint Ansel's nave and the Mito Mother (the boss), payphone save

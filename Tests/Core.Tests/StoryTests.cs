@@ -1,10 +1,10 @@
 using System.Collections.Generic;
-using UnityEve.Core.Battle;
-using UnityEve.Core.Items;
-using UnityEve.Core.Story;
+using Unity.Eve.Core.Battle;
+using Unity.Eve.Core.Items;
+using Unity.Eve.Core.Story;
 using NUnit.Framework;
 
-namespace UnityEve.Core.Tests
+namespace Unity.Eve.Core.Tests
 {
     public class StoryTests
     {

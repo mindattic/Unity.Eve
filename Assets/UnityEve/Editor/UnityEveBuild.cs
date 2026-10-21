@@ -4,7 +4,7 @@ using UnityEditor;
 using UnityEditor.Build.Reporting;
 using UnityEngine;
 
-namespace UnityEve.Editor
+namespace Unity.Eve.Editor
 {
     /// <summary>Batch-mode entry points: compile check and the Windows player build.</summary>
     public static class UnityEveBuild
@@ -19,10 +19,10 @@ namespace UnityEve.Editor
         }
 
         [MenuItem("Unity Eve/Build/Windows Player")]
-        public static void BuildWindows() => Build("Build/Windows/UnityEve.exe", BuildOptions.Development);
+        public static void BuildWindows() => Build("Build/Windows/Unity.Eve.exe", BuildOptions.Development);
 
         [MenuItem("Unity Eve/Build/Windows Player (Release)")]
-        public static void BuildWindowsRelease() => Build("Build/WindowsRelease/UnityEve.exe", BuildOptions.None);
+        public static void BuildWindowsRelease() => Build("Build/WindowsRelease/Unity.Eve.exe", BuildOptions.None);
 
         private static void Build(string output, BuildOptions buildOptions)
         {

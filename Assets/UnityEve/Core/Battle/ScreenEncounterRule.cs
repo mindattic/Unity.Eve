@@ -1,7 +1,7 @@
 using System.Collections.Generic;
-using UnityEve.Core.Util;
+using Unity.Eve.Core.Util;
 
-namespace UnityEve.Core.Battle
+namespace Unity.Eve.Core.Battle
 {
     /// <summary>
     /// Random encounters on returning to a screen (a fixed-camera zone). A screen can roll for an

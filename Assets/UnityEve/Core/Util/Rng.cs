@@ -1,4 +1,4 @@
-namespace UnityEve.Core.Util
+namespace Unity.Eve.Core.Util
 {
     /// <summary>
     /// Seeded xoshiro128** generator. Every random roll in Core goes through this, never

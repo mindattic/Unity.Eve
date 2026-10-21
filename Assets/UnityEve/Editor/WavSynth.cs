@@ -1,7 +1,7 @@
 using System;
 using System.IO;
 
-namespace UnityEve.Editor
+namespace Unity.Eve.Editor
 {
     /// <summary>
     /// Reproducible procedural sound effects (gunshots, explosions, PE stings) written as 16-bit mono

@@ -2,9 +2,9 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
 using UnityEngine;
-using UnityEve.Enemies;
+using Unity.Eve.Enemies;
 
-namespace UnityEve.Editor
+namespace Unity.Eve.Editor
 {
     /// <summary>
     /// The alien bestiary, built from primitives (original work, no third-party models) and animated by

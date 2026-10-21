@@ -1,9 +1,9 @@
 using UnityEngine;
-using UnityEve.Data;
-using UnityEve.Player;
-using UnityEve.UI;
+using Unity.Eve.Data;
+using Unity.Eve.Player;
+using Unity.Eve.UI;
 
-namespace UnityEve.Interaction
+namespace Unity.Eve.Interaction
 {
     /// <summary>An item lying in the open. A slow glint marks it, as in PE.</summary>
     public sealed class Pickup : Interactable

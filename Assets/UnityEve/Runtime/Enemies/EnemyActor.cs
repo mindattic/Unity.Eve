@@ -1,13 +1,13 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEve.Battle;
-using UnityEve.Core.Battle;
-using UnityEve.Core.Util;
-using UnityEve.Data;
-using UnityEve.UI;
+using Unity.Eve.Battle;
+using Unity.Eve.Core.Battle;
+using Unity.Eve.Core.Util;
+using Unity.Eve.Data;
+using Unity.Eve.UI;
 
-namespace UnityEve.Enemies
+namespace Unity.Eve.Enemies
 {
     /// <summary>
     /// A creature in battle. Real-time behaviour on scaled time. Its <see cref="EnemyMind"/> takes turns with

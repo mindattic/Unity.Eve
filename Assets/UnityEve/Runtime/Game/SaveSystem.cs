@@ -3,12 +3,12 @@ using System.IO;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using UnityEve.Battle;
-using UnityEve.Core.Story;
-using UnityEve.Interaction;
-using UnityEve.Player;
+using Unity.Eve.Battle;
+using Unity.Eve.Core.Story;
+using Unity.Eve.Interaction;
+using Unity.Eve.Player;
 
-namespace UnityEve.Game
+namespace Unity.Eve.Game
 {
     /// <summary>
     /// Save points write the whole night to disk (JSON next to the player's settings); Continue
@@ -38,7 +38,7 @@ namespace UnityEve.Game
             }
             catch (Exception e)
             {
-                Debug.LogWarning($"[UnityEve] save unreadable: {e.Message}");
+                Debug.LogWarning($"[Unity.Eve] save unreadable: {e.Message}");
                 return null;
             }
         }
@@ -62,7 +62,7 @@ namespace UnityEve.Game
             }
             catch (Exception e)
             {
-                Debug.LogWarning($"[UnityEve] save failed: {e.Message}");
+                Debug.LogWarning($"[Unity.Eve] save failed: {e.Message}");
                 return null;
             }
         }

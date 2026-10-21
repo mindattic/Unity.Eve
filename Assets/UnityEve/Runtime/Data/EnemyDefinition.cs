@@ -1,7 +1,7 @@
 using UnityEngine;
-using UnityEve.Core.Battle;
+using Unity.Eve.Core.Battle;
 
-namespace UnityEve.Data
+namespace Unity.Eve.Data
 {
     [CreateAssetMenu(menuName = "Unity Eve/Enemy", fileName = "Enemy")]
     public sealed class EnemyDefinition : ScriptableObject

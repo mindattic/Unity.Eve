@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace UnityEve.Battle
+namespace Unity.Eve.Battle
 {
     /// <summary>
     /// Parasite Eve's range dome: a translucent hemisphere of hexagon cells centred on the player whose

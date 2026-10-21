@@ -1,4 +1,4 @@
 using System.Runtime.CompilerServices;
 
-[assembly: InternalsVisibleTo("UnityEve.Tests.EditMode")]
-[assembly: InternalsVisibleTo("UnityEve.Core.Tests")]
+[assembly: InternalsVisibleTo("Unity.Eve.Tests.EditMode")]
+[assembly: InternalsVisibleTo("Unity.Eve.Core.Tests")]

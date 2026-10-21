@@ -3,7 +3,7 @@
 // toward their average colour so walls and floors read as painted. Ink lines come from the full-screen InkOutline pass, fed by this shader's
 // DepthNormals pass. Keeps URP Lit's property names (_BaseMap, _BaseColor, _EmissionColor, _Smoothness) so the
 // content builder and the enemy telegraph glow (a MaterialPropertyBlock on _EmissionColor) work unchanged.
-Shader "UnityEve/Toon"
+Shader "Unity.Eve/Toon"
 {
     Properties
     {

@@ -1,7 +1,7 @@
 using UnityEngine;
-using UnityEve.Core.Battle;
+using Unity.Eve.Core.Battle;
 
-namespace UnityEve.Data
+namespace Unity.Eve.Data
 {
     /// <summary>A Parasite Energy ability.</summary>
     [CreateAssetMenu(menuName = "Unity Eve/PE Ability", fileName = "Ability")]

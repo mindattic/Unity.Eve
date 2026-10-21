@@ -1,15 +1,15 @@
 using System.Collections;
 using System.Linq;
 using UnityEngine;
-using UnityEve.Battle;
-using UnityEve.Cameras;
-using UnityEve.Core.Battle;
-using UnityEve.Data;
-using UnityEve.Input;
-using UnityEve.Player;
-using UnityEve.UI;
+using Unity.Eve.Battle;
+using Unity.Eve.Cameras;
+using Unity.Eve.Core.Battle;
+using Unity.Eve.Data;
+using Unity.Eve.Input;
+using Unity.Eve.Player;
+using Unity.Eve.UI;
 
-namespace UnityEve.Game
+namespace Unity.Eve.Game
 {
     /// <summary>
     /// Composition root and game flow: the title screen (New Game / Continue / Quit), the field pause

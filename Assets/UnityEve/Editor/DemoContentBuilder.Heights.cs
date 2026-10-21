@@ -2,11 +2,11 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
 using UnityEngine;
-using UnityEve.Battle;
-using UnityEve.Cameras;
-using UnityEve.Interaction;
+using Unity.Eve.Battle;
+using Unity.Eve.Cameras;
+using Unity.Eve.Interaction;
 
-namespace UnityEve.Editor
+namespace Unity.Eve.Editor
 {
     /// <summary>
     /// Ashgrove Heights, west of the bus stop: Willow Lane, a residential street of detached houses

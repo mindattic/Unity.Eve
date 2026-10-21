@@ -1,11 +1,11 @@
 using System.Collections;
 using UnityEngine;
-using UnityEve.Cameras;
-using UnityEve.Data;
-using UnityEve.Player;
-using UnityEve.UI;
+using Unity.Eve.Cameras;
+using Unity.Eve.Data;
+using Unity.Eve.Player;
+using Unity.Eve.UI;
 
-namespace UnityEve.Interaction
+namespace Unity.Eve.Interaction
 {
     /// <summary>
     /// A door into (or out of) a building. Classic survival-horror transition: fade to black, door
@@ -52,7 +52,7 @@ namespace UnityEve.Interaction
         {
             if (_destination == null)
             {
-                Debug.LogError($"[UnityEve] Door '{name}' has no destination configured; ignoring interact.", this);
+                Debug.LogError($"[Unity.Eve] Door '{name}' has no destination configured; ignoring interact.", this);
                 return;
             }
             if (_requiredKey != null && !_unlocked)

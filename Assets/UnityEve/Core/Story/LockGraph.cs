@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace UnityEve.Core.Story
+namespace Unity.Eve.Core.Story
 {
     /// <summary>
     /// The overworld's lock-and-key dependency graph: places the player can stand (regions), the doors

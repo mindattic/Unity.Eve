@@ -2,17 +2,17 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using UnityEve.Cameras;
-using UnityEve.Core.Battle;
-using UnityEve.Core.Util;
-using UnityEve.Data;
-using UnityEve.Enemies;
-using UnityEve.Game;
-using UnityEve.Input;
-using UnityEve.Player;
-using UnityEve.UI;
+using Unity.Eve.Cameras;
+using Unity.Eve.Core.Battle;
+using Unity.Eve.Core.Util;
+using Unity.Eve.Data;
+using Unity.Eve.Enemies;
+using Unity.Eve.Game;
+using Unity.Eve.Input;
+using Unity.Eve.Player;
+using Unity.Eve.UI;
 
-namespace UnityEve.Battle
+namespace Unity.Eve.Battle
 {
     public enum BattlePhase
     {
@@ -167,7 +167,7 @@ namespace UnityEve.Battle
             var actor = go.GetComponent<EnemyActor>();
             if (actor == null)
             {
-                Debug.LogError($"[UnityEve] enemy prefab for '{definition.name}' has no EnemyActor component; skipping spawn.");
+                Debug.LogError($"[Unity.Eve] enemy prefab for '{definition.name}' has no EnemyActor component; skipping spawn.");
                 Destroy(go);
                 return null;
             }

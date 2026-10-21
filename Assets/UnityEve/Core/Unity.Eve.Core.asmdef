@@ -1,6 +1,6 @@
 {
-    "name": "UnityEve.Core",
-    "rootNamespace": "UnityEve.Core",
+    "name": "Unity.Eve.Core",
+    "rootNamespace": "Unity.Eve.Core",
     "references": [],
     "includePlatforms": [],
     "excludePlatforms": [],

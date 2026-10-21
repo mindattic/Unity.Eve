@@ -1,10 +1,10 @@
 using System;
 using UnityEngine;
-using UnityEve.Core.Battle;
-using UnityEve.Core.Items;
-using UnityEve.Data;
+using Unity.Eve.Core.Battle;
+using Unity.Eve.Core.Items;
+using Unity.Eve.Data;
 
-namespace UnityEve.Player
+namespace Unity.Eve.Player
 {
     /// <summary>
     /// The heroine's state: HP, Parasite Energy, level, bag and weapon. Thin MonoBehaviour shell

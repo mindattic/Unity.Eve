@@ -1,7 +1,7 @@
 using System;
-using UnityEve.Core.Util;
+using Unity.Eve.Core.Util;
 
-namespace UnityEve.Core.Battle
+namespace Unity.Eve.Core.Battle
 {
     public enum EnemyIntent
     {

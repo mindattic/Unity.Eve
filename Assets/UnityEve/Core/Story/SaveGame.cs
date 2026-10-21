@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace UnityEve.Core.Story
+namespace Unity.Eve.Core.Story
 {
     [Serializable]
     public sealed class SavedSlot

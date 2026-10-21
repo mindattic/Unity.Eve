@@ -1,8 +1,8 @@
 {
-    "name": "UnityEve.Runtime",
-    "rootNamespace": "UnityEve",
+    "name": "Unity.Eve.Runtime",
+    "rootNamespace": "Unity.Eve",
     "references": [
-        "UnityEve.Core",
+        "Unity.Eve.Core",
         "Unity.InputSystem",
         "Unity.RenderPipelines.Universal.Runtime",
         "Unity.RenderPipelines.Core.Runtime"

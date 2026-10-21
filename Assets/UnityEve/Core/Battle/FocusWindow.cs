@@ -1,6 +1,6 @@
 using System;
 
-namespace UnityEve.Core.Battle
+namespace Unity.Eve.Core.Battle
 {
     public enum FocusMove
     {

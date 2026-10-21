@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace UnityEve.Enemies
+namespace Unity.Eve.Enemies
 {
     public enum LimbStyle
     {

@@ -1,7 +1,7 @@
 using System.Collections;
 using UnityEngine;
 
-namespace UnityEve.Battle
+namespace Unity.Eve.Battle
 {
     /// <summary>
     /// Short-lived combat visuals: tracers, muzzle flashes, impact sparks, explosions, PE auras.

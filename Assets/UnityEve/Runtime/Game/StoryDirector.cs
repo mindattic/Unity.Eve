@@ -1,11 +1,11 @@
 using System;
 using System.Linq;
 using UnityEngine;
-using UnityEve.Battle;
-using UnityEve.Core.Story;
-using UnityEve.UI;
+using Unity.Eve.Battle;
+using Unity.Eve.Core.Story;
+using Unity.Eve.UI;
 
-namespace UnityEve.Game
+namespace Unity.Eve.Game
 {
     /// <summary>
     /// The night's story spine for the vertical slice. Learns facts as the game is played (items
@@ -38,7 +38,7 @@ namespace UnityEve.Game
         {
             Instance = this;
             if (_texts.Length != _facts.Length)
-                Debug.LogError($"[UnityEve] StoryDirector has {_texts.Length} objective texts but {_facts.Length} facts; truncating to the shorter length.");
+                Debug.LogError($"[Unity.Eve] StoryDirector has {_texts.Length} objective texts but {_facts.Length} facts; truncating to the shorter length.");
             var count = Math.Min(_texts.Length, _facts.Length);
             _objectives = new Objectives(Enumerable.Range(0, count).Select(i => new Objective(_texts[i], _facts[i])));
             _objectives.Changed += OnChanged;

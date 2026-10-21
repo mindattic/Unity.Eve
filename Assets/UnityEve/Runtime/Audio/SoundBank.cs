@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace UnityEve
+namespace Unity.Eve
 {
     [Serializable]
     public sealed class SoundEntry

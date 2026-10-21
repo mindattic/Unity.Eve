@@ -1,8 +1,8 @@
 using System;
 using System.Collections.Generic;
-using UnityEve.Core.Util;
+using Unity.Eve.Core.Util;
 
-namespace UnityEve.Core.Battle
+namespace Unity.Eve.Core.Battle
 {
     public readonly struct HitResult
     {

@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace UnityEve.Cameras
+namespace Unity.Eve.Cameras
 {
     /// <summary>
     /// A trigger volume that selects a <see cref="CameraShot"/> while the player stands in it.

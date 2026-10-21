@@ -1,6 +1,6 @@
 using System;
 
-namespace UnityEve.Core.Battle
+namespace Unity.Eve.Core.Battle
 {
     /// <summary>
     /// Kat's katana, carried alongside the gun. Two blade arts, both taken as a turn from the command menu:

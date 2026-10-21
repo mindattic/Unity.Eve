@@ -1,8 +1,8 @@
-using UnityEve.Core.Battle;
-using UnityEve.Core.Util;
+using Unity.Eve.Core.Battle;
+using Unity.Eve.Core.Util;
 using NUnit.Framework;
 
-namespace UnityEve.Core.Tests
+namespace Unity.Eve.Core.Tests
 {
     public class ScreenEncounterRuleTests
     {

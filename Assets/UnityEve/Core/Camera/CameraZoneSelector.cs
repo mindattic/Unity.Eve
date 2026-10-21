@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace UnityEve.Core.Camera
+namespace Unity.Eve.Core.Camera
 {
     /// <summary>
     /// Picks the active fixed-camera zone from the zones the player currently stands in.

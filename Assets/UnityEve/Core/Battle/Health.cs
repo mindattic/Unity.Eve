@@ -1,6 +1,6 @@
 using System;
 
-namespace UnityEve.Core.Battle
+namespace Unity.Eve.Core.Battle
 {
     /// <summary>Hit points with clamped damage and healing.</summary>
     public sealed class Health

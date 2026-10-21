@@ -1,7 +1,7 @@
 using UnityEngine;
-using UnityEve.Core.Items;
+using Unity.Eve.Core.Items;
 
-namespace UnityEve.Data
+namespace Unity.Eve.Data
 {
     [CreateAssetMenu(menuName = "Unity Eve/Loot Table", fileName = "Loot")]
     public sealed class LootTableDefinition : ScriptableObject

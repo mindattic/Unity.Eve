@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace UnityEve
+namespace Unity.Eve
 {
     /// <summary>Animator parameter hashes shared by the controllers the content builder generates.</summary>
     public static class AnimParams

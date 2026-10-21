@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace UnityEve.Core.Items
+namespace Unity.Eve.Core.Items
 {
     public sealed class ItemSlot
     {

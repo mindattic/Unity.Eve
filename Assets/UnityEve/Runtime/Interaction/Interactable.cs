@@ -1,7 +1,7 @@
 using UnityEngine;
-using UnityEve.Player;
+using Unity.Eve.Player;
 
-namespace UnityEve.Interaction
+namespace Unity.Eve.Interaction
 {
     /// <summary>Anything the player can use with the Interact button: doors, drawers, items, notes.</summary>
     public abstract class Interactable : MonoBehaviour

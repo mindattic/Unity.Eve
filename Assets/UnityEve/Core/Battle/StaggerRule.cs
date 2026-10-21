@@ -1,4 +1,4 @@
-namespace UnityEve.Core.Battle
+namespace Unity.Eve.Core.Battle
 {
     /// <summary>Enough burst damage in a short window staggers a creature: it loses its turn and
     /// reconsiders, same as a stun. See <see cref="BattleConfig.StaggerDamageFloor"/>/

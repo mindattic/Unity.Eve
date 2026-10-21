@@ -1,9 +1,9 @@
 using UnityEngine;
-using UnityEve.Core.Battle;
-using UnityEve.Player;
-using UnityEve.UI;
+using Unity.Eve.Core.Battle;
+using Unity.Eve.Player;
+using Unity.Eve.UI;
 
-namespace UnityEve.Battle
+namespace Unity.Eve.Battle
 {
     /// <summary>
     /// Acid/slime left where a ranged hit landed (<see cref="EnemyStats.LeavesPuddle"/>): ticks damage to

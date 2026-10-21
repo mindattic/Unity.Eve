@@ -2,12 +2,12 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using UnityEve.Cameras;
-using UnityEve.Core.Battle;
-using UnityEve.Core.Util;
-using UnityEve.Data;
+using Unity.Eve.Cameras;
+using Unity.Eve.Core.Battle;
+using Unity.Eve.Core.Util;
+using Unity.Eve.Data;
 
-namespace UnityEve.Battle
+namespace Unity.Eve.Battle
 {
     [Serializable]
     public sealed class RoamingPack

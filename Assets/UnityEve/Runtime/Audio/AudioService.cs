@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace UnityEve
+namespace Unity.Eve
 {
     /// <summary>Every sound cue in the game. "Every event has a sound."</summary>
     public enum SoundId

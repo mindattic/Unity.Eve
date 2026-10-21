@@ -1,11 +1,11 @@
 using UnityEngine;
-using UnityEve.Cameras;
-using UnityEve.Interaction;
+using Unity.Eve.Cameras;
+using Unity.Eve.Interaction;
 
-namespace UnityEve.Editor
+namespace Unity.Eve.Editor
 {
     /// <summary>
-    /// Ashgrove Park, through the gap behind Saint Ansel's: a cel-shaded fountain pool (UnityEve/ToonWater),
+    /// Ashgrove Park, through the gap behind Saint Ansel's: a cel-shaded fountain pool (Unity.Eve/ToonWater),
     /// trees and benches around it. A first, self-contained district to prove out the look before the rest
     /// of Kingsport grows (owner direction 2026-10-11: one new area, verified, before committing to more).
     /// </summary>

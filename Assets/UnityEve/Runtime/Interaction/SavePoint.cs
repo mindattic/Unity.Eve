@@ -1,9 +1,9 @@
 using UnityEngine;
-using UnityEve.Game;
-using UnityEve.Player;
-using UnityEve.UI;
+using Unity.Eve.Game;
+using Unity.Eve.Player;
+using Unity.Eve.UI;
 
-namespace UnityEve.Interaction
+namespace Unity.Eve.Interaction
 {
     /// <summary>
     /// A payphone that still has a dial tone: use it to save. Its green handset light makes save

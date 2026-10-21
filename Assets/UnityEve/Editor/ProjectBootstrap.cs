@@ -7,13 +7,13 @@ using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 
-namespace UnityEve.Editor
+namespace Unity.Eve.Editor
 {
     /// <summary>
     /// One-shot project configuration that would otherwise be clicked together in the editor:
     /// creates the URP pipeline asset and assigns it to Graphics and every Quality level.
     /// Idempotent, so it is safe to re-run from the menu or from batch mode
-    /// (<c>-executeMethod UnityEve.Editor.ProjectBootstrap.Run</c>).
+    /// (<c>-executeMethod Unity.Eve.Editor.ProjectBootstrap.Run</c>).
     /// </summary>
     public static class ProjectBootstrap
     {
@@ -58,13 +58,13 @@ namespace UnityEve.Editor
             PlayerSettings.productName = "Unity Eve";
 
             AssetDatabase.SaveAssets();
-            Debug.Log("[UnityEve] Project configured: URP assigned to Graphics and all Quality levels.");
+            Debug.Log("[Unity.Eve] Project configured: URP assigned to Graphics and all Quality levels.");
         }
 
         private const string InkMaterialPath = SettingsFolder + "/InkOutline.mat";
 
         /// <summary>
-        /// The ink lines: a Full Screen Pass Renderer Feature running UnityEve/InkOutline over the depth and
+        /// The ink lines: a Full Screen Pass Renderer Feature running Unity.Eve/InkOutline over the depth and
         /// normals textures, before transparents so the range dome, effects and popups stay un-inked.
         /// </summary>
         private static void ConfigureInk(UniversalRendererData renderer)
@@ -73,10 +73,10 @@ namespace UnityEve.Editor
             var material = AssetDatabase.LoadAssetAtPath<Material>(InkMaterialPath);
             if (material == null)
             {
-                material = new Material(Shader.Find("UnityEve/InkOutline"));
+                material = new Material(Shader.Find("Unity.Eve/InkOutline"));
                 AssetDatabase.CreateAsset(material, InkMaterialPath);
             }
-            material.shader = Shader.Find("UnityEve/InkOutline");
+            material.shader = Shader.Find("Unity.Eve/InkOutline");
             material.SetColor("_InkColor", new Color(0.03f, 0.025f, 0.04f, 1f));
             material.SetFloat("_Thickness", 1.1f);
             material.SetFloat("_DepthThreshold", 0.04f);

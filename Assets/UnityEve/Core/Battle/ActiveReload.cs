@@ -1,6 +1,6 @@
-using UnityEve.Core.Util;
+using Unity.Eve.Core.Util;
 
-namespace UnityEve.Core.Battle
+namespace Unity.Eve.Core.Battle
 {
     /// <summary>
     /// Gears-of-War-style active reload: a marker sweeps once across the bar while the magazine loads.

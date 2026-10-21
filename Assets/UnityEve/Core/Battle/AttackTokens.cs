@@ -1,7 +1,7 @@
 using System.Collections.Generic;
-using UnityEve.Core.Util;
+using Unity.Eve.Core.Util;
 
-namespace UnityEve.Core.Battle
+namespace Unity.Eve.Core.Battle
 {
     /// <summary>
     /// The pack's attack tokens (the classic action-game pattern): only a creature holding a token may

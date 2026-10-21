@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace UnityEve.Game
+namespace Unity.Eve.Game
 {
     /// <summary>A failing bulb: mostly steady, with irregular dropouts. Pure atmosphere.</summary>
     [RequireComponent(typeof(Light))]

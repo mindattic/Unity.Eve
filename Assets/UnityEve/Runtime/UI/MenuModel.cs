@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace UnityEve.UI
+namespace Unity.Eve.UI
 {
     public sealed class MenuEntry
     {

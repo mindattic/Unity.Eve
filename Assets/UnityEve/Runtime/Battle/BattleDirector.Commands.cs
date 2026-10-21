@@ -1,15 +1,15 @@
 using System.Collections;
 using System.Linq;
 using UnityEngine;
-using UnityEve.Cameras;
-using UnityEve.Core.Battle;
-using UnityEve.Data;
-using UnityEve.Enemies;
-using UnityEve.Game;
-using UnityEve.Input;
-using UnityEve.UI;
+using Unity.Eve.Cameras;
+using Unity.Eve.Core.Battle;
+using Unity.Eve.Data;
+using Unity.Eve.Enemies;
+using Unity.Eve.Game;
+using Unity.Eve.Input;
+using Unity.Eve.UI;
 
-namespace UnityEve.Battle
+namespace Unity.Eve.Battle
 {
     /// <summary>The paused half of the battle: command menus, the range dome, and executing turns.</summary>
     public sealed partial class BattleDirector

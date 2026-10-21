@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace UnityEve.Cameras
+namespace Unity.Eve.Cameras
 {
     public enum ShotMode
     {

@@ -14,7 +14,7 @@ if ($LASTEXITCODE -ne 0) { Write-Host "FAIL core tests"; exit $LASTEXITCODE }
 Write-Host "PASS core tests"
 
 if ($Compile) {
-    & "$PSScriptRoot/unity.ps1" -Method UnityEve.Editor.UnityEveBuild.CompileCheck -Log compile
+    & "$PSScriptRoot/unity.ps1" -Method Unity.Eve.Editor.UnityEveBuild.CompileCheck -Log compile
     if ($LASTEXITCODE -ne 0) { Write-Host "FAIL unity compile"; exit $LASTEXITCODE }
     Write-Host "PASS unity compile"
 }

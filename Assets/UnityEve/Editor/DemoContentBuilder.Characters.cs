@@ -3,19 +3,19 @@ using System.Linq;
 using UnityEditor;
 using UnityEditor.Animations;
 using UnityEngine;
-using UnityEve.Data;
-using UnityEve.Enemies;
-using UnityEve.Interaction;
-using UnityEve.Player;
+using Unity.Eve.Data;
+using Unity.Eve.Enemies;
+using Unity.Eve.Interaction;
+using Unity.Eve.Player;
 
-namespace UnityEve.Editor
+namespace Unity.Eve.Editor
 {
     public static partial class DemoContentBuilder
     {
         private static readonly Dictionary<Material, Material> Converted = new Dictionary<Material, Material>();
 
         /// <summary>Every opaque surface is cel-shaded with an ink outline (owner direction 2026-10-11).</summary>
-        private const string ToonShader = "UnityEve/Toon";
+        private const string ToonShader = "Unity.Eve/Toon";
 
         // ------------------------------------------------------------------ materials
 
@@ -92,7 +92,7 @@ namespace UnityEve.Editor
         {
             var path = $"{MatDir}/RangeDome.mat";
             AssetDatabase.DeleteAsset(path);
-            var m = new Material(Shader.Find("UnityEve/HexDome"));
+            var m = new Material(Shader.Find("Unity.Eve/HexDome"));
             m.SetColor("_BaseColor", color);
             AssetDatabase.CreateAsset(m, path);
             return m;
@@ -103,7 +103,7 @@ namespace UnityEve.Editor
         {
             var path = $"{MatDir}/{name}.mat";
             AssetDatabase.DeleteAsset(path);
-            var m = new Material(Shader.Find("UnityEve/ToonWater"));
+            var m = new Material(Shader.Find("Unity.Eve/ToonWater"));
             m.SetColor("_BaseColor", deep);
             m.SetColor("_FoamColor", foam);
             AssetDatabase.CreateAsset(m, path);
@@ -143,7 +143,7 @@ namespace UnityEve.Editor
             var src = AssetDatabase.LoadAllAssetsAtPath(sourcePath).OfType<AnimationClip>().FirstOrDefault(c => c.name == clipName);
             if (src == null)
             {
-                Debug.LogWarning($"[UnityEve] clip {clipName} not found in {sourcePath}");
+                Debug.LogWarning($"[Unity.Eve] clip {clipName} not found in {sourcePath}");
                 return null;
             }
             System.IO.Directory.CreateDirectory(folder);
@@ -380,7 +380,7 @@ namespace UnityEve.Editor
         {
             if (!bones.TryGetValue("hand_r", out var hand) || !bones.TryGetValue("spine_03", out var spine))
             {
-                Debug.LogError("[UnityEve] rig is missing hand_r/spine_03; Kat will have no Katana.");
+                Debug.LogError("[Unity.Eve] rig is missing hand_r/spine_03; Kat will have no Katana.");
                 return;
             }
             var steel = SimpleMaterial("KatanaSteel", new Color(0.86f, 0.9f, 0.95f), null, 0.85f);

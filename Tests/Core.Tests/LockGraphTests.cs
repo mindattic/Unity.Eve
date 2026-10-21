@@ -1,7 +1,7 @@
-using UnityEve.Core.Story;
+using Unity.Eve.Core.Story;
 using NUnit.Framework;
 
-namespace UnityEve.Core.Tests
+namespace Unity.Eve.Core.Tests
 {
     public class LockGraphTests
     {

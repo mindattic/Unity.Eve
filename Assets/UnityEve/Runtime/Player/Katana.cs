@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace UnityEve.Player
+namespace Unity.Eve.Player
 {
     /// <summary>
     /// Kat's katana, carried alongside her gun. Worn across her back; drawn into her right hand for the

@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace UnityEve.Data
+namespace Unity.Eve.Data
 {
     /// <summary>Lookup from item id to definition, so Core (which only knows ids) can be presented.</summary>
     [CreateAssetMenu(menuName = "Unity Eve/Item Database", fileName = "ItemDatabase")]

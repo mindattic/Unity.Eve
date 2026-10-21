@@ -2,7 +2,7 @@ using System.Collections;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-namespace UnityEve.Input
+namespace Unity.Eve.Input
 {
     /// <summary>
     /// Gamepad-first input with keyboard fallback, built on the Input System. Bindings are declared

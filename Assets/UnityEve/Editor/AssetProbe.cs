@@ -3,7 +3,7 @@ using System.Text;
 using UnityEditor;
 using UnityEngine;
 
-namespace UnityEve.Editor
+namespace Unity.Eve.Editor
 {
     /// <summary>Dumps hierarchy, clip names and curve bindings of imported models (diagnostics for the asset pipeline).</summary>
     public static class AssetProbe
@@ -48,7 +48,7 @@ namespace UnityEve.Editor
             }
             System.IO.Directory.CreateDirectory("Logs");
             System.IO.File.WriteAllText("Logs/asset-probe.txt", sb.ToString());
-            Debug.Log("[UnityEve] probe written to Logs/asset-probe.txt");
+            Debug.Log("[Unity.Eve] probe written to Logs/asset-probe.txt");
         }
 
         private static void Dump(Transform t, int depth, int max, StringBuilder sb)

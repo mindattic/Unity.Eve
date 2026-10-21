@@ -1,9 +1,9 @@
 <#
 .SYNOPSIS
-  Runs the UnityEve project in Unity batch mode and surfaces compile errors.
+  Runs the Unity.Eve project in Unity batch mode and surfaces compile errors.
 .EXAMPLE
-  pwsh tools/unity.ps1 -Method UnityEve.Editor.DemoContentBuilder.BuildAll -Log build-content
-  pwsh tools/unity.ps1 -Method UnityEve.Editor.UnityEveBuild.BuildWindows -Log build-player -Graphics
+  pwsh tools/unity.ps1 -Method Unity.Eve.Editor.DemoContentBuilder.BuildAll -Log build-content
+  pwsh tools/unity.ps1 -Method Unity.Eve.Editor.UnityEveBuild.BuildWindows -Log build-player -Graphics
 .NOTES
   Unity batch mode needs the Editor closed on this project. This script refuses to run if it is open.
 #>
@@ -34,7 +34,7 @@ if ($Extra) { $argList += $Extra.Split(' ') }
 if ($Extra -notmatch 'runTests') { $argList += "-quit" }
 
 $p = Start-Process -FilePath $unity -ArgumentList $argList -Wait -PassThru -NoNewWindow
-Select-String -Path $logFile -Pattern 'error CS|\[UnityEve\]|\[Build\]|Shader error|Compilation failed' |
+Select-String -Path $logFile -Pattern 'error CS|\[Unity\.Eve\]|\[Build\]|Shader error|Compilation failed' |
     Select-Object -First 80 | ForEach-Object { $_.Line }
 Write-Host "exit=$($p.ExitCode)  log=$logFile"
 exit $p.ExitCode

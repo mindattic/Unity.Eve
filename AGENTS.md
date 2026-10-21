@@ -18,7 +18,7 @@ ATB battle, built from free assets. Read `docs/BIBLE.md` for what it is, what it
 4. **Content is generated.** Data assets, prefabs, animator controllers, audio and `Demo.unity` come from
    `DemoContentBuilder`. Change the builder, not the generated asset, then re-run it.
 5. **Done is verified by play.** `./tools/test.ps1 -Compile` green, the content build, the player
-   build, then `UnityEve.exe -batchmode -autoplay` exits 0. Look at the screenshots in
+   build, then `Unity.Eve.exe -batchmode -autoplay` exits 0. Look at the screenshots in
    `artifacts/autoplay/`. Batch mode needs the Editor closed: ask the owner to quit it, never kill it.
 6. **Every event has a sound** (`SoundId`). The content build warns about silent ids.
 7. **Free assets only** (CC0, OFL, or MIT with attribution), recorded in `CREDITS.md`. Never Mixamo or

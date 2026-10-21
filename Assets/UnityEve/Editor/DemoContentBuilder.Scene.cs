@@ -5,16 +5,16 @@ using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.UIElements;
-using UnityEve.Battle;
-using UnityEve.Cameras;
-using UnityEve.Data;
-using UnityEve.Game;
-using UnityEve.Input;
-using UnityEve.Interaction;
-using UnityEve.Player;
-using UnityEve.UI;
+using Unity.Eve.Battle;
+using Unity.Eve.Cameras;
+using Unity.Eve.Data;
+using Unity.Eve.Game;
+using Unity.Eve.Input;
+using Unity.Eve.Interaction;
+using Unity.Eve.Player;
+using Unity.Eve.UI;
 
-namespace UnityEve.Editor
+namespace Unity.Eve.Editor
 {
     /// <summary>
     /// The Demo level: Ashgrove Street at night. A bus stop, a street of shuttered houses, an alley to a
@@ -160,7 +160,7 @@ namespace UnityEve.Editor
             var asset = AssetDatabase.LoadAssetAtPath<GameObject>(assetPath);
             if (asset == null)
             {
-                Debug.LogError($"[UnityEve] missing model {assetPath}");
+                Debug.LogError($"[Unity.Eve] missing model {assetPath}");
                 return new GameObject(name ?? "Missing");
             }
             var wrapper = new GameObject(name ?? asset.name);

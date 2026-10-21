@@ -4,7 +4,7 @@
 // close to the lens fades out so a fixed camera near the dome is not curtained, and a second, faint pass
 // draws the shell behind walls so range still reads in rooms smaller than the weapon's reach.
 // Animates on _UnscaledTime (set by RangeDome) so it keeps moving while the world is paused.
-Shader "UnityEve/HexDome"
+Shader "Unity.Eve/HexDome"
 {
     Properties
     {

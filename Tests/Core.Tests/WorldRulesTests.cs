@@ -1,10 +1,10 @@
 using System;
-using UnityEve.Core.Camera;
-using UnityEve.Core.Items;
-using UnityEve.Core.Util;
+using Unity.Eve.Core.Camera;
+using Unity.Eve.Core.Items;
+using Unity.Eve.Core.Util;
 using NUnit.Framework;
 
-namespace UnityEve.Core.Tests
+namespace Unity.Eve.Core.Tests
 {
     public class WorldRulesTests
     {

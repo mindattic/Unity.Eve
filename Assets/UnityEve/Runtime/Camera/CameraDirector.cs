@@ -1,8 +1,8 @@
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEve.Core.Camera;
+using Unity.Eve.Core.Camera;
 
-namespace UnityEve.Cameras
+namespace Unity.Eve.Cameras
 {
     /// <summary>
     /// Drives the one gameplay camera. Picks the active <see cref="CameraZone"/> via the pure

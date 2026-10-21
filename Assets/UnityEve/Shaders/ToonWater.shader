@@ -1,7 +1,7 @@
 // Cel-shaded water for the park fountain: a flat banded tint (not photographic reflection), a gentle
 // vertex ripple, and a scrolling toon sparkle standing in for broken specular highlights on moving
 // water. No camera-depth sampling or refraction: this is a small decorative pool, not an ocean system.
-Shader "UnityEve/ToonWater"
+Shader "Unity.Eve/ToonWater"
 {
     Properties
     {

@@ -120,24 +120,24 @@ Controls:
 ./tools/test.ps1 -Compile        # + batch-mode Unity compile check
 
 # Regenerate every generated asset and the Demo scene from code
-./tools/unity.ps1 -Method UnityEve.Editor.DemoContentBuilder.BuildAll -Log content
+./tools/unity.ps1 -Method Unity.Eve.Editor.DemoContentBuilder.BuildAll -Log content
 
-# Build the Windows player (Build/Windows/UnityEve.exe)
-./tools/unity.ps1 -Method UnityEve.Editor.UnityEveBuild.BuildWindows -Log build -Graphics
+# Build the Windows player (Build/Windows/Unity.Eve.exe)
+./tools/unity.ps1 -Method Unity.Eve.Editor.UnityEveBuild.BuildWindows -Log build -Graphics
 
 # Self-play: tour, rummage, fight all three encounters, screenshot every beat, then quit.
 # Batch mode renders offscreen, so no window opens. Exit code 0 = PASS.
-Build/Windows/UnityEve.exe -batchmode -autoplay -artifacts artifacts/autoplay -logFile artifacts/autoplay.log
+Build/Windows/Unity.Eve.exe -batchmode -autoplay -artifacts artifacts/autoplay -logFile artifacts/autoplay.log
 
 # Attract mode: the same self-play tour, windowed, with no screenshots and no PASS/FAIL,
 # looping the whole night forever (it clicks through the ending back to the title). For a
 # show floor or capturing trailer footage; close the window to stop it.
-Build/Windows/UnityEve.exe -demo
+Build/Windows/Unity.Eve.exe -demo
 
 # A video from launch to quit, at native resolution (MindAttic.Capture, Assets/StreamingAssets/capture.json
 # turns it on). Production builds are capture-free by design; this build has it compiled in.
 ./tools/unity.ps1 -Method MindAttic.Capture.Unity.Editor.CaptureBuild.BuildWindows -Log capture-build
-Builds/Capture/UnityEve.exe -autoplay -artifacts artifacts/autoplay   # or -demo
+Builds/Capture/Unity.Eve.exe -autoplay -artifacts artifacts/autoplay   # or -demo
 ```
 
 MindAttic.Capture also auto-starts in plain Editor Play sessions and dev builds (not gated by
@@ -150,12 +150,12 @@ Unity batch mode needs the Editor closed on this project; `tools/unity.ps1` refu
 
 ```text
 Assets/UnityEve/
-  Core/        UnityEve.Core (noEngineReferences)   ATB, PE, damage, Focus, enemy attack cycle,
+  Core/        Unity.Eve.Core (noEngineReferences)   ATB, PE, damage, Focus, enemy attack cycle,
                                                    inventory, loot, camera-zone selection, movement basis
-  Runtime/     UnityEve.Runtime                     MonoBehaviours: BattleDirector, EnemyActor, PlayerController,
+  Runtime/     Unity.Eve.Runtime                     MonoBehaviours: BattleDirector, EnemyActor, PlayerController,
                                                    CameraDirector/Shot/Zone, interactables, GameHud (UI Toolkit),
                                                    WorldTime, GameInput (Input System), Autopilot
-  Editor/      UnityEve.Editor                      DemoContentBuilder (data, prefabs, animators, scene),
+  Editor/      Unity.Eve.Editor                      DemoContentBuilder (data, prefabs, animators, scene),
                                                    WavSynth, OutfitPainter, build entry points
   Art/         CC0 models, sounds, OFL font (see CREDITS.md)
   Generated/   output of DemoContentBuilder: ScriptableObjects, materials, clips, prefabs, audio

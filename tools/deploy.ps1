@@ -1,26 +1,26 @@
 #Requires -Version 5.1
 <#
 .SYNOPSIS
-    Shuts down any running UnityEve, clears the build output, rebuilds the Windows
-    player from scratch, and publishes a standalone copy to C:\Apps\UnityEve\ — same
+    Shuts down any running Unity.Eve, clears the build output, rebuilds the Windows
+    player from scratch, and publishes a standalone copy to C:\Apps\Unity.Eve\ — same
     process Automata/KdpPublish/IdiotProof use to always have a fresh, independent
     deployed copy instead of a possibly-stale one.
 
 .DESCRIPTION
-    1. Stops any running UnityEve.exe process (dev copy or deployed copy).
+    1. Stops any running Unity.Eve.exe process (dev copy or deployed copy).
     2. Removes Build\Windows — the build OUTPUT only, never Library\ (Unity's asset
        import / script-compile cache, which survives exactly as it does for a normal
        Editor rebuild) — so the player build below is never a stale incremental copy.
-    3. Runs tools\unity.ps1 -Method UnityEve.Editor.UnityEveBuild.BuildWindows in Unity
-       batch mode (requires the Editor closed) -> Build\Windows\UnityEve.exe.
-    4. Copies Build\Windows\* -> C:\Apps\UnityEve\.
-    5. Writes C:\Apps\UnityEve\launch.bat, which calls this same deploy.ps1 (by its
+    3. Runs tools\unity.ps1 -Method Unity.Eve.Editor.UnityEveBuild.BuildWindows in Unity
+       batch mode (requires the Editor closed) -> Build\Windows\Unity.Eve.exe.
+    4. Copies Build\Windows\* -> C:\Apps\Unity.Eve\.
+    5. Writes C:\Apps\Unity.Eve\launch.bat, which calls this same deploy.ps1 (by its
        baked-in source path) EVERY time before launching, so a double-click always runs
        the current source rather than risking a stale deployed copy. If the source repo
        is missing (moved/deleted), it warns and launches whatever is already deployed.
 
 .PARAMETER Launch
-    After publishing, immediately run the deployed UnityEve.exe.
+    After publishing, immediately run the deployed Unity.Eve.exe.
 
 .EXAMPLE
     powershell -ExecutionPolicy Bypass -File tools\deploy.ps1
@@ -32,14 +32,14 @@ $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 
 $repoDir  = Split-Path $PSScriptRoot   # tools\ -> UnityEve\
-$out      = 'C:\Apps\UnityEve'
-$exeName  = 'UnityEve.exe'
+$out      = 'C:\Apps\Unity.Eve'
+$exeName  = 'Unity.Eve.exe'
 $buildDir = Join-Path $repoDir 'Build\WindowsRelease'
 
 # ── Stop running instance ──────────────────────────────────────────────────
 Write-Host ''
 Write-Host '  Stopping running instance...' -ForegroundColor Yellow
-$procs = Get-Process 'UnityEve' -ErrorAction SilentlyContinue
+$procs = Get-Process 'Unity.Eve' -ErrorAction SilentlyContinue
 if ($procs) {
     $procs | Stop-Process -Force
     Write-Host "    Stopped ($(@($procs).Count) process(es))" -ForegroundColor DarkYellow
@@ -60,7 +60,7 @@ if (Test-Path $buildDir) {
 # ── Build ────────────────────────────────────────────────────────────────────
 Write-Host ''
 Write-Host '  Building Windows Release player (Unity batch mode)...' -ForegroundColor Cyan
-& (Join-Path $PSScriptRoot 'unity.ps1') -Method UnityEve.Editor.UnityEveBuild.BuildWindowsRelease -Log deploy-build -Graphics
+& (Join-Path $PSScriptRoot 'unity.ps1') -Method Unity.Eve.Editor.UnityEveBuild.BuildWindowsRelease -Log deploy-build -Graphics
 if ($LASTEXITCODE -ne 0) {
     Write-Host "Build failed (exit $LASTEXITCODE)." -ForegroundColor Red
     exit $LASTEXITCODE
@@ -97,7 +97,7 @@ $deployPs1Path = Join-Path $PSScriptRoot 'deploy.ps1'
 $launchBatPath = Join-Path $out 'launch.bat'
 @(
     '@echo off',
-    'title UnityEve',
+    'title Unity.Eve',
     "set `"DEPLOY_PS1=$deployPs1Path`"",
     'if exist "%DEPLOY_PS1%" (',
     '    echo Redeploying latest build from source...',

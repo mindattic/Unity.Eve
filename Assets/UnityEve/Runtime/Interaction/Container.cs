@@ -1,12 +1,12 @@
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using UnityEve.Core.Util;
-using UnityEve.Data;
-using UnityEve.Player;
-using UnityEve.UI;
+using Unity.Eve.Core.Util;
+using Unity.Eve.Data;
+using Unity.Eve.Player;
+using Unity.Eve.UI;
 
-namespace UnityEve.Interaction
+namespace Unity.Eve.Interaction
 {
     /// <summary>
     /// Something to rummage through: a drawer, fridge, dumpster, crate. Hold Interact to search;

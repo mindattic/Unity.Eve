@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace UnityEve.Game
+namespace Unity.Eve.Game
 {
     /// <summary>
     /// Single owner of <see cref="Time.timeScale"/>. Systems request a pause (menus, targeting) or a

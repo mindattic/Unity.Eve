@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEve.Data;
+using Unity.Eve.Data;
 
-namespace UnityEve.Battle
+namespace Unity.Eve.Battle
 {
     [Serializable]
     public sealed class EncounterSpawn

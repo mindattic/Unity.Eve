@@ -1,4 +1,4 @@
-namespace UnityEve.Core.Battle
+namespace Unity.Eve.Core.Battle
 {
     /// <summary>
     /// Every battle tuning number in one place. Values follow Parasite Eve (1998) where the

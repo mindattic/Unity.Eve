@@ -1,6 +1,6 @@
 using System;
 
-namespace UnityEve.Core.Battle
+namespace Unity.Eve.Core.Battle
 {
     /// <summary>
     /// The Active Time Bar. It fills in real time while the player moves; when full, the player may

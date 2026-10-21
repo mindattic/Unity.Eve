@@ -1,9 +1,9 @@
 {
-    "name": "UnityEve.Editor",
-    "rootNamespace": "UnityEve.Editor",
+    "name": "Unity.Eve.Editor",
+    "rootNamespace": "Unity.Eve.Editor",
     "references": [
-        "UnityEve.Runtime",
-        "UnityEve.Core",
+        "Unity.Eve.Runtime",
+        "Unity.Eve.Core",
         "Unity.RenderPipelines.Universal.Runtime",
         "Unity.RenderPipelines.Core.Runtime",
         "Unity.InputSystem",

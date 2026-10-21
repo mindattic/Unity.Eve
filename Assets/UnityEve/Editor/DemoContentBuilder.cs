@@ -3,18 +3,18 @@ using System.IO;
 using System.Linq;
 using UnityEditor;
 using UnityEngine;
-using UnityEve.Core.Battle;
-using UnityEve.Core.Items;
-using UnityEve.Data;
+using Unity.Eve.Core.Battle;
+using Unity.Eve.Core.Items;
+using Unity.Eve.Data;
 
-namespace UnityEve.Editor
+namespace Unity.Eve.Editor
 {
     /// <summary>
     /// Builds every generated asset of the demo from code: data (weapons, items, PE, enemies, loot),
     /// synthesized audio + sound bank, URP materials, the player and creature prefabs with their
     /// animator controllers, and the Demo scene itself. Deterministic and idempotent: re-running it
     /// regenerates the same content, so the level is reviewable as code.
-    /// <c>-executeMethod UnityEve.Editor.DemoContentBuilder.BuildAll</c>
+    /// <c>-executeMethod Unity.Eve.Editor.DemoContentBuilder.BuildAll</c>
     /// </summary>
     public static partial class DemoContentBuilder
     {
@@ -52,7 +52,7 @@ namespace UnityEve.Editor
             // Re-import the models now that URP is the active pipeline, so glTFast picks URP shaders.
             AssetDatabase.ImportAsset(Art + "/Models", ImportAssetOptions.ImportRecursive | ImportAssetOptions.ForceUpdate);
 
-            Locks = new UnityEve.Core.Story.LockGraph();
+            Locks = new Unity.Eve.Core.Story.LockGraph();
             var content = new Content();
             BuildData(content);
             BuildAudio(content);
@@ -65,7 +65,7 @@ namespace UnityEve.Editor
             AssetDatabase.SaveAssets();
             ValidateLocks();
             ValidateMaterials();
-            Debug.Log("[UnityEve] Demo content built.");
+            Debug.Log("[Unity.Eve] Demo content built.");
             if (Application.isBatchMode) EditorApplication.Exit(0);
         }
 
@@ -75,7 +75,7 @@ namespace UnityEve.Editor
         // text (SignText(...)) is Unity's built-in TextMesh, also never imported, also exempt.
         private static readonly HashSet<string> ApprovedShaders = new HashSet<string>
         {
-            "UnityEve/Toon", "UnityEve/HexDome", "UnityEve/ToonWater",
+            "Unity.Eve/Toon", "Unity.Eve/HexDome", "Unity.Eve/ToonWater",
             "Universal Render Pipeline/Particles/Unlit", "GUI/Text Shader",
         };
 
@@ -95,7 +95,7 @@ namespace UnityEve.Editor
                 if (m == null) continue;
                 var shaderName = m.shader != null ? m.shader.name : null;
                 if (shaderName != null && ApprovedShaders.Contains(shaderName)) continue;
-                Debug.LogWarning($"[UnityEve] '{r.name}' uses material '{m.name}' with shader '{shaderName ?? "(none)"}' — " +
+                Debug.LogWarning($"[Unity.Eve] '{r.name}' uses material '{m.name}' with shader '{shaderName ?? "(none)"}' — " +
                     "it should have been re-skinned onto the toon shader by Model()/ConvertRenderers() when it was placed.");
             }
         }
@@ -105,14 +105,14 @@ namespace UnityEve.Editor
         /// region doors/keys in Scene.cs, Grocery.cs and Church.cs); failing this means some lock in the
         /// game has no reachable key, which would trap the player with no way through.
         /// </summary>
-        private static UnityEve.Core.Story.LockGraph Locks;
+        private static Unity.Eve.Core.Story.LockGraph Locks;
 
         private static void ValidateLocks()
         {
             var report = Locks.Validate("Street");
             if (report.Solvable) return;
             foreach (var region in report.UnreachableRegions)
-                Debug.LogError($"[UnityEve] '{region}' is unreachable: its lock's key is missing or itself behind another unreachable lock.");
+                Debug.LogError($"[Unity.Eve] '{region}' is unreachable: its lock's key is missing or itself behind another unreachable lock.");
         }
 
         // ------------------------------------------------------------------ helpers
@@ -214,7 +214,7 @@ namespace UnityEve.Editor
                 // Kat must always be able to walk away from a creature that isn't actively charging
                 // (BattleConfig.PlayerRunSpeed), or distance stops being a real defensive option.
                 if (speed >= BattleConfig.PlayerRunSpeed)
-                    Debug.LogWarning($"[UnityEve] enemy '{id}' MoveSpeed {speed} is not slower than Kat's " +
+                    Debug.LogWarning($"[Unity.Eve] enemy '{id}' MoveSpeed {speed} is not slower than Kat's " +
                         $"run speed {BattleConfig.PlayerRunSpeed} — she can be run down even outside a Charge.");
                 var e = ScriptableObject.CreateInstance<EnemyDefinition>();
                 e.Stats = new EnemyStats
@@ -340,7 +340,7 @@ namespace UnityEve.Editor
             c.Sounds = SaveAsset(bank, $"{DataDir}/SoundBank.asset");
             var missing = System.Enum.GetValues(typeof(SoundId)).Cast<SoundId>()
                 .Where(id => id != SoundId.None && (c.Sounds.Find(id) == null || c.Sounds.Find(id).Clips.Length == 0)).ToList();
-            if (missing.Count > 0) Debug.LogWarning($"[UnityEve] Silent sound ids: {string.Join(", ", missing)}");
+            if (missing.Count > 0) Debug.LogWarning($"[Unity.Eve] Silent sound ids: {string.Join(", ", missing)}");
         }
     }
 }

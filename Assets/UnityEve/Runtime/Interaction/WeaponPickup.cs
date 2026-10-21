@@ -1,9 +1,9 @@
 using UnityEngine;
-using UnityEve.Data;
-using UnityEve.Player;
-using UnityEve.UI;
+using Unity.Eve.Data;
+using Unity.Eve.Player;
+using Unity.Eve.UI;
 
-namespace UnityEve.Interaction
+namespace Unity.Eve.Interaction
 {
     /// <summary>A weapon to find in the world. Taking it adds it to the Equip list and readies it.</summary>
     public sealed class WeaponPickup : Interactable

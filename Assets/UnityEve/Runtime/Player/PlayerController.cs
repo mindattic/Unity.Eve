@@ -1,11 +1,11 @@
 using UnityEngine;
-using UnityEve.Battle;
-using UnityEve.Cameras;
-using UnityEve.Core.Battle;
-using UnityEve.Core.Camera;
-using UnityEve.Input;
+using Unity.Eve.Battle;
+using Unity.Eve.Cameras;
+using Unity.Eve.Core.Battle;
+using Unity.Eve.Core.Camera;
+using Unity.Eve.Input;
 
-namespace UnityEve.Player
+namespace Unity.Eve.Player
 {
     /// <summary>
     /// Camera-relative movement with a direction latch across fixed-camera cuts, plus a dodge leap

@@ -1,6 +1,6 @@
 using System;
 
-namespace UnityEve.Core.Camera
+namespace Unity.Eve.Core.Camera
 {
     /// <summary>
     /// Keeps "stick up" meaning the same world direction across fixed-camera cuts, so a held stick

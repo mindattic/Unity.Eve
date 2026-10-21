@@ -1,6 +1,6 @@
 using System;
 
-namespace UnityEve.Editor
+namespace Unity.Eve.Editor
 {
     /// <summary>
     /// Synthesized music loops (original work). Every oscillator completes whole cycles over the loop

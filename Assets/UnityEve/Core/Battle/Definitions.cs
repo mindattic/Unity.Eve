@@ -1,6 +1,6 @@
 using System;
 
-namespace UnityEve.Core.Battle
+namespace Unity.Eve.Core.Battle
 {
     /// <summary>A firearm or melee weapon. PE1 weapons differ by damage, range dome, ATB multiplier and rate of fire.</summary>
     [Serializable]

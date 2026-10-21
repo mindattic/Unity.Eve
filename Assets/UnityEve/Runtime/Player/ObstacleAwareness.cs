@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace UnityEve.Player
+namespace Unity.Eve.Player
 {
     /// <summary>
     /// An outer "slow your roll" trigger around Kat, bigger than the CharacterController's own capsule

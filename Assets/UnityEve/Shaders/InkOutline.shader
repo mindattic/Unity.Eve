@@ -6,7 +6,7 @@
 // - Creases come from the normals texture.
 // Stroke width is in 1080p pixels, scales with the screen, tapers gently with distance, and the stroke
 // is anti-aliased by sampling a full and a half radius. Lines sink into the night fog with the surface.
-Shader "UnityEve/InkOutline"
+Shader "Unity.Eve/InkOutline"
 {
     Properties
     {

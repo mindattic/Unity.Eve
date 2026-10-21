@@ -1,9 +1,9 @@
 using UnityEngine;
-using UnityEve.Battle;
-using UnityEve.Cameras;
-using UnityEve.Interaction;
+using Unity.Eve.Battle;
+using Unity.Eve.Cameras;
+using Unity.Eve.Interaction;
 
-namespace UnityEve.Editor
+namespace Unity.Eve.Editor
 {
     /// <summary>
     /// Ashgrove School, through the gap left by the Market Square's old south-east wall: a fenced

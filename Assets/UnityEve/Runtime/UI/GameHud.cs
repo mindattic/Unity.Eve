@@ -1,9 +1,9 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UIElements;
-using UnityEve.Core.Battle;
+using Unity.Eve.Core.Battle;
 
-namespace UnityEve.UI
+namespace Unity.Eve.UI
 {
     /// <summary>
     /// The whole screen, built in code on UI Toolkit and styled by Hud.uss. Owns the world camera's

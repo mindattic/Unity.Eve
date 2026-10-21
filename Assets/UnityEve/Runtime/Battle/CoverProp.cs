@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace UnityEve.Battle
+namespace Unity.Eve.Battle
 {
     /// <summary>
     /// Marks a bench, streetlamp post or mailbox as cover geometry. The collider on this object (or a

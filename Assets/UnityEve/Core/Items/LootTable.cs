@@ -1,8 +1,8 @@
 using System;
 using System.Collections.Generic;
-using UnityEve.Core.Util;
+using Unity.Eve.Core.Util;
 
-namespace UnityEve.Core.Items
+namespace Unity.Eve.Core.Items
 {
     [Serializable]
     public sealed class LootEntry

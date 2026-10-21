@@ -1,11 +1,11 @@
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using UnityEve.Battle;
-using UnityEve.Cameras;
-using UnityEve.Interaction;
+using Unity.Eve.Battle;
+using Unity.Eve.Cameras;
+using Unity.Eve.Interaction;
 
-namespace UnityEve.Editor
+namespace Unity.Eve.Editor
 {
     /// <summary>
     /// The Market district, east of Ashgrove Street past the broken barricade: Market Crossing, the

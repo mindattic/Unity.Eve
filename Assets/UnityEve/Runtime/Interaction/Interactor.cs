@@ -1,11 +1,11 @@
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEve.Battle;
-using UnityEve.Input;
-using UnityEve.Player;
-using UnityEve.UI;
+using Unity.Eve.Battle;
+using Unity.Eve.Input;
+using Unity.Eve.Player;
+using Unity.Eve.UI;
 
-namespace UnityEve.Interaction
+namespace Unity.Eve.Interaction
 {
     /// <summary>
     /// Finds the best interactable in front of the player, shows its prompt, and handles press or
