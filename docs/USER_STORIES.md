@@ -139,4 +139,4 @@ updated: 2026-10-11
 | U.EVE-T22 | 2026-10-20 | fix | closed | DemoContentBuilder.Characters.cs CreatureAnimator(): Bat.glb has no _Attack or _Death animation clip, so Find("Attack")/Find("Death") silently return null and the generated Bat animator's Attack/Die states get a null Motion (no warning, no fallback) -- the bat shows no attack telegraph or death animation in play | 7361162 |
 | U.EVE-T23 | 2026-10-21 | feature | closed | Add deploy.ps1/deploy.bat and an Editor build entry point so a Desktop shortcut can pull latest, build Release, and launch | 14d3517 |
 | U.EVE-T24 | 2026-10-21 | fix | closed | DemoContentBuilder.Characters.cs: ambiguous 'Motion' resolves to a namespace instead of UnityEngine.Motion, breaking compilation entirely (CS0118) | 8e054bb |
-| U.EVE-T25 | 2026-10-21 | fix | open | deploy.ps1 dirty-check blocked on untracked files (e.g. .prose/), not just real tracked changes | — |
+| U.EVE-T25 | 2026-10-21 | fix | closed | deploy.ps1 dirty-check blocked on untracked files (e.g. .prose/), not just real tracked changes | 6437249 |
