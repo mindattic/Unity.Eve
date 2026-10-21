@@ -245,8 +245,8 @@ namespace Unity.Eve.Enemies
             {
                 if (_cycle.Phase == AttackPhase.Close) _mind.Tick(dt, senses);
                 // Tokens decide whose turn it is; the commit limit stays as a safety net.
-                _cycle.Tick(dt, dist, (_mayCommit == null || _mayCommit()) && _mind.MayAttack(senses), tempo);
-                Move(dt, dir, dist, tempo, _mind.Steer(senses), facing);
+                _cycle.Tick(dt, dist, (_mayCommit == null || _mayCommit()) && _mind.MayAttack(), tempo);
+                Move(dt, dir, dist, tempo, _mind.Steer(), facing);
             }
 
             // Locomotion follows how fast it actually moved: idle when still, walk, run when charging.

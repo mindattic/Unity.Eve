@@ -319,9 +319,8 @@ namespace Unity.Eve.Battle
         {
             _player.Controller.Animator?.SetTrigger(AnimParams.Die);
             yield return new WaitForSeconds(1.5f);
-            var zone = _zone;
             End(won: false);
-            GameSession.Instance?.OnPlayerDefeated(zone);
+            GameSession.Instance?.OnPlayerDefeated();
         }
 
         // ------------------------------------------------------------------ enemy strikes and Focus
@@ -380,13 +379,13 @@ namespace Unity.Eve.Battle
             if (input == null) return;
             if (input.FocusHealPressed) UseFocusMove(FocusMove.QuickHeal);
             else if (input.FocusVitalsPressed) UseFocusMove(FocusMove.TargetVitals);
-            else if (input.FocusCounterPressed) UseFocusMove(FocusMove.Riposte);
+            else if (input.FocusRipostePressed) UseFocusMove(FocusMove.Riposte);
         }
 
         /// <summary>Spends the open Focus window on a free move. No ATB cost.</summary>
         public bool UseFocusMove(FocusMove move)
         {
-            if (_focusAttacker == null || !_focus.TryUse(move)) return false;
+            if (_focusAttacker == null || !_focus.TryUse()) return false;
             var hud = GameHud.Instance;
             switch (move)
             {

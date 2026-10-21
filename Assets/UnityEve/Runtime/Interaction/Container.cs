@@ -10,7 +10,8 @@ namespace Unity.Eve.Interaction
 {
     /// <summary>
     /// Something to rummage through: a drawer, fridge, dumpster, crate. Hold Interact to search;
-    /// it rolls its loot table once (or gives its fixed contents). Searched containers stay empty.
+    /// each stage rolls its loot table once (or gives its fixed contents), up to <see cref="MaxStages"/>
+    /// stages. Searched containers stay empty.
     /// </summary>
     public sealed class Container : Interactable
     {

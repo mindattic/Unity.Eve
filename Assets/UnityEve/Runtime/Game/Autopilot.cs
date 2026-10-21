@@ -52,7 +52,8 @@ namespace Unity.Eve.Game
 
         /// <summary>
         /// In batch mode (no window) the HUD panel renders into this texture instead of the screen.
-        /// The HUD already composites the PS1 render target, so one readback captures the whole frame.
+        /// The HUD already composites the full-resolution render target, so one readback captures the
+        /// whole frame.
         /// </summary>
         private RenderTexture _offscreen;
         private UnityEngine.UIElements.PanelSettings _panel;
@@ -78,7 +79,8 @@ namespace Unity.Eve.Game
         private IEnumerator Shot(string name)
         {
             // A batch-mode player draws UI but does not render cameras by itself: render the world
-            // camera into the PS1 target explicitly, let the HUD panel composite it, then read back.
+            // camera into the offscreen render target explicitly, let the HUD panel composite it, then
+            // read back.
             if (_offscreen != null && Cameras.CameraDirector.Instance != null)
             {
                 Cameras.CameraDirector.Instance.Camera.Render();

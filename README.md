@@ -42,7 +42,7 @@ The current objective is always on screen; each new one is announced. Payphones 
 
 ### Parasite Eve battle
 - **No screen transition.** Walking into an encounter zone makes the creatures materialize where you stand and seals the area with invisible walls.
-- **Active Time Bar.** The gauge fills in real time while you move and dodge, using PE1's formula `(50 + ActiveTime) x gun multiplier` (pistol 1.0, shotgun 0.8, melee 2.0).
+- **Active Time Bar.** The gauge fills in real time while you move and dodge, using PE1's formula `(50 + ActiveTime) x gun multiplier` (pistol 1.0, shotgun 0.8).
 - **World pause.** With a full gauge, Confirm stops time and opens **Attack / PE / Item / Equip / Escape**.
 - **Range dome.** Choosing Attack raises a faint wireframe shell of hexagons sized to the weapon's range. Only enemies inside it can be targeted. In rooms smaller than the range, the shell shows faintly through the walls.
 - **Katana.** Kat carries a katana alongside her gun. The **Blade** command offers three arts:

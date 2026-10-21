@@ -177,7 +177,7 @@ namespace Unity.Eve.Editor
                 c.Weapons[id] = w;
                 return w;
             }
-            // PE1 multipliers: pistol 1.0, shotgun 0.8 with burst, club 2.0.
+            // PE1 multipliers: pistol 1.0, shotgun 0.8 with burst, pipe 2.0.
             Weapon("pistol", "Service Pistol", 12, 7f, 1f, 10, 2, false, false, ammo9, SoundId.Gunshot, 0.45f);
             Weapon("shotgun", "Pump Shotgun", 20, 4.5f, 0.8f, 5, 1, true, false, shells, SoundId.ShotgunBlast, 0.7f);
             Weapon("pipe", "Steel Pipe", 14, 1.9f, 2f, 0, 1, false, true, null, SoundId.HitFlesh, 0.5f);

@@ -289,7 +289,7 @@ namespace Unity.Eve.Game
             return _menu.Confirm();
         }
 
-        public void OnPlayerDefeated(EncounterZone zone)
+        public void OnPlayerDefeated()
         {
             StartCoroutine(DefeatRoutine());
         }

@@ -27,7 +27,7 @@ namespace Unity.Eve.Input
 
         private InputActionMap _map;
         private InputAction _move, _navigate, _confirm, _cancel, _interact, _menu, _walk, _shootdodge;
-        private InputAction _focusHeal, _focusVitals, _focusCounter;
+        private InputAction _focusHeal, _focusVitals, _focusRiposte;
         private Vector2 _lastNavigate;
         private Coroutine _rumble;
 
@@ -46,7 +46,7 @@ namespace Unity.Eve.Input
         public bool ShootdodgePressed => _shootdodge.WasPressedThisFrame() || Consume(ref _shootdodgeOverride);
         public bool FocusHealPressed => _focusHeal.WasPressedThisFrame();
         public bool FocusVitalsPressed => _focusVitals.WasPressedThisFrame();
-        public bool FocusCounterPressed => _focusCounter.WasPressedThisFrame();
+        public bool FocusRipostePressed => _focusRiposte.WasPressedThisFrame();
 
         /// <summary>Menu navigation as discrete steps (-1, 0, +1) on each axis, edge-triggered.</summary>
         public Vector2Int NavigateStep { get; private set; }
@@ -108,7 +108,7 @@ namespace Unity.Eve.Input
             _shootdodge = Button("Shootdodge", "<Gamepad>/rightShoulder", "<Keyboard>/leftCtrl");
             _focusHeal = Button("FocusHeal", "<Gamepad>/buttonWest", "<Keyboard>/1");
             _focusVitals = Button("FocusVitals", "<Gamepad>/buttonNorth", "<Keyboard>/2");
-            _focusCounter = Button("FocusCounter", "<Gamepad>/buttonSouth", "<Keyboard>/3");
+            _focusRiposte = Button("FocusRiposte", "<Gamepad>/buttonSouth", "<Keyboard>/3");
 
             _map.Enable();
         }

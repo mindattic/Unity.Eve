@@ -699,7 +699,7 @@ namespace Unity.Eve.Editor
             game.AddComponent<GameSession>().Configure(player, spawn, spawnShot,
                 new[] { c.Items["medicine"], c.Items["ammo_9mm"], c.Items["grenade"], c.Items["flash"] }, new[] { 2, 2, 2, 1 });
 
-            // HUD: UI Toolkit document drawing the PS1 render target plus every overlay.
+            // HUD: UI Toolkit document drawing the full-resolution render target plus every overlay.
             var themePath = $"{Root}/UI/UnityEveTheme.tss";
             if (!System.IO.File.Exists(themePath))
             {

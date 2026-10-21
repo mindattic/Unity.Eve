@@ -18,8 +18,8 @@ namespace Unity.Eve.Core.Tests
         {
             var mind = new EnemyMind(new EnemyStats(), new Rng(1), firstThinkSeconds: 0.5f);
             Assert.That(mind.Intent, Is.EqualTo(EnemyIntent.Think));
-            Assert.That(mind.MayAttack(Senses(distance: 0.5f)), Is.False);
-            Assert.That(mind.Steer(Senses()).Still, Is.True);
+            Assert.That(mind.MayAttack(), Is.False);
+            Assert.That(mind.Steer().Still, Is.True);
 
             mind.Tick(0f, Senses());
             Assert.That(mind.Intent, Is.EqualTo(EnemyIntent.Think));
@@ -37,7 +37,7 @@ namespace Unity.Eve.Core.Tests
             {
                 mind.Tick(0.05f, Senses(distance: 4.5f));
                 seen.Add(mind.Intent);
-                Assert.That(mind.MayAttack(Senses(distance: 0.5f)), Is.False);
+                Assert.That(mind.MayAttack(), Is.False);
             }
             Assert.That(seen, Does.Not.Contain(EnemyIntent.Stalk));
             Assert.That(seen, Does.Not.Contain(EnemyIntent.Flank));
@@ -55,7 +55,7 @@ namespace Unity.Eve.Core.Tests
             Assert.That(mind.Intent == EnemyIntent.Lurk || mind.Intent == EnemyIntent.Circle || mind.Intent == EnemyIntent.Retreat, Is.True);
             mind.Tick(0.05f, Senses(distance: 1f));
             Assert.That(mind.Intent, Is.EqualTo(EnemyIntent.Retreat));
-            Assert.That(mind.Steer(Senses(distance: 1f)).RingDistance >= BattleConfig.EnemyRingMinRadius, Is.True);
+            Assert.That(mind.Steer().RingDistance >= BattleConfig.EnemyRingMinRadius, Is.True);
         }
 
         [Test]
@@ -66,24 +66,24 @@ namespace Unity.Eve.Core.Tests
             for (var i = 0; i < 400 && !mind.HasToken; i++) mind.Tick(0.05f, Senses(distance: 5f, facing: 0f));
             Assert.That(mind.HasToken, Is.True);
             Assert.That(mind.Intent, Is.EqualTo(EnemyIntent.Stalk));
-            Assert.That(mind.MayAttack(Senses(distance: 0.5f)), Is.False);
+            Assert.That(mind.MayAttack(), Is.False);
 
             mind.Tick(0.05f, Senses(distance: 2f)); // within charging distance
             Assert.That(mind.Intent, Is.EqualTo(EnemyIntent.Charge));
             Assert.That(mind.RearingUp, Is.True);
-            Assert.That(mind.Steer(Senses()).Still, Is.True);
-            Assert.That(mind.MayAttack(Senses(distance: 0.5f)), Is.False);
+            Assert.That(mind.Steer().Still, Is.True);
+            Assert.That(mind.MayAttack(), Is.False);
 
             mind.Tick(BattleConfig.EnemyChargeAnticipationSeconds + 0.01f, Senses(distance: 2f));
             Assert.That(mind.RearingUp, Is.False);
-            Assert.That(mind.Steer(Senses()).Speed, Is.EqualTo(BattleConfig.EnemyChargeSpeed));
-            Assert.That(mind.MayAttack(Senses(distance: 0.9f)), Is.True);
+            Assert.That(mind.Steer().Speed, Is.EqualTo(BattleConfig.EnemyChargeSpeed));
+            Assert.That(mind.MayAttack(), Is.True);
 
             mind.Struck();
             Assert.That(mind.Intent, Is.EqualTo(EnemyIntent.Retreat));
             Assert.That(mind.HasToken, Is.False);
             Assert.That(released, Is.EqualTo(1));
-            Assert.That(mind.MayAttack(Senses(distance: 0.5f)), Is.False);
+            Assert.That(mind.MayAttack(), Is.False);
         }
 
         [Test]
@@ -155,7 +155,7 @@ namespace Unity.Eve.Core.Tests
                 if (m.Intent == EnemyIntent.Buff) mind = m;
             }
             Assert.That(mind, Is.Not.Null);
-            Assert.That(mind.Steer(Senses()).Still, Is.True);
+            Assert.That(mind.Steer().Still, Is.True);
             Assert.That(mind.Buffed, Is.False);
 
             var applied = 0;
@@ -182,7 +182,7 @@ namespace Unity.Eve.Core.Tests
                 if (m.Intent == EnemyIntent.Flank) mind = m;
             }
             Assert.That(mind, Is.Not.Null);
-            Assert.That(mind.Steer(Senses()).TowardBack, Is.True);
+            Assert.That(mind.Steer().TowardBack, Is.True);
             mind.Tick(0.05f, Senses(distance: 3f, facing: -0.5f)); // reached her back
             Assert.That(mind.Intent, Is.EqualTo(EnemyIntent.Charge));
         }

@@ -52,8 +52,8 @@ namespace Unity.Eve.Core.Battle
             if (!wasOpen) Opened?.Invoke();
         }
 
-        /// <summary>Spends the window on a move. Returns false if the window had already closed.</summary>
-        public bool TryUse(FocusMove move)
+        /// <summary>Spends the window. Returns false if the window had already closed.</summary>
+        public bool TryUse()
         {
             if (!IsOpen) return false;
             Close();

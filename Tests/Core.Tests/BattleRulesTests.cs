@@ -196,9 +196,9 @@ namespace Unity.Eve.Core.Tests
             focus.Open();
             Assert.That(focus.IsOpen, Is.True);
             Assert.That(focus.TimeScale, Is.EqualTo(FocusWindow.SlowTimeScale));
-            Assert.That(focus.TryUse(FocusMove.QuickHeal), Is.True);
+            Assert.That(focus.TryUse(), Is.True);
             Assert.That(focus.IsOpen, Is.False);
-            Assert.That(focus.TryUse(FocusMove.TargetVitals), Is.False);
+            Assert.That(focus.TryUse(), Is.False);
         }
 
         [Test]

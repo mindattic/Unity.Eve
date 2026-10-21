@@ -51,7 +51,7 @@ updated: 2026-10-11
 | ID | Story | Status | Evidence |
 | --- | --- | --- | --- |
 | US-020 | A dodge started ≤0.3 s before a strike opens Focus: time ×0.15 | ✅ | `Perfect_dodge_window_opens_focus_and_slows_time`, autoplay:`encounter_1_street_focus` |
-| US-021 | Focus offers one free Quick Heal / Target Vitals / Counter, no ATB cost | ✅ | autoplay:`encounter_1_street_vitals` |
+| US-021 | Focus offers one free Quick Heal / Target Vitals / Riposte, no ATB cost | ✅ | autoplay:`encounter_1_street_vitals` |
 | US-022 | Focus is optional: the window expires on real time; mistimed dodges still evade | ✅ | `Focus_window_expires_on_real_time_so_it_is_optional` |
 | US-023 | A perfect dodge triggered by a human on a gamepad, felt in play | 🟡 | Autoplay opens Focus through `DebugOpenFocus`; needs an owner playtest |
 
@@ -66,7 +66,7 @@ updated: 2026-10-11
 | US-034 | Doors fade and move between the street and the house | ✅ | autoplay:`front_door`, `interior` |
 | US-039 | The Market district east of the street: crossing, square with fountain, stalls and church, back lane, loading dock (five screens, three encounters) | ✅ | autoplay:`11_crossing` … `15_dock`, `encounter_4..6_*` |
 | US-038 | The shed door stays locked until the key from the Mercer side table is in the bag | ✅ | autoplay:`shed_locked`, `search_container_house_sidetable`, `shed_interior`, `shed_shotgun` |
-| US-035 | Hold Interact to rummage; each container rolls its seeded loot table once | ✅ | `Loot_table_is_deterministic_and_can_roll_nothing`, autoplay:`rummage_street`, `search_container_house_fridge` |
+| US-035 | Hold Interact to rummage; each container rolls its seeded loot table once per stage, up to 3 stages | ✅ | `Loot_table_is_deterministic_and_can_roll_nothing`, autoplay:`rummage_street`, `search_container_house_fridge` |
 | US-036 | The bag has limited slots; stacks spill over and overflow is reported | ✅ | `Inventory_stacks_then_spills_into_new_slots`, `Inventory_reports_overflow_when_full` |
 | US-037 | Field menu: items, equip, controls | ✅ | autoplay:`field_menu` |
 

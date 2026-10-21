@@ -168,9 +168,9 @@ namespace Unity.Eve.Core.Battle
         public void Leave() => GiveBackToken();
 
         /// <summary>The attack cycle may wind up only while this is true: a charging token holder.</summary>
-        public bool MayAttack(in EnemySenses s) => HasToken && Intent == EnemyIntent.Charge && !RearingUp;
+        public bool MayAttack() => HasToken && Intent == EnemyIntent.Charge && !RearingUp;
 
-        public EnemySteering Steer(in EnemySenses s)
+        public EnemySteering Steer()
         {
             switch (Intent)
             {
