@@ -291,8 +291,24 @@ namespace Unity.Eve.Editor
             tree.AddChild(runClip, 4f);
             var move = AddState(sm, "Move", tree, new Vector3(300, 0));
             sm.defaultState = move;
-            TriggerFromAny(sm, AddState(sm, "Attack", Find("Attack"), new Vector3(600, 0)), "Attack", move, 0.9f);
-            var die = AddState(sm, "Die", Find("Death"), new Vector3(600, 100));
+            // Not every creature's source model has its own Attack/Death clip (e.g. Bat.glb ships only a
+            // flying loop): fall back to its idle/flying clip so the state still has *something* to play,
+            // the same way Walk/Run already fall back above, instead of silently leaving the state's
+            // Motion null (frozen/undefined in the Animator).
+            var attackClip = Find("Attack");
+            if (attackClip == null)
+            {
+                Debug.LogWarning($"[Unity.Eve] {species} has no Attack clip; its attack telegraph will just hold its idle/flying pose.");
+                attackClip = idleClip;
+            }
+            TriggerFromAny(sm, AddState(sm, "Attack", attackClip, new Vector3(600, 0)), "Attack", move, 0.9f);
+            var deathClip = Find("Death");
+            if (deathClip == null)
+            {
+                Debug.LogWarning($"[Unity.Eve] {species} has no Death clip; its death will just hold its idle/flying pose.");
+                deathClip = idleClip;
+            }
+            var die = AddState(sm, "Die", deathClip, new Vector3(600, 100));
             TriggerFromAny(sm, die, "Die", null);
             return ac;
         }
