@@ -55,7 +55,7 @@ namespace Unity.Eve.Editor
             Locks = new Unity.Eve.Core.Story.LockGraph();
             var content = new Content();
             BuildData(content);
-            BuildAudio(content);
+            var audioOk = BuildAudio(content);
             BuildEnemyPrefabs(content);
             BuildAlienPrefabs(content);
             BuildMother(content);
@@ -63,10 +63,16 @@ namespace Unity.Eve.Editor
             AssetDatabase.SaveAssets();
             BuildScene(content);
             AssetDatabase.SaveAssets();
-            ValidateLocks();
-            ValidateMaterials();
-            Debug.Log("[Unity.Eve] Demo content built.");
-            if (Application.isBatchMode) EditorApplication.Exit(0);
+            var locksOk = ValidateLocks();
+            var materialsOk = ValidateMaterials();
+            // The build's own validators (an unwinnable lock graph, a renderer that skipped the toon
+            // pipeline, a sound id with no clip) only logged before this: BuildAll exited 0 regardless, so
+            // tools/unity.ps1's batch-mode CI run -- which trusts Unity's own process exit code -- reported
+            // success even for genuinely broken content. Fold their results into the exit code, the same
+            // way UnityEveBuild.Build() already does for the player build.
+            var ok = audioOk && locksOk && materialsOk;
+            Debug.Log(ok ? "[Unity.Eve] Demo content built." : "[Unity.Eve] Demo content built WITH VALIDATION FAILURES (see above).");
+            if (Application.isBatchMode) EditorApplication.Exit(ok ? 0 : 1);
         }
 
         // The particle shader is first-party too: FxAdditive/KatanaTrail/RangeRing are built straight from
@@ -87,17 +93,21 @@ namespace Unity.Eve.Editor
         /// path skipped the pipeline (owner direction 2026-10-11, "every single asset... needs to be
         /// converted and scaled and saved as the correct format").
         /// </summary>
-        private static void ValidateMaterials()
+        /// <returns>False if any renderer was caught on an unapproved shader.</returns>
+        private static bool ValidateMaterials()
         {
+            var ok = true;
             foreach (var r in Object.FindObjectsByType<Renderer>(FindObjectsInactive.Include))
             foreach (var m in r.sharedMaterials)
             {
                 if (m == null) continue;
                 var shaderName = m.shader != null ? m.shader.name : null;
                 if (shaderName != null && ApprovedShaders.Contains(shaderName)) continue;
+                ok = false;
                 Debug.LogWarning($"[Unity.Eve] '{r.name}' uses material '{m.name}' with shader '{shaderName ?? "(none)"}' — " +
                     "it should have been re-skinned onto the toon shader by Model()/ConvertRenderers() when it was placed.");
             }
+            return ok;
         }
 
         /// <summary>
@@ -107,12 +117,14 @@ namespace Unity.Eve.Editor
         /// </summary>
         private static Unity.Eve.Core.Story.LockGraph Locks;
 
-        private static void ValidateLocks()
+        /// <returns>False if any region of the level is unreachable (a soft-lock).</returns>
+        private static bool ValidateLocks()
         {
             var report = Locks.Validate("Street");
-            if (report.Solvable) return;
+            if (report.Solvable) return true;
             foreach (var region in report.UnreachableRegions)
                 Debug.LogError($"[Unity.Eve] '{region}' is unreachable: its lock's key is missing or itself behind another unreachable lock.");
+            return false;
         }
 
         // ------------------------------------------------------------------ helpers
@@ -280,7 +292,8 @@ namespace Unity.Eve.Editor
 
         // ------------------------------------------------------------------ audio
 
-        private static void BuildAudio(Content c)
+        /// <returns>False if any <see cref="SoundId"/> ended up with no clip ("every event has a sound").</returns>
+        private static bool BuildAudio(Content c)
         {
             WavSynth.WriteAll(AudioDir);
             AssetDatabase.ImportAsset(AudioDir, ImportAssetOptions.ImportRecursive | ImportAssetOptions.ForceUpdate);
@@ -341,6 +354,7 @@ namespace Unity.Eve.Editor
             var missing = System.Enum.GetValues(typeof(SoundId)).Cast<SoundId>()
                 .Where(id => id != SoundId.None && (c.Sounds.Find(id) == null || c.Sounds.Find(id).Clips.Length == 0)).ToList();
             if (missing.Count > 0) Debug.LogWarning($"[Unity.Eve] Silent sound ids: {string.Join(", ", missing)}");
+            return missing.Count == 0;
         }
     }
 }
