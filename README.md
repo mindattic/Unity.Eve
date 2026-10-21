@@ -1,10 +1,12 @@
 # Unity Eve
 
-A proof of concept for a cel-shaded, hand-inked survival-horror RPG (Borderlands meets Parasite Mutant) with Parasite Eve's real-time/pause battle system, built in Unity 6 entirely from free (CC0/OFL) assets. It is a playable vertical slice: one night in Kingsport, from the bus stop through a neighbourhood of houses, a grocery store and a market square to a boss in the church, with objectives, payphone saves, music and an ending. You explore under fixed and CCTV cameras, enter buildings, rummage through drawers and fridges, and fight creatures with an Active Time Bar, a hexagon range dome, a gun and a katana, PE abilities and grenades. On top of that sits one new idea, **Focus**: dodge an attack at the last moment and time slows, opening free bonus moves.
+A Unity 6 proof of concept: a cel-shaded, hand-inked survival-horror RPG, built entirely from free assets, with Parasite Eve's real-time/pause Active Time Battle and an original perfect-dodge Focus mechanic.
 
 ![Unity 6000.4](https://img.shields.io/badge/Unity-6000.4.3f1-black) ![URP 17](https://img.shields.io/badge/URP-17.4-blue) ![Input System](https://img.shields.io/badge/Input%20System-1.19-green) ![Status vertical slice](https://img.shields.io/badge/status-vertical%20slice-yellow)
 
 ![Kat in the Mercer living room under a fixed corner camera: cel-shaded light pools, ink lines and comic hatching](docs/images/house-living-room.png)
+
+It is a playable vertical slice: one night in Kingsport, from the bus stop through a neighbourhood of houses, a grocery store and a market square to a boss in the church, with objectives, payphone saves, music and an ending. Past the market square, two extra exterior districts, Ashgrove Park and Ashgrove School, are open to explore. You explore under fixed and CCTV cameras, enter buildings, rummage through drawers and fridges, and fight creatures with an Active Time Bar, a hexagon range dome, guns and a katana, PE abilities and grenades.
 
 This is the Unity port of [ExperimentEve](https://github.com/mindattic/ExperimentEve) (the same game in Three.js and Babylon.js), whose battle numbers, enemy rhythm, camera rules and outfit painter it reuses.
 
@@ -12,7 +14,7 @@ This is the Unity port of [ExperimentEve](https://github.com/mindattic/Experimen
 
 - **Prove it can be made from free assets.** Every model, sound and font is CC0 or OFL and committed to the repo. Gunshots and stingers are synthesized by code. Nothing is bought or ripped.
 - **Recapture the PE1 battle.** No open-source recreation of Parasite Eve's battle system existed, so this builds one: real time while the gauge fills, the world stops when you act, and the weapon's dome decides what you can hit.
-- **Add one idea of its own.** Focus rewards precise dodging the way Max Payne and Clair Obscur: Expedition 33 do, but the game never requires it.
+- **Add ideas of its own.** Focus rewards precise dodging the way Max Payne and Clair Obscur: Expedition 33 do, and a Max Payne-style airborne shootdodge lets her leap and fire untouchable — neither is ever required.
 - **Built for PC with a controller.** It is gamepad-first with keyboard fallback, and the HUD is laid out for a monitor, not a phone.
 
 ## The night (vertical slice)
@@ -23,6 +25,8 @@ This is the Unity port of [ExperimentEve](https://github.com/mindattic/Experimen
 4. **Willow Lane and Kingsport Foods.** Down a street of houses to the grocery. The register holds the storeroom key; the manager's desk holds the church key. The storeroom holds a Husk Brute.
 5. **Saint Ansel's.** Save in the vestibule, then face the **Mito Mother** in the nave. She whips the whole aisle with her tentacles and calls her brood as she weakens.
 6. **Ending.** The night's tally (time, creatures, saves, level), then back to the title.
+
+Optional, off the Market Square through a gap in its old south-east wall: **Ashgrove Park**, with a cel-shaded fountain, and **Ashgrove School**, a fenced yard guarded by the armour-plated Husk Warden and the acid-spitting Bloat Spitter. Neither is on the path to the church.
 
 ![The title screen over Ashgrove Street](docs/images/title.png)
 
@@ -41,12 +45,17 @@ The current objective is always on screen; each new one is announced. Payphones 
 - **Active Time Bar.** The gauge fills in real time while you move and dodge, using PE1's formula `(50 + ActiveTime) x gun multiplier` (pistol 1.0, shotgun 0.8, melee 2.0).
 - **World pause.** With a full gauge, Confirm stops time and opens **Attack / PE / Item / Equip / Escape**.
 - **Range dome.** Choosing Attack raises a faint wireframe shell of hexagons sized to the weapon's range. Only enemies inside it can be targeted. In rooms smaller than the range, the shell shows faintly through the walls.
-- **Katana.** Kat carries a katana alongside her gun. The **Blade** command offers two arts:
+- **Katana.** Kat carries a katana alongside her gun. The **Blade** command offers three arts:
   - *Slash:* a heavy cut that hits the target and anything beside it in a 110° arc, within 2.4 m.
-  - *Rush (12 PE):* she dashes through a target up to 8 m away, cutting every creature along the line. She is untouchable mid-dash.
+  - *Rush (PE):* locks onto a target up to 8 m away and dashes through it, cutting every creature along the line. She is untouchable mid-dash.
+  - *Line Rush (PE):* the same dash and cut, aimed by hand — rotate the line with the stick, confirm to cut everything it crosses.
+- **Shove.** A free melee (Interact, in battle): a short-reach punch that knocks back and stuns whatever's in front of her, no ATB cost and no ammo, on a cooldown.
+- **Shootdodge.** A Max Payne leap (right shoulder / Left Ctrl, gun weapons only): she dives in the stick's direction, untouchable and able to fire until she lands.
+- **Weapons.** A pistol, pump shotgun, SMG and bolt-action rifle, each with its own clip and ammo type.
 - **Weapon behaviour from PE1:**
   - *Rate of fire:* two rounds at 60% each.
   - *Burst:* the shotgun hits everything in range.
+  - *Active reload:* holding Reload can hit a sweet spot sweeping across the bar to finish instantly (Gears of War-style); missing it, or never trying, still reloads normally — a bonus, never a requirement.
   - *Ammo* lives in a slot-limited bag, so bullets compete with medicine for space.
 - **Parasite Energy.** Heal, Energy Shot, Haste, Slow and Barrier. PE regenerates during battle, but each cast slows the regeneration, as in PE1.
 - **Items.**
@@ -65,7 +74,7 @@ The current objective is always on screen; each new one is announced. Payphones 
 - Dodge (B / Space) so that a strike lands within 0.3 s of starting the dodge. Time drops to 15% for 2.4 real seconds and three free moves appear, none of which spends ATB:
   - **Quick Heal:** a small heal.
   - **Target Vitals:** a guaranteed x3 weak-point shot at the attacker.
-  - **Counter:** shoves and stuns the attacker.
+  - **Riposte:** a guaranteed full-damage counter-strike that knocks the attacker back and stuns it.
 - Missing the timing still evades through i-frames, and the window expires on its own. Players who never time a dodge lose nothing: the ATB menu alone wins every fight.
 
 ![Focus: a perfect dodge in the Mercer kitchen slows time and offers three free moves](docs/images/focus-perfect-dodge.png)
@@ -76,8 +85,10 @@ The current objective is always on screen; each new one is announced. Payphones 
 - **Fixed cameras** with camera zones that hard-cut like classic survival horror. Overlapping trigger volumes give hysteresis, so the camera doesn't flicker at boundaries.
 - **CCTV cameras** stay mounted in place and servo-pan to follow you within yaw/pitch limits (the street, the alley, a kitchen nanny-cam). A **rail camera** slides along the street with you.
 - **Direction latch.** While the stick is held, "up" keeps its meaning across camera cuts. The basis rotates to the new camera after a short grace period, so a cut never reverses you.
+- **Obstacle-aware movement.** A soft warning collider around Kat eases her run speed before she actually hits a wall, bench or parked car, so she settles against it instead of jittering. Stepping back from someone she just attacked, within the window, plays a backpedal instead of a turn-and-walk.
+- **Cover.** Benches, streetlamp posts and mailboxes are read as real geometry: a fan of rays from the attacker to Kat's silhouette measures how much of her they actually block, and that fraction cuts the damage she takes.
 - **Doors** fade to black and move you between the street, the Mercer house and the shed. The shed is locked until you find its key.
-- **Rummaging.** Hold Interact to search dumpsters, fridges, drawers, coat pockets, a medicine cabinet and tool chests. Each rolls a seeded loot table once.
+- **Rummaging.** Hold Interact to search dumpsters, fridges, drawers, coat pockets, a medicine cabinet and tool chests. A glint marks anything still worth searching; bigger containers keep paying out over several digs (up to three items) before they're empty.
 - **Story beats.** Notes, posters and a TV broadcast tell it in one line each. Glinting pickups mark items in the open, and the shotgun waits in the shed.
 
 ![The alley, watched by a CCTV camera that pans to follow Kat](docs/images/camera-alley-cctv.png)
@@ -108,7 +119,8 @@ Controls:
 | Walk | Left stick click | Left Shift |
 | Battle command (gauge full) / confirm | A | Enter / Z |
 | Dodge / back | B | Space / X |
-| Interact (hold to search) | X | E |
+| Interact (hold to search; shove in battle) | X | E |
+| Shootdodge | Right shoulder | Left Ctrl |
 | Focus moves | X / Y / A | 1 / 2 / 3 |
 | Menu (items, equip, controls) | Start | Esc / Tab |
 | Menu navigation | D-pad / stick | Arrows / WASD |
@@ -138,13 +150,19 @@ Build/Windows/Unity.Eve.exe -demo
 # turns it on). Production builds are capture-free by design; this build has it compiled in.
 ./tools/unity.ps1 -Method MindAttic.Capture.Unity.Editor.CaptureBuild.BuildWindows -Log capture-build
 Builds/Capture/Unity.Eve.exe -autoplay -artifacts artifacts/autoplay   # or -demo
+
+# Rebuild the Windows player from scratch and publish a standalone copy to C:\Apps\Unity.Eve
+./tools/deploy.ps1          # add -Launch to run it immediately after
+
+# Deploy, then offer Normal Play / Demo + Capture / Quit from a menu (double-clickable as launch.bat)
+./tools/launch.ps1
 ```
 
 MindAttic.Capture also auto-starts in plain Editor Play sessions and dev builds (not gated by
 `-capture`). Currently disabled project-wide: `"enabled": false` in `capture.json`. Flip it to
 `true` (or remove the key) to re-enable.
 
-Unity batch mode needs the Editor closed on this project; `tools/unity.ps1` refuses to run if it's open.
+Unity batch mode needs the Editor closed on this project; `tools/unity.ps1` and `tools/deploy.ps1` refuse to run if it's open.
 
 ## How it's built
 
@@ -160,8 +178,8 @@ Assets/UnityEve/
   Art/         CC0 models, sounds, OFL font (see CREDITS.md)
   Generated/   output of DemoContentBuilder: ScriptableObjects, materials, clips, prefabs, audio
   Scenes/      Demo.unity (generated)
-Tests/         Core.Tests: xUnit against Assets/UnityEve/Core compiled as netstandard2.1
-tools/         unity.ps1 (batch mode), test.ps1 (the gate)
+Tests/         Core.Tests: NUnit against Assets/UnityEve/Core compiled as netstandard2.1
+tools/         unity.ps1 (batch mode), test.ps1 (the gate), deploy.ps1 / launch.ps1 (standalone build)
 docs/          BIBLE.md (design canon), USER_STORIES.md (status + evidence)
 ```
 
@@ -174,11 +192,11 @@ docs/          BIBLE.md (design canon), USER_STORIES.md (status + evidence)
 
 ## Limitations
 
-- It is a vertical slice: one night, about 20-40 minutes. Ashgrove Street, Ashgrove Heights (Willow Lane and Kingsport Foods), the Market district and five interiors; eleven fixed encounters plus random re-entry encounters; twelve creature types (seven mutated animals, four aliens, one boss).
+- It is a vertical slice: one night, about 20-40 minutes. Ashgrove Street, Ashgrove Heights (Willow Lane and Kingsport Foods), the Market district and five interiors, plus the optional Ashgrove Park and Ashgrove School (exteriors only, like Willow Lane's houses); eleven fixed encounters plus random re-entry encounters; fourteen creature types (seven mutated animals, six aliens, one boss).
 - Enemies move by transform with simple separation, not a navmesh. Arena walls keep fights contained.
 - Bonus Points are spent automatically on Active Time rather than through a menu.
+- No boss part/weak-point targeting yet; the Mito Mother is a single hittable body.
 - Music and all sound effects are synthesized in code; there is no recorded score.
-- The shotgun pickup uses the survival kit's axe mesh as a stand-in.
 
 ## Documentation
 
