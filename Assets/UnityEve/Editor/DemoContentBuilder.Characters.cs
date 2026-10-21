@@ -158,7 +158,7 @@ namespace Unity.Eve.Editor
             return copy;
         }
 
-        private static AnimatorState AddState(AnimatorStateMachine sm, string name, Motion motion, Vector3 pos, float speed = 1f)
+        private static AnimatorState AddState(AnimatorStateMachine sm, string name, UnityEngine.Motion motion, Vector3 pos, float speed = 1f)
         {
             var s = sm.AddState(name, pos);
             s.motion = motion;
