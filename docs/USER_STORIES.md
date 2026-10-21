@@ -1,6 +1,6 @@
 ---
 codex: 1
-project: UnityEve
+project: Unity.Eve
 code: U.EVE
 layer: stories
 status: living
@@ -134,6 +134,6 @@ updated: 2026-10-11
 | U.EVE-T17 | 2026-10-16 | docs | closed | Bring README.md up to date with the code as it is now (what it is, setup, usage, commands, current state), following codex-standard/README-STYLE.md; README.htm regenerated if the repo has one | 2f723dc |
 | U.EVE-T18 | 2026-10-19 | chore | open | Convert tracked source files to LF line endings via .gitattributes, per HOUSE-LAW-13 (low priority) | — |
 | U.EVE-T19 | 2026-10-20 | docs | open | Publish UnityEve docs to GitHub Pages via the shared Toolkit DocFX pipeline: run adopt-docs-site.ps1 (README.md as home page, docs/*.md as articles, API reference only where the code builds in CI), enable Pages with build_type=workflow, set the repo homepage URL, retire tools/build-readme.ps1 and README.htm, confirm the docs Actions run is green and https://mindattic.github.io/UnityEve/ returns 200. Depends on MAT-T8. | — |
-| U.EVE-T20 | 2026-10-20 | chore | open | Rename UnityEve to Unity.Eve: part of the Unity-fleet naming pass (all Unity game repos get a Unity. prefix). Covers GitHub repo, local folder, git remote URL, ticket DB key (tickets repos rename), C# namespaces/asmdefs/class comments throughout Assets/, README/AGENTS/CLAUDE/CREDITS docs, build scripts and logs' repo-name strings, and any other repo that references UnityEve by name (grep workspace-wide). Owner-approved 2026-10-20 as part of the Unity Fleet Rename effort; run crossrepo from a General (workspace-root) window so the folder move is included. | — |
+| U.EVE-T20 | 2026-10-20 | chore | closed | Rename UnityEve to Unity.Eve: part of the Unity-fleet naming pass (all Unity game repos get a Unity. prefix). Covers GitHub repo, local folder, git remote URL, ticket DB key (tickets repos rename), C# namespaces/asmdefs/class comments throughout Assets/, README/AGENTS/CLAUDE/CREDITS docs, build scripts and logs' repo-name strings, and any other repo that references UnityEve by name (grep workspace-wide). Owner-approved 2026-10-20 as part of the Unity Fleet Rename effort; run crossrepo from a General (workspace-root) window so the folder move is included. | 022451c |
 | U.EVE-T21 | 2026-10-20 | fix | closed | DemoContentBuilder.BuildAll() exits 0 in batch mode even when ValidateLocks/ValidateMaterials/the missing-sound check find real content errors | e526b19 |
 | U.EVE-T22 | 2026-10-20 | fix | closed | DemoContentBuilder.Characters.cs CreatureAnimator(): Bat.glb has no _Attack or _Death animation clip, so Find("Attack")/Find("Death") silently return null and the generated Bat animator's Attack/Die states get a null Motion (no warning, no fallback) -- the bat shows no attack telegraph or death animation in play | 7361162 |
