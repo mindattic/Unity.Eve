@@ -35,6 +35,22 @@ $repoDir  = Split-Path $PSScriptRoot   # tools\ -> UnityEve\
 $out      = 'C:\Apps\Unity.Eve'
 $exeName  = 'Unity.Eve.exe'
 $buildDir = Join-Path $repoDir 'Build\WindowsRelease'
+$deployBat = Join-Path $repoDir 'deploy.bat'
+$marker    = Join-Path $out '.deploy-commit'
+
+# ── Pull latest, skip the rebuild entirely if nothing changed ──────────────
+$dirty = git -C $repoDir status --porcelain
+if ($dirty) { throw "$repoDir has uncommitted changes - not pulling. Commit/stash first." }
+git -C $repoDir pull --ff-only
+if ($LASTEXITCODE -ne 0) { throw "git pull --ff-only failed in $repoDir (not a clean fast-forward)." }
+$head = (git -C $repoDir rev-parse HEAD).Trim()
+$upToDate = (Test-Path (Join-Path $out $exeName)) -and (Test-Path $marker) -and
+            ((Get-Content -LiteralPath $marker -Raw).Trim() -eq $head)
+if ($upToDate) {
+    Write-Host "  Already deployed at $head - skipping rebuild." -ForegroundColor Green
+    if ($Launch) { Start-Process -FilePath (Join-Path $out $exeName) -WorkingDirectory $out }
+    exit 0
+}
 
 # ── Stop running instance ──────────────────────────────────────────────────
 Write-Host ''
@@ -108,6 +124,20 @@ $launchBatPath = Join-Path $out 'launch.bat'
     ')',
     "start `"`" `"%~dp0$exeName`""
 ) | Set-Content $launchBatPath -Encoding ascii
+
+Set-Content -LiteralPath $marker -Value $head -NoNewline
+
+# ── Desktop shortcut ─────────────────────────────────────────────────────────
+# Points at deploy.bat (not the exe directly), so double-clicking it always pulls latest and
+# only rebuilds if the source actually changed, before launching.
+$shortcut = Join-Path ([Environment]::GetFolderPath('Desktop')) 'Unity.Eve.lnk'
+$link = (New-Object -ComObject WScript.Shell).CreateShortcut($shortcut)
+$link.TargetPath       = $deployBat
+$link.WorkingDirectory = $repoDir
+$link.IconLocation     = "$exe,0"
+$link.Description      = 'Pull latest, build Release if changed, and launch Unity.Eve'
+$link.Save()
+Write-Host "    Shortcut -> $shortcut" -ForegroundColor Gray
 
 # ── Summary ────────────────────────────────────────────────────────────────
 Write-Host ''
