@@ -105,8 +105,8 @@ Prerequisites:
 - .NET SDK 10 (for the fast rules tests)
 
 ```powershell
-git clone https://github.com/mindattic/UnityEve.git
-cd UnityEve
+git clone https://github.com/mindattic/Unity.Eve.git
+cd Unity.Eve
 ```
 
 Open the folder in Unity Hub, then open `Assets/UnityEve/Scenes/Demo.unity` and press Play. The scene and all generated content are committed, so there's nothing to build first.

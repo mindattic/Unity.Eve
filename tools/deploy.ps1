@@ -31,7 +31,7 @@ param([switch]$Launch)
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 
-$repoDir  = Split-Path $PSScriptRoot   # tools\ -> UnityEve\
+$repoDir  = Split-Path $PSScriptRoot   # tools\ -> Unity.Eve\
 $out      = 'C:\Apps\Unity.Eve'
 $exeName  = 'Unity.Eve.exe'
 $buildDir = Join-Path $repoDir 'Build\WindowsRelease'
