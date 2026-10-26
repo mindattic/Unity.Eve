@@ -156,7 +156,27 @@ Builds/Capture/Unity.Eve.exe -autoplay -artifacts artifacts/autoplay   # or -dem
 
 # Deploy, then offer Normal Play / Demo + Capture / Quit from a menu (double-clickable as launch.bat)
 ./tools/launch.ps1
+./tools/launch.ps1 -Sound   # opt into audio; every other launch.ps1 choice is muted by default
 ```
+
+### Muted launches
+
+`tools/launch.ps1` launches muted by default: it sets `MINDATTIC_CLI_MUTED=1` and passes `-muted`
+to whichever choice you pick, so a CLI or agent launching the game for development never plays
+sound. Pass `-Sound` to launch with audio instead. Either switch works on its own when you start
+`Unity.Eve.exe` (or the Editor) yourself:
+
+```powershell
+$env:MINDATTIC_CLI_MUTED = '1'; .\Build\Windows\Unity.Eve.exe
+.\Build\Windows\Unity.Eve.exe -muted
+```
+
+The mute is the shared `com.mindattic.unity.shared` session mute (added in U.EVE-T31): read before
+the first scene loads, it sets `Unity.Shared.Core.Profiles.SessionMuted`, and `Unity.Eve`'s own
+`SessionAudio` (`Assets/UnityEve/Runtime/Audio/SessionAudio.cs`) zeroes `AudioListener.volume` for
+that run only, silencing `AudioService` and `MusicDirector` alike. The player's saved
+`settings.json` (once Eve has one) is never written. `-batchmode` runs (`-autoplay`, `CompileCheck`)
+play nothing audible and don't need it.
 
 MindAttic.Capture also auto-starts in plain Editor Play sessions and dev builds (not gated by
 `-capture`). Currently disabled project-wide: `"enabled": false` in `capture.json`. Flip it to
