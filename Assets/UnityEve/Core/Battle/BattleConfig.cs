@@ -1,148 +1,150 @@
-﻿namespace Unity.Eve.Core.Battle
+namespace Unity.Eve.Core.Battle
 {
     /// <summary>
     /// Every battle tuning number in one place. Values follow Parasite Eve (1998) where the
-    /// original is documented, and ExperimentEve's playtested numbers where it is not.
+    /// original is documented, and ExperimentEve's playtested numbers where it is not. The shipped values
+    /// are data: Resources/UnityEve/battle-tuning.json, applied through <see cref="Apply"/> before the first
+    /// scene loads. The initializers here are the same numbers, so Core runs (and tests) without the file.
     /// </summary>
-    public static class BattleConfig
+    public static partial class BattleConfig
     {
         // --- Active Time Bar ---------------------------------------------------------------
         // PE1: fill rate = (50 + ActiveTime - penalty*2) * gunMultiplier. A base rate of 50
         // fills the bar in BaseAtbSeconds; higher Active Time fills proportionally faster.
-        public const float AtbBaseRate = 50f;
-        public const float BaseAtbSeconds = 3.2f;
-        public const float AtbMinimumRate = 19f;
-        public const float HasteMultiplier = 2f;
+        public static float AtbBaseRate { get; private set; } = 50f;
+        public static float BaseAtbSeconds { get; private set; } = 3.2f;
+        public static float AtbMinimumRate { get; private set; } = 19f;
+        public static float HasteMultiplier { get; private set; } = 2f;
 
         // --- Parasite Energy -------------------------------------------------------------------
-        public const float PeRegenPerSecond = 4f;
+        public static float PeRegenPerSecond { get; private set; } = 4f;
         /// <summary>PE1: every cast in a fight slows PE recovery; after ~7 casts it barely moves.</summary>
-        public const float PeRegenFalloffPerCast = 0.14f;
-        public const float PeRegenFloor = 0.05f;
+        public static float PeRegenFalloffPerCast { get; private set; } = 0.14f;
+        public static float PeRegenFloor { get; private set; } = 0.05f;
 
         // --- Damage ------------------------------------------------------------------------
-        public const float DamageVarianceLow = 0.9f;
-        public const float DamageVarianceHigh = 1.1f;
-        public const float CriticalChance = 0.08f;
-        public const float CriticalMultiplier = 1.75f;
-        public const float DefensePerPoint = 0.5f;
+        public static float DamageVarianceLow { get; private set; } = 0.9f;
+        public static float DamageVarianceHigh { get; private set; } = 1.1f;
+        public static float CriticalChance { get; private set; } = 0.08f;
+        public static float CriticalMultiplier { get; private set; } = 1.75f;
+        public static float DefensePerPoint { get; private set; } = 0.5f;
 
         // --- Enemy pressure ----------------------------------------------------------------
         /// <summary>At most this many enemies may be winding up or striking at once.</summary>
-        public const int MaxCommittedAttackers = 2;
-        public const float StrikeSeconds = 0.14f;
-        public const float StrikeWhiffSlack = 0.35f;
+        public static int MaxCommittedAttackers { get; private set; } = 2;
+        public static float StrikeSeconds { get; private set; } = 0.14f;
+        public static float StrikeWhiffSlack { get; private set; } = 0.35f;
 
         // --- Enemy tactics (EnemyMind) ------------------------------------------------------
-        public const float EnemyThinkMinSeconds = 0.4f;
-        public const float EnemyThinkMaxSeconds = 1.0f;
+        public static float EnemyThinkMinSeconds { get; private set; } = 0.4f;
+        public static float EnemyThinkMaxSeconds { get; private set; } = 1.0f;
         /// <summary>Waiting creatures keep to a ring this far from the player (each picks its own radius).</summary>
-        public const float EnemyRingMinRadius = 3.6f;
-        public const float EnemyRingMaxRadius = 5.4f;
+        public static float EnemyRingMinRadius { get; private set; } = 3.6f;
+        public static float EnemyRingMaxRadius { get; private set; } = 5.4f;
         /// <summary>Seconds a charging creature rears up (growls, holds still) before it runs.</summary>
-        public const float EnemyChargeAnticipationSeconds = 0.4f;
-        public const float EnemyChargeMaxSeconds = 2.2f;
-        public const float EnemyChargeSpeed = 2.4f;
-        public const float EnemyRetreatSpeed = 1.3f;
+        public static float EnemyChargeAnticipationSeconds { get; private set; } = 0.4f;
+        public static float EnemyChargeMaxSeconds { get; private set; } = 2.2f;
+        public static float EnemyChargeSpeed { get; private set; } = 2.4f;
+        public static float EnemyRetreatSpeed { get; private set; } = 1.3f;
         /// <summary>Breather after an attack token comes back before the next creature may take it.</summary>
-        public const float TokenBreatherMinSeconds = 0.6f;
-        public const float TokenBreatherMaxSeconds = 1.5f;
+        public static float TokenBreatherMinSeconds { get; private set; } = 0.6f;
+        public static float TokenBreatherMaxSeconds { get; private set; } = 1.5f;
         /// <summary>A flanker strikes once the player's facing to it drops below this cosine (~78 degrees off her aim).</summary>
-        public const float EnemyFlankOpeningFacing = 0.2f;
-        public const float EnemyBuffCastSeconds = 1.1f;
-        public const float EnemyBuffSeconds = 8f;
-        public const float EnemyBuffCooldownSeconds = 14f;
-        public const float EnemyBuffDamageMultiplier = 1.35f;
-        public const float EnemyBuffTempo = 1.2f;
+        public static float EnemyFlankOpeningFacing { get; private set; } = 0.2f;
+        public static float EnemyBuffCastSeconds { get; private set; } = 1.1f;
+        public static float EnemyBuffSeconds { get; private set; } = 8f;
+        public static float EnemyBuffCooldownSeconds { get; private set; } = 14f;
+        public static float EnemyBuffDamageMultiplier { get; private set; } = 1.35f;
+        public static float EnemyBuffTempo { get; private set; } = 1.2f;
 
         // --- Random encounters on returning to a screen ------------------------------------
-        public const float ScreenEncounterChance = 0.55f;
-        public const float ScreenEncounterCooldownSeconds = 12f;
+        public static float ScreenEncounterChance { get; private set; } = 0.55f;
+        public static float ScreenEncounterCooldownSeconds { get; private set; } = 12f;
 
         // --- Katana (BladeArts) ------------------------------------------------------------
-        public const int KatanaDamage = 24;
+        public static int KatanaDamage { get; private set; } = 24;
         /// <summary>Slash reach in metres (the slash range dome).</summary>
-        public const float KatanaSlashReach = 2.4f;
-        public const float KatanaSlashArcDegrees = 110f;
+        public static float KatanaSlashReach { get; private set; } = 2.4f;
+        public static float KatanaSlashArcDegrees { get; private set; } = 110f;
         /// <summary>Rush range in metres (the rush range dome).</summary>
-        public const float KatanaRushRange = 8f;
-        public const float KatanaRushPeCost = 12f;
-        public const float KatanaRushHalfWidth = 0.7f;
-        public const float KatanaRushOvershoot = 1.4f;
-        public const float KatanaRushDamageMultiplier = 0.85f;
-        public const float KatanaRushSeconds = 0.26f;
+        public static float KatanaRushRange { get; private set; } = 8f;
+        public static float KatanaRushPeCost { get; private set; } = 12f;
+        public static float KatanaRushHalfWidth { get; private set; } = 0.7f;
+        public static float KatanaRushOvershoot { get; private set; } = 1.4f;
+        public static float KatanaRushDamageMultiplier { get; private set; } = 0.85f;
+        public static float KatanaRushSeconds { get; private set; } = 0.26f;
         /// <summary>How fast the stick rotates Line Rush's aim line, degrees per second at full deflection.</summary>
-        public const float RushAimTurnDegreesPerSecond = 150f;
+        public static float RushAimTurnDegreesPerSecond { get; private set; } = 150f;
 
         // --- Player defence ----------------------------------------------------------------
-        public const float DodgeSeconds = 0.34f;
-        public const float DodgeInvulnerableSeconds = 0.5f;
-        public const float DodgeCooldownSeconds = 0.9f;
+        public static float DodgeSeconds { get; private set; } = 0.34f;
+        public static float DodgeInvulnerableSeconds { get; private set; } = 0.5f;
+        public static float DodgeCooldownSeconds { get; private set; } = 0.9f;
         /// <summary>Kat's run speed, m/s. Every creature's default <c>MoveSpeed</c> must stay below this â€”
         /// she can always walk away from one that isn't actively charging, or the fight is unwinnable
         /// by distance alone. A short Charge (<see cref="EnemyChargeSpeed"/> multiplies it) may exceed it.</summary>
-        public const float PlayerRunSpeed = 4f;
+        public static float PlayerRunSpeed { get; private set; } = 4f;
         /// <summary>Stepping away from a target within this long of her last attack backpedals (faces the
         /// target, walks backward); past it, stepping away turns and runs like ordinary retreat.</summary>
-        public const float BackpedalWindowSeconds = 3f;
+        public static float BackpedalWindowSeconds { get; private set; } = 3f;
 
         // --- Shove (free melee: Interact in battle, no ATB cost, no ammo) --------------------
-        public const float ShoveReach = 1.6f;
-        public const float ShoveCooldownSeconds = 2.5f;
-        public const float ShoveRootSeconds = 0.3f;
-        public const float ShoveKnockbackMetres = 1.8f;
-        public const float ShoveStunSeconds = 1.2f;
+        public static float ShoveReach { get; private set; } = 1.6f;
+        public static float ShoveCooldownSeconds { get; private set; } = 2.5f;
+        public static float ShoveRootSeconds { get; private set; } = 0.3f;
+        public static float ShoveKnockbackMetres { get; private set; } = 1.8f;
+        public static float ShoveStunSeconds { get; private set; } = 1.2f;
         /// <summary>Fraction of her current weapon's damage a shove lands: control, not a damage option.</summary>
-        public const float ShoveDamageFraction = 0.25f;
+        public static float ShoveDamageFraction { get; private set; } = 0.25f;
 
         // --- Shootdodge (Max Payne-style dive: leap, fire in bullet time, land hard) ----------
         /// <summary>Horizontal dive speed, metres/second of real (unscaled) time â€” the dive itself isn't
         /// slowed by its own bullet time, only the world around it is, same as Max's own dive.</summary>
-        public const float ShootdodgeSpeed = 6.5f;
-        public const float ShootdodgeRiseSpeed = 4.5f;
-        public const float ShootdodgeGravity = 11f;
+        public static float ShootdodgeSpeed { get; private set; } = 6.5f;
+        public static float ShootdodgeRiseSpeed { get; private set; } = 4.5f;
+        public static float ShootdodgeGravity { get; private set; } = 11f;
         /// <summary>The world (enemy attacks, their windups) runs at this fraction of normal speed while
         /// she's airborne â€” bullet time, via WorldTime's scale key, never Time.timeScale directly.</summary>
-        public const float ShootdodgeTimeScale = 0.3f;
-        public const float ShootdodgeCooldownSeconds = 6f;
+        public static float ShootdodgeTimeScale { get; private set; } = 0.3f;
+        public static float ShootdodgeCooldownSeconds { get; private set; } = 6f;
         /// <summary>Rooted this long after landing â€” "you need time to stand up," the move's real cost.</summary>
-        public const float ShootdodgeLandStunSeconds = 1.4f;
+        public static float ShootdodgeLandStunSeconds { get; private set; } = 1.4f;
         /// <summary>Flat self-damage from landing hard, regardless of defense: minor, but real.</summary>
-        public const int ShootdodgeLandDamage = 6;
+        public static int ShootdodgeLandDamage { get; private set; } = 6;
 
         // --- Hazard puddles (a ranged hit that leaves acid/slime behind) ---------------------
-        public const float PuddleDurationSeconds = 6f;
-        public const float PuddleRadius = 1.3f;
-        public const float PuddleTickSeconds = 1f;
-        public const int PuddleDamagePerTick = 4;
+        public static float PuddleDurationSeconds { get; private set; } = 6f;
+        public static float PuddleRadius { get; private set; } = 1.3f;
+        public static float PuddleTickSeconds { get; private set; } = 1f;
+        public static int PuddleDamagePerTick { get; private set; } = 4;
 
         // --- Cover (benches, streetlamps, mailboxes) ----------------------------------------
         /// <summary>Damage reduction at full (1.0) exposure-blocked, scaled by how much of Kat's
         /// silhouette a cover prop actually blocks from the attacker (see Runtime/Battle/CoverProp.cs).</summary>
-        public const float CoverMaxReduction = 0.9f;
+        public static float CoverMaxReduction { get; private set; } = 0.9f;
 
         // --- Active reload (Gears-of-War-style: press Reload again in the sweet spot) --------
         /// <summary>Full bar duration, seconds; a normal reload (no attempt, or a miss) takes this long.</summary>
-        public const float ActiveReloadDurationSeconds = 1.2f;
+        public static float ActiveReloadDurationSeconds { get; private set; } = 1.2f;
         /// <summary>Sweet-spot width as a fraction of the bar.</summary>
-        public const float ActiveReloadSweetSpotWidth = 0.12f;
+        public static float ActiveReloadSweetSpotWidth { get; private set; } = 0.12f;
 
         // --- Escape ------------------------------------------------------------------------
-        public const float EscapeBaseChance = 0.6f;
-        public const float EscapeChancePerLevel = 0.08f;
-        public const float EscapeMinChance = 0.15f;
-        public const float EscapeMaxChance = 0.95f;
+        public static float EscapeBaseChance { get; private set; } = 0.6f;
+        public static float EscapeChancePerLevel { get; private set; } = 0.08f;
+        public static float EscapeMinChance { get; private set; } = 0.15f;
+        public static float EscapeMaxChance { get; private set; } = 0.95f;
 
         // --- Stagger (burst damage in a short window interrupts a creature's turn) ----------
-        public const float StaggerDamageFloor = 20f;
-        public const float StaggerDamageFraction = 0.35f;
-        public const float StaggerStunSeconds = 1.8f;
+        public static float StaggerDamageFloor { get; private set; } = 20f;
+        public static float StaggerDamageFraction { get; private set; } = 0.35f;
+        public static float StaggerStunSeconds { get; private set; } = 1.8f;
         /// <summary>Recent damage drains this much per second of game time (ExperimentEve enemyActor.ts tickStun).</summary>
-        public const float StaggerDecayPerSecond = 14f;
+        public static float StaggerDecayPerSecond { get; private set; } = 14f;
 
         // --- Experience --------------------------------------------------------------------
-        public const int ExpPerLevelBase = 60;
-        public const float ExpCurveGrowth = 1.45f;
-        public const int BonusPointsPerLevel = 3;
+        public static int ExpPerLevelBase { get; private set; } = 60;
+        public static float ExpCurveGrowth { get; private set; } = 1.45f;
+        public static int BonusPointsPerLevel { get; private set; } = 3;
     }
 }

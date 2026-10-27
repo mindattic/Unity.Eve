@@ -90,6 +90,11 @@ fight with Parasite Eve's real-time/pause Active Time Battle.
   - UI, camera servos and the Focus timer run on unscaled time.
 - **Content:** `DemoContentBuilder` generates every data asset, material, clip, animator controller,
   prefab, sound and `Demo.unity`, deterministically.
+- **Tuning:** every battle number is a `BattleConfig` knob. Its shipped value lives in the hand-edited data file
+  `Assets/UnityEve/Resources/UnityEve/battle-tuning.json` (U.EVE-T39).
+  - `TuningLoader` validates the whole file before the first scene and applies it only if every value passes.
+  - The code's initializers hold the same numbers: they are the fallback and what `dotnet test` runs on.
+  - Retune both. The test `The_shipped_file_lists_every_knob_and_matches_the_built_in_values` keeps them in step.
 
 ## 5. The Laws {#U.EVE-§5}
 This project inherits the org-wide laws in [MindAttic.HouseRules.md](../../MindAttic.HouseRules.md),

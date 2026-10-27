@@ -14,7 +14,6 @@ namespace Unity.Eve.Player
     [RequireComponent(typeof(CharacterController))]
     public sealed class PlayerController : MonoBehaviour
     {
-        [SerializeField] private float _runSpeed = BattleConfig.PlayerRunSpeed;
         [SerializeField] private float _turnSpeed = 12f;
         [SerializeField] private float _acceleration = 26f;
         [SerializeField] private float _deceleration = 34f;
@@ -153,7 +152,7 @@ namespace Unity.Eve.Player
             }
             else
             {
-                var target = CanAct ? wish * _runSpeed : Vector3.zero;
+                var target = CanAct ? wish * BattleConfig.PlayerRunSpeed : Vector3.zero;
                 if (CanAct) target *= ApproachSlowdown(wish);
                 var rate = target.sqrMagnitude > _velocity.sqrMagnitude ? _acceleration : _deceleration;
                 _velocity = Vector3.MoveTowards(_velocity, target, rate * dt);

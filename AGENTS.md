@@ -33,7 +33,7 @@ ATB battle, built from free assets. Read `docs/BIBLE.md` for what it is, what it
 
 | File | Role |
 | --- | --- |
-| `Core/Battle/AtbGauge.cs`, `BattleConfig.cs` | PE1 gauge formula; every tuning number |
+| `Core/Battle/AtbGauge.cs`, `BattleConfig.cs` | PE1 gauge formula; every tuning number, as named knobs whose shipped values are data in `Resources/UnityEve/battle-tuning.json` (validated whole and applied by `Runtime/Game/TuningLoader.cs` before the first scene; retune in the file and the matching initializer, a test keeps them equal so Core tests run on the shipped numbers) |
 | `Core/Battle/FocusWindow.cs` | Perfect-dodge slow-motion window |
 | `Core/Battle/EnemyAttackCycle.cs` | close → windup → strike → recover |
 | `Runtime/Battle/BattleDirector*.cs` | Battle phases, menus, range dome targeting, actions |

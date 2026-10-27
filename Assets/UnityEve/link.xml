@@ -1,0 +1,4 @@
+<!-- BattleConfig's tuning knobs are set by reflection from battle-tuning.json (U.EVE-T39): keep Core whole under managed stripping. -->
+<linker>
+  <assembly fullname="Unity.Eve.Core" preserve="all" />
+</linker>
