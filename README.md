@@ -151,7 +151,8 @@ Build/Windows/Unity.Eve.exe -demo
 Builds/Capture/Unity.Eve.exe -demo -artifacts artifacts/demo
 
 # Rebuild the Windows player from scratch and publish a standalone copy to C:\Apps\Unity.Eve
-./tools/deploy.ps1          # add -Launch to run it immediately after
+./tools/deploy.ps1          # add -Launch to run it immediately after, -Force to rebuild even when up to date
+# deploy.bat (the Desktop shortcut) asks first: 1) Deploy & Run, 2) Run the published build
 
 # Deploy, then offer Normal Play / Demo + Capture / Quit from a menu (double-clickable as launch.bat)
 ./tools/launch.ps1

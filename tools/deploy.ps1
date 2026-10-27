@@ -14,19 +14,37 @@
     3. Runs tools\unity.ps1 -Method Unity.Eve.Editor.UnityEveBuild.BuildWindows in Unity
        batch mode (requires the Editor closed) -> Build\Windows\Unity.Eve.exe.
     4. Copies Build\Windows\* -> C:\Apps\Unity.Eve\.
-    5. Writes C:\Apps\Unity.Eve\launch.bat, which calls this same deploy.ps1 (by its
-       baked-in source path) EVERY time before launching, so a double-click always runs
-       the current source rather than risking a stale deployed copy. If the source repo
-       is missing (moved/deleted), it warns and launches whatever is already deployed.
+    5. Writes C:\Apps\Unity.Eve\launch.bat on every run (not only when publishing), so an
+       existing install picks up launcher changes without a rebuild. The launcher opens a
+       menu (MAT-T67): 1) Deploy & Run calls this deploy.ps1 (by its baked-in source path)
+       with -Force, then launches; 2) Run launches the exe beside it without deploying
+       (deploying first if it is missing). If the source repo is missing (moved/deleted), it
+       warns and launches whatever is already deployed.
+
+    The menus live in the .bat files (launch.bat and the repo-root deploy.bat); this script
+    never prompts, so agents and /deploy run it unattended.
 
 .PARAMETER Launch
     After publishing, immediately run the deployed Unity.Eve.exe.
 
+.PARAMETER Force
+    Rebuild and republish even when the deployed commit is up to date. It skips only that
+    check. The launchers' "Deploy & Run" passes it.
+
+.PARAMETER LauncherOnly
+    Only (re)write C:\Apps\Unity.Eve\launch.bat and exit: no pull, no stop, no build.
+
 .EXAMPLE
     powershell -ExecutionPolicy Bypass -File tools\deploy.ps1
     powershell -ExecutionPolicy Bypass -File tools\deploy.ps1 -Launch
+    powershell -ExecutionPolicy Bypass -File tools\deploy.ps1 -Force -Launch
+    powershell -ExecutionPolicy Bypass -File tools\deploy.ps1 -LauncherOnly
 #>
-param([switch]$Launch)
+param(
+    [switch]$Launch,
+    [switch]$Force,
+    [switch]$LauncherOnly
+)
 
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
@@ -38,6 +56,56 @@ $buildDir = Join-Path $repoDir 'Build\WindowsRelease'
 $deployBat = Join-Path $repoDir 'deploy.bat'
 $marker    = Join-Path $out '.deploy-commit'
 
+# ── Generated launcher ──────────────────────────────────────────────────────
+# A menu first (MAT-T67): 1) Deploy & Run redeploys from source (-Force) before launching;
+# 2) Run launches the exe beside it as is. $PSScriptRoot here is THIS script's own folder,
+# baked into the batch file as an absolute path so it still resolves no matter where
+# launch.bat itself is invoked from. Falls back to launching the existing exe (with a
+# warning) if that path is missing or the redeploy fails, rather than refusing to start.
+# Written with CRLF (Set-Content), so its goto labels are safe.
+$deployPs1Path = Join-Path $PSScriptRoot 'deploy.ps1'
+$launchBatPath = Join-Path $out 'launch.bat'
+function Write-Launcher {
+    New-Item -ItemType Directory -Force $out | Out-Null
+    @(
+        '@echo off',
+        'title Unity.Eve',
+        "set `"DEPLOY_PS1=$deployPs1Path`"",
+        'echo.',
+        'echo   Unity.Eve',
+        'echo     1^) Deploy ^& Run',
+        'echo     2^) Run',
+        'echo.',
+        'choice /c 12 /n /m "  Choose 1 or 2: "',
+        'if errorlevel 2 goto run',
+        ':deploy',
+        'if exist "%DEPLOY_PS1%" (',
+        '    echo Redeploying latest build from source...',
+        '    powershell -NoProfile -ExecutionPolicy Bypass -File "%DEPLOY_PS1%" -Force',
+        '    if errorlevel 1 echo Redeploy failed - launching whatever is already in this folder instead.',
+        ') else (',
+        '    echo Source repo not found at "%DEPLOY_PS1%" - launching existing build without redeploying.',
+        ')',
+        'goto launch',
+        ':run',
+        "if not exist `"%~dp0$exeName`" (",
+        '    echo Nothing is deployed here yet - deploying first.',
+        '    goto deploy',
+        ')',
+        ':launch',
+        "start `"`" `"%~dp0$exeName`""
+    ) | Set-Content $launchBatPath -Encoding ascii
+    Write-Host "    Launcher -> $launchBatPath" -ForegroundColor Gray
+}
+
+if ($LauncherOnly) {
+    Write-Launcher
+    exit 0
+}
+# Every run refreshes the launcher of an existing install; a publish below rewrites it after
+# replacing the folder.
+if (Test-Path $out) { Write-Launcher }
+
 # ── Pull latest, skip the rebuild entirely if nothing changed ──────────────
 # Untracked files (e.g. .prose/ session state) don't block a pull; only real changes to tracked
 # files (staged or not) do.
@@ -46,7 +114,7 @@ if ($dirty) { throw "$repoDir has uncommitted changes - not pulling. Commit/stas
 git -C $repoDir pull --ff-only
 if ($LASTEXITCODE -ne 0) { throw "git pull --ff-only failed in $repoDir (not a clean fast-forward)." }
 $head = (git -C $repoDir rev-parse HEAD).Trim()
-$upToDate = (Test-Path (Join-Path $out $exeName)) -and (Test-Path $marker) -and
+$upToDate = (-not $Force) -and (Test-Path (Join-Path $out $exeName)) -and (Test-Path $marker) -and
             ((Get-Content -LiteralPath $marker -Raw).Trim() -eq $head)
 if ($upToDate) {
     Write-Host "  Already deployed at $head - skipping rebuild." -ForegroundColor Green
@@ -105,39 +173,19 @@ if (-not (Test-Path $exe)) {
     exit 1
 }
 
-# ── Write self-redeploying launcher ─────────────────────────────────────────
-# Always redeploys from source before launching, so a double-click can never run a
-# stale build. $PSScriptRoot here is THIS script's own folder — baked into the batch
-# file as an absolute path so it still resolves no matter where launch.bat itself is
-# invoked from. Falls back to launching the existing exe (with a warning) if that path
-# is missing, rather than refusing to start.
-$deployPs1Path = Join-Path $PSScriptRoot 'deploy.ps1'
-$launchBatPath = Join-Path $out 'launch.bat'
-@(
-    '@echo off',
-    'title Unity.Eve',
-    "set `"DEPLOY_PS1=$deployPs1Path`"",
-    'if exist "%DEPLOY_PS1%" (',
-    '    echo Redeploying latest build from source...',
-    '    powershell -NoProfile -ExecutionPolicy Bypass -File "%DEPLOY_PS1%"',
-    '    if errorlevel 1 echo Redeploy failed - launching whatever is already in this folder instead.',
-    ') else (',
-    '    echo Source repo not found at "%DEPLOY_PS1%" - launching existing build without redeploying.',
-    ')',
-    "start `"`" `"%~dp0$exeName`""
-) | Set-Content $launchBatPath -Encoding ascii
+# ── Launcher (publishing replaced the folder) ─────────────────────────────────
+Write-Launcher
 
 Set-Content -LiteralPath $marker -Value $head -NoNewline
 
 # ── Desktop shortcut ─────────────────────────────────────────────────────────
-# Points at deploy.bat (not the exe directly), so double-clicking it always pulls latest and
-# only rebuilds if the source actually changed, before launching.
+# Points at deploy.bat (not the exe directly), which asks first: Deploy & Run, or Run (MAT-T67).
 $shortcut = Join-Path ([Environment]::GetFolderPath('Desktop')) 'Unity.Eve.lnk'
 $link = (New-Object -ComObject WScript.Shell).CreateShortcut($shortcut)
 $link.TargetPath       = $deployBat
 $link.WorkingDirectory = $repoDir
 $link.IconLocation     = "$exe,0"
-$link.Description      = 'Pull latest, build Release if changed, and launch Unity.Eve'
+$link.Description      = 'Unity.Eve: 1) Deploy & Run (pull, rebuild, launch) or 2) Run the published build'
 $link.Save()
 Write-Host "    Shortcut -> $shortcut" -ForegroundColor Gray
 
