@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -54,7 +54,8 @@ namespace Unity.Eve.Battle
             _rule = new ScreenEncounterRule(new Rng(_rng.NextUInt()), initialCooldownElapsed: BattleConfig.ScreenEncounterCooldownSeconds);
 
             // Every camera zone is a screen; overlapping (or touching) volumes are neighbours.
-            var zones = FindObjectsByType<CameraZone>(FindObjectsSortMode.InstanceID).ToList();
+            // Numbered by name (the builder's stable ids), so a screen's id is the same every run.
+            var zones = FindObjectsByType<CameraZone>().OrderBy(z => z.name, StringComparer.Ordinal).ToList();
             for (var i = 0; i < zones.Count; i++) _ids[zones[i]] = i;
             for (var i = 0; i < zones.Count; i++)
             {

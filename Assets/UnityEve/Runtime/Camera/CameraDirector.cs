@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 using Unity.Eve.Core.Camera;
 
@@ -18,6 +18,9 @@ namespace Unity.Eve.Cameras
 
         private readonly CameraZoneSelector _selector = new CameraZoneSelector();
         private readonly Dictionary<int, CameraZone> _zones = new Dictionary<int, CameraZone>();
+        /// <summary>Each zone's selector id: handed out in the order zones are first entered, from 0, so it is never
+        /// the selector's 'no zone' (-1) and never depends on engine instance ids.</summary>
+        private readonly Dictionary<CameraZone, int> _zoneIds = new Dictionary<CameraZone, int>();
         private Camera _camera;
         private CameraShot _active;
         private Pose _pose;
@@ -60,15 +63,21 @@ namespace Unity.Eve.Cameras
 
         public void EnterZone(CameraZone zone)
         {
-            var id = zone.GetInstanceID();
+            var id = IdOf(zone);
             _zones[id] = zone;
             _selector.Enter(id, zone.Priority);
             ApplySelection();
         }
 
+        private int IdOf(CameraZone zone)
+        {
+            if (!_zoneIds.TryGetValue(zone, out var id)) _zoneIds[zone] = id = _zoneIds.Count;
+            return id;
+        }
+
         public void ExitZone(CameraZone zone)
         {
-            _selector.Exit(zone.GetInstanceID());
+            _selector.Exit(IdOf(zone));
             ApplySelection();
         }
 

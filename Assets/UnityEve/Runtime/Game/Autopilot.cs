@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.IO;
 using System.Linq;
@@ -11,9 +11,9 @@ using Unity.Eve.Player;
 namespace Unity.Eve.Game
 {
     /// <summary>
-    /// Self-play. Launch the player with <c>-demo [-artifacts DIR]</c> — the same flag name used for
-    /// it in every MindAttic Unity project — and it tours the demo through the real systems —
-    /// cameras, rummaging, doors, an ATB battle with the range dome, a grenade, a Focus window —
+    /// Self-play. Launch the player with <c>-demo [-artifacts DIR]</c> â€” the same flag name used for
+    /// it in every MindAttic Unity project â€” and it tours the demo through the real systems â€”
+    /// cameras, rummaging, doors, an ATB battle with the range dome, a grenade, a Focus window â€”
     /// writing a screenshot at each beat, then quits with PASS/FAIL. "Done is verified by play": look
     /// at the PNGs. Pair with <c>-capture</c> (parsed separately by MindAttic.Capture) to record it.
     /// </summary>
@@ -170,7 +170,7 @@ namespace Unity.Eve.Game
 
             // 1. Camera tour: every "Tour_" marker, in name order. Encounters stay dormant while sightseeing.
             BattleDirector.Instance.SuppressEncounters = true;
-            foreach (var marker in FindObjectsByType<Transform>(FindObjectsSortMode.None)
+            foreach (var marker in FindObjectsByType<Transform>()
                          .Where(t => t.name.StartsWith("Tour_")).OrderBy(t => t.name))
             {
                 Teleport(marker);
@@ -181,7 +181,7 @@ namespace Unity.Eve.Game
             BattleDirector.Instance.SuppressEncounters = false;
 
             // 2. Rummage a street container.
-            var streetBin = FindObjectsByType<Container>(FindObjectsSortMode.None).OrderBy(c => c.name).FirstOrDefault(c => c.name.Contains("Street"));
+            var streetBin = FindObjectsByType<Container>().OrderBy(c => c.name).FirstOrDefault(c => c.name.Contains("Street"));
             if (streetBin != null)
             {
                 Teleport(streetBin.transform.position + streetBin.transform.forward * 1.1f, streetBin.transform.position);
@@ -193,7 +193,7 @@ namespace Unity.Eve.Game
 
             // 3. Battles: walk into each encounter and fight it through the command menu.
             // (The boss waits for the story run at the end.)
-            foreach (var zone in FindObjectsByType<EncounterZone>(FindObjectsSortMode.None)
+            foreach (var zone in FindObjectsByType<EncounterZone>()
                          .Where(z => !z.Roaming && !z.name.Contains("Boss")).OrderBy(z => EncounterNumber(z.name)))
             {
 
@@ -223,7 +223,7 @@ namespace Unity.Eve.Game
             yield return ReentryEncounter(() => _failures++);
 
             // 4. The shed is padlocked until the key from the Mercer side table is in the bag.
-            var shedDoor = FindObjectsByType<Door>(FindObjectsSortMode.None).FirstOrDefault(d => d.name == "Door_Shed_Enter");
+            var shedDoor = FindObjectsByType<Door>().FirstOrDefault(d => d.name == "Door_Shed_Enter");
             if (shedDoor == null)
             {
                 Log("FAIL no Door_Shed_Enter in scene");
@@ -244,7 +244,7 @@ namespace Unity.Eve.Game
             }
 
             // 5. Enter the house, search everything inside, including the side table with the shed key.
-            var houseDoor = FindObjectsByType<Door>(FindObjectsSortMode.None).FirstOrDefault(d => d.name == "Door_HouseA_Enter");
+            var houseDoor = FindObjectsByType<Door>().FirstOrDefault(d => d.name == "Door_HouseA_Enter");
             if (houseDoor != null)
             {
                 Teleport(houseDoor.transform.position + houseDoor.transform.forward * 1.2f, houseDoor.transform.position);
@@ -253,9 +253,9 @@ namespace Unity.Eve.Game
                 houseDoor.Interact(_player);
                 yield return Real(1.8f);
                 yield return Shot("interior");
-                var inside = FindObjectsByType<Container>(FindObjectsSortMode.None)
+                var inside = FindObjectsByType<Container>()
                     .Where(c => c.name.Contains("House") && !c.Searched).OrderBy(c => c.name).Take(3).ToList();
-                var sideTable = FindObjectsByType<Container>(FindObjectsSortMode.None).FirstOrDefault(c => c.name == "Container_House_SideTable");
+                var sideTable = FindObjectsByType<Container>().FirstOrDefault(c => c.name == "Container_House_SideTable");
                 if (sideTable != null && !inside.Contains(sideTable)) inside.Add(sideTable);
                 foreach (var c in inside)
                 {
@@ -338,7 +338,7 @@ namespace Unity.Eve.Game
         }
 
         private static T Named<T>(string name) where T : Component =>
-            FindObjectsByType<T>(FindObjectsInactive.Include, FindObjectsSortMode.None).FirstOrDefault(c => c.name == name);
+            FindObjectsByType<T>(FindObjectsInactive.Include).FirstOrDefault(c => c.name == name);
 
         private IEnumerator UseDoor(string name, string shot)
         {
@@ -496,7 +496,7 @@ namespace Unity.Eve.Game
             check(MusicDirector.Instance != null && MusicDirector.Instance.Playing == "explore", "exploration music after the reload");
         }
 
-        private Transform Marker(string name) => FindObjectsByType<Transform>(FindObjectsSortMode.None).FirstOrDefault(t => t.name == name);
+        private Transform Marker(string name) => FindObjectsByType<Transform>().FirstOrDefault(t => t.name == name);
 
         private IEnumerator ReentryEncounter(Action fail)
         {
