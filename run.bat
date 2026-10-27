@@ -1,6 +1,6 @@
 @echo off
 rem The Desktop shortcut runs this. It asks first (MAT-T67):
-rem   1) Deploy & Run: tools\deploy.ps1 -Force -Launch pulls latest, rebuilds Release, publishes to C:\Apps\Unity.Eve,
+rem   1) Deploy & Run: tools\run.ps1 -Force -Launch pulls latest, rebuilds Release, publishes to C:\Apps\Unity.Eve,
 rem      refreshes the Desktop shortcut and launches it.
 rem   2) Run: launches the published C:\Apps\Unity.Eve\Unity.Eve.exe without deploying (deploys if missing).
 rem No goto/labels on purpose: cmd's label search is unreliable in LF files.
@@ -22,4 +22,4 @@ if "%PICK%"=="2" (
     start "" /d "%APP_DIR%" "%APP_EXE%"
     exit /b 0
 )
-powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0tools\deploy.ps1" -Force -Launch %*
+powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0tools\run.ps1" -Force -Launch %*

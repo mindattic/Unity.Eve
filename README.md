@@ -151,8 +151,8 @@ Build/Windows/Unity.Eve.exe -demo
 Builds/Capture/Unity.Eve.exe -demo -artifacts artifacts/demo
 
 # Rebuild the Windows player from scratch and publish a standalone copy to C:\Apps\Unity.Eve
-./tools/deploy.ps1          # add -Launch to run it immediately after, -Force to rebuild even when up to date
-# deploy.bat (the Desktop shortcut) asks first: 1) Deploy & Run, 2) Run the published build
+./tools/run.ps1          # add -Launch to run it immediately after, -Force to rebuild even when up to date
+# run.bat (the Desktop shortcut) asks first: 1) Deploy & Run, 2) Run the published build
 
 # Deploy, then offer Normal Play / Demo + Capture / Quit from a menu (double-clickable as launch.bat)
 ./tools/launch.ps1
@@ -182,7 +182,7 @@ MindAttic.Capture also auto-starts in plain Editor Play sessions and dev builds 
 `-capture`). Currently disabled project-wide: `"enabled": false` in `capture.json`. Flip it to
 `true` (or remove the key) to re-enable.
 
-Unity batch mode needs the Editor closed on this project; `tools/unity.ps1` and `tools/deploy.ps1` refuse to run if it's open.
+Unity batch mode needs the Editor closed on this project; `tools/unity.ps1` and `tools/run.ps1` refuse to run if it's open.
 
 ## How it's built
 
@@ -199,7 +199,7 @@ Assets/UnityEve/
   Generated/   output of DemoContentBuilder: ScriptableObjects, materials, clips, prefabs, audio
   Scenes/      Demo.unity (generated)
 Tests/         Core.Tests: NUnit against Assets/UnityEve/Core compiled as netstandard2.1
-tools/         unity.ps1 (batch mode), test.ps1 (the gate), deploy.ps1 / launch.ps1 (standalone build)
+tools/         unity.ps1 (batch mode), test.ps1 (the gate), run.ps1 / launch.ps1 (standalone build)
 docs/          BIBLE.md (design canon), USER_STORIES.md (status + evidence)
 ```
 

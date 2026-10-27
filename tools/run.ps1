@@ -14,14 +14,15 @@
     3. Runs tools\unity.ps1 -Method Unity.Eve.Editor.UnityEveBuild.BuildWindows in Unity
        batch mode (requires the Editor closed) -> Build\Windows\Unity.Eve.exe.
     4. Copies Build\Windows\* -> C:\Apps\Unity.Eve\.
-    5. Writes C:\Apps\Unity.Eve\launch.bat on every run (not only when publishing), so an
+    5. Writes C:\Apps\Unity.Eve\run.bat on every run (and deletes a stale launch.bat or
+       deploy.bat left there by older versions) - not only when publishing - so an
        existing install picks up launcher changes without a rebuild. The launcher opens a
-       menu (MAT-T67): 1) Deploy & Run calls this deploy.ps1 (by its baked-in source path)
+       menu (MAT-T67): 1) Deploy & Run calls this run.ps1 (by its baked-in source path)
        with -Force, then launches; 2) Run launches the exe beside it without deploying
        (deploying first if it is missing). If the source repo is missing (moved/deleted), it
        warns and launches whatever is already deployed.
 
-    The menus live in the .bat files (launch.bat and the repo-root deploy.bat); this script
+    The menus live in the .bat files (that run.bat and the repo-root run.bat); this script
     never prompts, so agents and /deploy run it unattended.
 
 .PARAMETER Launch
@@ -32,13 +33,13 @@
     check. The launchers' "Deploy & Run" passes it.
 
 .PARAMETER LauncherOnly
-    Only (re)write C:\Apps\Unity.Eve\launch.bat and exit: no pull, no stop, no build.
+    Only (re)write C:\Apps\Unity.Eve\run.bat (removing a stale launch.bat/deploy.bat) and exit: no pull, no stop, no build.
 
 .EXAMPLE
-    powershell -ExecutionPolicy Bypass -File tools\deploy.ps1
-    powershell -ExecutionPolicy Bypass -File tools\deploy.ps1 -Launch
-    powershell -ExecutionPolicy Bypass -File tools\deploy.ps1 -Force -Launch
-    powershell -ExecutionPolicy Bypass -File tools\deploy.ps1 -LauncherOnly
+    powershell -ExecutionPolicy Bypass -File tools\run.ps1
+    powershell -ExecutionPolicy Bypass -File tools\run.ps1 -Launch
+    powershell -ExecutionPolicy Bypass -File tools\run.ps1 -Force -Launch
+    powershell -ExecutionPolicy Bypass -File tools\run.ps1 -LauncherOnly
 #>
 param(
     [switch]$Launch,
@@ -53,24 +54,26 @@ $repoDir  = Split-Path $PSScriptRoot   # tools\ -> Unity.Eve\
 $out      = 'C:\Apps\Unity.Eve'
 $exeName  = 'Unity.Eve.exe'
 $buildDir = Join-Path $repoDir 'Build\WindowsRelease'
-$deployBat = Join-Path $repoDir 'deploy.bat'
+$runBat = Join-Path $repoDir 'run.bat'
 $marker    = Join-Path $out '.deploy-commit'
 
 # ── Generated launcher ──────────────────────────────────────────────────────
 # A menu first (MAT-T67): 1) Deploy & Run redeploys from source (-Force) before launching;
 # 2) Run launches the exe beside it as is. $PSScriptRoot here is THIS script's own folder,
 # baked into the batch file as an absolute path so it still resolves no matter where
-# launch.bat itself is invoked from. Falls back to launching the existing exe (with a
+# run.bat itself is invoked from. Falls back to launching the existing exe (with a
 # warning) if that path is missing or the redeploy fails, rather than refusing to start.
 # Written with CRLF (Set-Content), so its goto labels are safe.
-$deployPs1Path = Join-Path $PSScriptRoot 'deploy.ps1'
-$launchBatPath = Join-Path $out 'launch.bat'
+$runPs1Path = Join-Path $PSScriptRoot 'run.ps1'
+$launchBatPath = Join-Path $out 'run.bat'
+# Older versions wrote these names; the shortcut-era launcher is run.bat (MAT-T68).
+$staleLaunchers = @((Join-Path $out 'launch.bat'), (Join-Path $out 'deploy.bat'))
 function Write-Launcher {
     New-Item -ItemType Directory -Force $out | Out-Null
     @(
         '@echo off',
         'title Unity.Eve',
-        "set `"DEPLOY_PS1=$deployPs1Path`"",
+        "set `"RUN_PS1=$runPs1Path`"",
         'echo.',
         'echo   Unity.Eve',
         'echo     1^) Deploy ^& Run',
@@ -79,12 +82,12 @@ function Write-Launcher {
         'choice /c 12 /n /m "  Choose 1 or 2: "',
         'if errorlevel 2 goto run',
         ':deploy',
-        'if exist "%DEPLOY_PS1%" (',
+        'if exist "%RUN_PS1%" (',
         '    echo Redeploying latest build from source...',
-        '    powershell -NoProfile -ExecutionPolicy Bypass -File "%DEPLOY_PS1%" -Force',
+        '    powershell -NoProfile -ExecutionPolicy Bypass -File "%RUN_PS1%" -Force',
         '    if errorlevel 1 echo Redeploy failed - launching whatever is already in this folder instead.',
         ') else (',
-        '    echo Source repo not found at "%DEPLOY_PS1%" - launching existing build without redeploying.',
+        '    echo Source repo not found at "%RUN_PS1%" - launching existing build without redeploying.',
         ')',
         'goto launch',
         ':run',
@@ -95,6 +98,9 @@ function Write-Launcher {
         ':launch',
         "start `"`" `"%~dp0$exeName`""
     ) | Set-Content $launchBatPath -Encoding ascii
+    foreach ($stale in $staleLaunchers) {
+        if (Test-Path -LiteralPath $stale) { Remove-Item -LiteralPath $stale -Force }
+    }
     Write-Host "    Launcher -> $launchBatPath" -ForegroundColor Gray
 }
 
@@ -179,10 +185,10 @@ Write-Launcher
 Set-Content -LiteralPath $marker -Value $head -NoNewline
 
 # ── Desktop shortcut ─────────────────────────────────────────────────────────
-# Points at deploy.bat (not the exe directly), which asks first: Deploy & Run, or Run (MAT-T67).
+# Points at run.bat (not the exe directly), which asks first: Deploy & Run, or Run (MAT-T67).
 $shortcut = Join-Path ([Environment]::GetFolderPath('Desktop')) 'Unity.Eve.lnk'
 $link = (New-Object -ComObject WScript.Shell).CreateShortcut($shortcut)
-$link.TargetPath       = $deployBat
+$link.TargetPath       = $runBat
 $link.WorkingDirectory = $repoDir
 $link.IconLocation     = "$exe,0"
 $link.Description      = 'Unity.Eve: 1) Deploy & Run (pull, rebuild, launch) or 2) Run the published build'
