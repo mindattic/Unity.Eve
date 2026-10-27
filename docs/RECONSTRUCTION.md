@@ -126,7 +126,7 @@ Supporting material:
   (`Core/Battle/DamageCalculator.cs`, owner 2026-10-10, BIBLE §2).
 - Strike roll: kept at 0.85-1.15 (`BattleDirector.cs:354`).
 - Cover: now raycast exposure (`Runtime/Battle/CoverProp.cs`, BIBLE §6, 2026-10-11).
-- Stagger: ported (`Core/Battle/StaggerRule.cs`), but see bug B1 (§4).
+- Stagger: ported (`Core/Battle/StaggerRule.cs`, `StaggerMeter`); bug B1 fixed by U.EVE-T34.
 
 ### 2.3 Parasite Energy {#U.EVE-RECON-§2.3}
 - **Original (Three):**
@@ -372,7 +372,7 @@ The README's ATB formula is Parasite Eve 1998's. It is not ExperimentEve's. Expe
 | A11 | Random crit | none; crit means weak-point part or Precision (x6 weak, x2 body) (`battleSystem.ts:604,609,613`) | 8% × 1.75 (`BattleConfig.cs:26-27`) |
 | A12 | Defence | none; armoured parts give flat 1/2 damage (`enemyActor.ts:94,163`) | `−defense×0.5`, floor 1 (`BattleConfig.cs:28`, `DamageCalculator.cs:46-47`) |
 | A13 | Multi-round | Rapid Fire: whole clip, 30% miss, 12% x3 (`three/src/battle/battle.ts:1058-1062`) | PE1 share table 2→0.6 ... 7→0.182 (`DamageCalculator.cs:26-38`); SMG burst 8 @ 55% (`DemoContentBuilder.cs:198-199`) |
-| A14 | Stagger decay | `recentDamage −14/s`, reset when the stun ends (`enemyActor.ts:481,486`) | **none**: only reset on stagger (`Runtime/Enemies/EnemyActor.cs:164-169`). Bug B1. |
+| A14 | Stagger decay | `recentDamage −14/s`, reset when the stun ends (`enemyActor.ts:481,486`) | Matches since U.EVE-T34 (`StaggerMeter`, `BattleConfig.StaggerDecayPerSecond`). Was bug B1. |
 | A15 | PE pool / regen | 40 of 100, 2.5/s flat (`three/.../gameState.ts:86-88`) | max 60+10/level, 4/s × (1−0.14·casts), floor 0.05 (`BattleConfig.cs:18-21`, `Progression.cs:55`) |
 | A16 | Player HP growth | 80 + 12 per health point (`three/.../gameState.ts:115`) | 80 + 14 per level (`Progression.cs:54`) |
 | A17 | XP curve | 100 × level, XP = Σ enemy maxHp (`three/.../gameState.ts:48-50`; `battle.ts:1092`) | 60 × 1.45^(L−1), per-species `Exp` (`BattleConfig.cs:142-143`) |
@@ -470,7 +470,7 @@ Original: `babylon/src/player/outfit.ts`. Unity: `Editor/OutfitPainter.cs`.
 ## 4. Bugs found {#U.EVE-RECON-§4}
 These are defects against what the original or the BIBLE intends. Features the owner deliberately dropped are not listed.
 
-- **B1: Stagger never decays.**
+- **B1: Stagger never decays.** *Fixed by U.EVE-T34: `Core/Battle/StaggerRule.cs` `StaggerMeter` drains 14/s, skips a creature already stunned and clears when the stun ends.*
   - `EnemyActor._recentDamage` only grows, and is cleared only when a stagger fires (`Runtime/Enemies/EnemyActor.cs:39,164-169`).
   - The original decays it at 14/s and clears it when the stun ends (`babylon/src/enemies/enemyActor.ts:481,486`).
   - `StaggerRule` and `BattleConfig` both describe "burst damage in a short window" (`Core/Battle/StaggerRule.cs:3-4`, `BattleConfig.cs:136`).

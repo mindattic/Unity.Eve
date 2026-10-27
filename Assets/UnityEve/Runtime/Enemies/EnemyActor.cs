@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
 using Unity.Eve.Battle;
@@ -36,7 +36,7 @@ namespace Unity.Eve.Enemies
         private float _stunnedUntil;
         private float _slowUntil;
         private float _hurtFlashUntil;
-        private float _recentDamage;
+        private readonly StaggerMeter _stagger = new StaggerMeter();
         private float _circleSign = 1f;
         private float _deathTime = -1f;
         private float _spawnTime;
@@ -148,8 +148,8 @@ namespace Unity.Eve.Enemies
             d.y = 0f;
             if (d.sqrMagnitude <= 0.0001f) return;
             transform.position += d.normalized * metres;
-            // Shove and Riposte knock back 1.8m — several times farther than a blade hit or grenade ever
-            // did — and immediately stun, which skips Move()/KeepInArena() for its whole duration. Without
+            // Shove and Riposte knock back 1.8m â€” several times farther than a blade hit or grenade ever
+            // did â€” and immediately stun, which skips Move()/KeepInArena() for its whole duration. Without
             // this, a shove near a wall in a tight room (the shed, the storeroom) could leave the creature
             // visibly outside the arena until the stun wears off.
             KeepInArena();
@@ -161,12 +161,8 @@ namespace Unity.Eve.Enemies
             if (!IsAlive) return 0;
             var dealt = Health.Damage(amount);
             _hurtFlashUntil = Time.unscaledTime + 0.18f;
-            _recentDamage += dealt;
-            if (StaggerRule.ShouldStagger(_recentDamage, Stats.MaxHp))
-            {
-                _recentDamage = 0f;
+            if (_stagger.AddHit(dealt, Stats.MaxHp, stunned: Time.time < _stunnedUntil))
                 ApplyStun(BattleConfig.StaggerStunSeconds);
-            }
             if (Health.IsDead)
             {
                 _deathTime = Time.time;
@@ -223,6 +219,7 @@ namespace Unity.Eve.Enemies
             }
 
             var stunned = Time.time < _stunnedUntil;
+            _stagger.Tick(dt, stunned);
             var before = transform.position;
             var tempo = Time.time < _slowUntil ? 0.5f : 1f;
             var toPlayer = _target.position - transform.position;

@@ -1,4 +1,4 @@
-namespace Unity.Eve.Core.Battle
+﻿namespace Unity.Eve.Core.Battle
 {
     /// <summary>
     /// Every battle tuning number in one place. Values follow Parasite Eve (1998) where the
@@ -78,7 +78,7 @@ namespace Unity.Eve.Core.Battle
         public const float DodgeSeconds = 0.34f;
         public const float DodgeInvulnerableSeconds = 0.5f;
         public const float DodgeCooldownSeconds = 0.9f;
-        /// <summary>Kat's run speed, m/s. Every creature's default <c>MoveSpeed</c> must stay below this —
+        /// <summary>Kat's run speed, m/s. Every creature's default <c>MoveSpeed</c> must stay below this â€”
         /// she can always walk away from one that isn't actively charging, or the fight is unwinnable
         /// by distance alone. A short Charge (<see cref="EnemyChargeSpeed"/> multiplies it) may exceed it.</summary>
         public const float PlayerRunSpeed = 4f;
@@ -96,16 +96,16 @@ namespace Unity.Eve.Core.Battle
         public const float ShoveDamageFraction = 0.25f;
 
         // --- Shootdodge (Max Payne-style dive: leap, fire in bullet time, land hard) ----------
-        /// <summary>Horizontal dive speed, metres/second of real (unscaled) time — the dive itself isn't
+        /// <summary>Horizontal dive speed, metres/second of real (unscaled) time â€” the dive itself isn't
         /// slowed by its own bullet time, only the world around it is, same as Max's own dive.</summary>
         public const float ShootdodgeSpeed = 6.5f;
         public const float ShootdodgeRiseSpeed = 4.5f;
         public const float ShootdodgeGravity = 11f;
         /// <summary>The world (enemy attacks, their windups) runs at this fraction of normal speed while
-        /// she's airborne — bullet time, via WorldTime's scale key, never Time.timeScale directly.</summary>
+        /// she's airborne â€” bullet time, via WorldTime's scale key, never Time.timeScale directly.</summary>
         public const float ShootdodgeTimeScale = 0.3f;
         public const float ShootdodgeCooldownSeconds = 6f;
-        /// <summary>Rooted this long after landing — "you need time to stand up," the move's real cost.</summary>
+        /// <summary>Rooted this long after landing â€” "you need time to stand up," the move's real cost.</summary>
         public const float ShootdodgeLandStunSeconds = 1.4f;
         /// <summary>Flat self-damage from landing hard, regardless of defense: minor, but real.</summary>
         public const int ShootdodgeLandDamage = 6;
@@ -137,6 +137,8 @@ namespace Unity.Eve.Core.Battle
         public const float StaggerDamageFloor = 20f;
         public const float StaggerDamageFraction = 0.35f;
         public const float StaggerStunSeconds = 1.8f;
+        /// <summary>Recent damage drains this much per second of game time (ExperimentEve enemyActor.ts tickStun).</summary>
+        public const float StaggerDecayPerSecond = 14f;
 
         // --- Experience --------------------------------------------------------------------
         public const int ExpPerLevelBase = 60;
