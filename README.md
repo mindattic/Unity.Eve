@@ -139,17 +139,15 @@ Controls:
 
 # Self-play: tour, rummage, fight all three encounters, screenshot every beat, then quit.
 # Batch mode renders offscreen, so no window opens. Exit code 0 = PASS.
-Build/Windows/Unity.Eve.exe -batchmode -autoplay -artifacts artifacts/autoplay -logFile artifacts/autoplay.log
+Build/Windows/Unity.Eve.exe -batchmode -demo -artifacts artifacts/demo -logFile artifacts/demo.log
 
-# Attract mode: the same self-play tour, windowed, with no screenshots and no PASS/FAIL,
-# looping the whole night forever (it clicks through the ending back to the title). For a
-# show floor or capturing trailer footage; close the window to stop it.
+# The same tour in a window, to watch it play (it still screenshots, then quits PASS/FAIL).
 Build/Windows/Unity.Eve.exe -demo
 
 # A video from launch to quit, at native resolution (MindAttic.Capture, Assets/StreamingAssets/capture.json
 # turns it on). Production builds are capture-free by design; this build has it compiled in.
 ./tools/unity.ps1 -Method MindAttic.Capture.Unity.Editor.CaptureBuild.BuildWindows -Log capture-build
-Builds/Capture/Unity.Eve.exe -autoplay -artifacts artifacts/autoplay   # or -demo
+Builds/Capture/Unity.Eve.exe -demo -artifacts artifacts/demo
 
 # Rebuild the Windows player from scratch and publish a standalone copy to C:\Apps\Unity.Eve
 ./tools/deploy.ps1          # add -Launch to run it immediately after
@@ -175,7 +173,7 @@ The mute is the shared `com.mindattic.unity.shared` session mute (added in U.EVE
 the first scene loads, it sets `Unity.Shared.Core.Profiles.SessionMuted`, and `Unity.Eve`'s own
 `SessionAudio` (`Assets/UnityEve/Runtime/Audio/SessionAudio.cs`) zeroes `AudioListener.volume` for
 that run only, silencing `AudioService` and `MusicDirector` alike. The player's saved
-`settings.json` (once Eve has one) is never written. `-batchmode` runs (`-autoplay`, `CompileCheck`)
+`settings.json` (once Eve has one) is never written. `-batchmode` runs (`-demo`, `CompileCheck`)
 play nothing audible and don't need it.
 
 MindAttic.Capture also auto-starts in plain Editor Play sessions and dev builds (not gated by
@@ -208,7 +206,7 @@ docs/          BIBLE.md (design canon), USER_STORIES.md (status + evidence)
 | Core | Pure C#, no UnityEngine, seeded `Rng` only. Every rule is unit-tested in seconds. |
 | Runtime | Thin MonoBehaviours over Core. Presentation never decides a rule. One owner of `Time.timeScale` (`WorldTime`). |
 | Content | Weapons, items, PE abilities, enemies, loot and sounds are ScriptableObjects, editable in the Inspector. `DemoContentBuilder` regenerates them, the prefabs and the scene deterministically. |
-| Verification | `dotnet test` for rules; `-autoplay` drives the real game through every system and writes screenshots. |
+| Verification | `dotnet test` for rules; `-demo` drives the real game through every system and writes screenshots. |
 
 ## Limitations
 

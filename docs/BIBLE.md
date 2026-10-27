@@ -144,21 +144,20 @@ Where Unity.Eve stands (U.EVE-T26, 2026-10-26):
   Core authority stepped at a fixed tick is the remaining work before going online (§7).
 
 ## 6. Verified state {#U.EVE-§6}
-- `dotnet test Tests/Core.Tests`: 66 passing.
+- `dotnet test Tests/Core.Tests` (Core rules, the session seam) and the Unity EditMode suite in `Assets/UnityEve/Tests/EditMode` (PlayerCharacter, WorldTime/MenuModel, SaveSystem, Cover), added 2026-10-26.
 - Unity 6000.4.3f1 batch-mode compile: clean.
-- `UnityEve.exe -batchmode -autoplay`: PASS, with ~230 screenshots (count varies with the enemy-buff
+- `Unity.Eve.exe -batchmode -demo`: PASS, last run 2026-10-26 with 239 screenshots (the count varies with the enemy-buff
   shot and which random encounters fire) covering everything in the original slice (above) plus, as of
   the 2026-10-11 town-expansion pass:
   - Ashgrove Park (cel-shaded fountain water) and Ashgrove School (two new alien enemies, the warden and
     the spitter)
-  - the demo attract-mode loop (`-demo`) surviving a failed ending and playing its own perfect dodges
+  - the self-play playing its own perfect dodges (the looping attract mode it once had was retired on
+    2026-10-13, when `-demo` became the family-wide self-play flag that runs once and quits PASS/FAIL)
   - the active-reload minigame, raycast-measured cover, backpedal, and obstacle-aware movement
   - the free Shove and the Focus Riposte (upgraded from Counter); the hand-aimed Line Rush alongside
     the original lock-on Rush; the ranged Spitter's DOT puddle; the Wasp's dodgeable ranged sting
   - multi-stage "Rummaging..." containers (up to 3 items) with a glint marking anything still searchable
   - the lock-and-key solvability check (`Core/Story/LockGraph.cs`) passing for every door in the game
-  - `-demo` smoke-checked separately (continuous loop, no batch exit — spot-checked, not run to a full lap
-    every pass)
 
 ## 7. Active frontier {#U.EVE-§7}
 - Navmesh enemy movement

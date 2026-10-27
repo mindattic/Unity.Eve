@@ -18,8 +18,8 @@ ATB battle, built from free assets. Read `docs/BIBLE.md` for what it is, what it
 4. **Content is generated.** Data assets, prefabs, animator controllers, audio and `Demo.unity` come from
    `DemoContentBuilder`. Change the builder, not the generated asset, then re-run it.
 5. **Done is verified by play.** `./tools/test.ps1 -Compile` green, the content build, the player
-   build, then `Unity.Eve.exe -batchmode -autoplay` exits 0. Look at the screenshots in
-   `artifacts/autoplay/`. Batch mode needs the Editor closed: ask the owner to quit it, never kill it.
+   build, then `Unity.Eve.exe -batchmode -demo` exits 0. Look at the screenshots in
+   `artifacts/demo/` (or the `-artifacts DIR` you pass). Batch mode needs the Editor closed: ask the owner to quit it, never kill it.
 6. **Every event has a sound** (`SoundId`). The content build warns about silent ids.
 7. **Free assets only** (CC0, OFL, or MIT with attribution), recorded in `CREDITS.md`. Never Mixamo or
    store assets. A new kit drops into `Art/Models/<kit-name>/` (glTF/`.glb` preferred — that's what
@@ -43,7 +43,7 @@ ATB battle, built from free assets. Read `docs/BIBLE.md` for what it is, what it
 | `Shaders/Toon.shader`, `InkOutline.shader`, `HexDome.shader` | Cel shading + hatching, full-screen ink lines, hexagon range dome |
 | `Core/Battle/EnemyMind.cs`, `BladeArts.cs` | Enemy tactics; katana Slash / Rush rules |
 | `Core/Session/*` + `Runtime/Input/GameInput.cs` | Multiplayer-ready seam (BIBLE U.EVE-LAW-6): the device submits each seat's `IntentCommand` to `GameSession.Session` (`LocalSession`); game code reads `PlayerCharacter.Controls`, never the device |
-| `Runtime/Game/Autopilot.cs` | `-autoplay` self-play verification; `-demo` loops the same tour windowed as an attract mode |
+| `Runtime/Game/Autopilot.cs` | `-demo [-artifacts DIR]` self-play verification (the family-wide flag): tours every system, screenshots each beat, quits PASS/FAIL |
 | `Editor/DemoContentBuilder*.cs` | Generates all content and the level |
 | `Editor/DemoContentBuilder.Scene.cs`'s `Model(...)`/`ConvertRenderers(...)` | The universal glTF/FBX import pipeline: any kit's model scales, floor-centers, re-skins to the toon shader, and gets a collider the same way |
 | `Core/Story/LockGraph.cs` | Pure lock-and-key solvability check: every door/gate's key must be reachable without it, so content can never ship an unwinnable soft-lock |
