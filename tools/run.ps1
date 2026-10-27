@@ -118,12 +118,17 @@ if ($LauncherOnly) {
 if (Test-Path $out) { Write-Launcher }
 
 # ── Pull latest, skip the rebuild entirely if nothing changed ──────────────
-# Untracked files (e.g. .prose/ session state) don't block a pull; only real changes to tracked
-# files (staged or not) do.
+# Untracked files (e.g. .prose/ session state) don't block a pull; changes to tracked files (staged
+# or not) skip it, as does a pull that fails: the desktop launcher runs this, and the ticket tools
+# keep docs/USER_STORIES.md modified, so throwing here fell back to the installed copy and never
+# redeployed (U.EVE-T43). It then deploys the commit already checked out.
 $dirty = git -C $repoDir status --porcelain | Where-Object { $_ -notmatch '^\?\? ' }
-if ($dirty) { throw "$repoDir has uncommitted changes - not pulling. Commit/stash first." }
-git -C $repoDir pull --ff-only
-if ($LASTEXITCODE -ne 0) { throw "git pull --ff-only failed in $repoDir (not a clean fast-forward)." }
+if ($dirty) {
+    Write-Host "  $repoDir has uncommitted changes - not pulling; deploying the current commit." -ForegroundColor DarkYellow
+} else {
+    git -C $repoDir pull --ff-only
+    if ($LASTEXITCODE -ne 0) { Write-Host "  git pull --ff-only failed in $repoDir - deploying the current commit." -ForegroundColor DarkYellow }
+}
 $head = (git -C $repoDir rev-parse HEAD).Trim()
 $upToDate = (-not $Force) -and (Test-Path (Join-Path $out $exeName)) -and (Test-Path $marker) -and
             ((Get-Content -LiteralPath $marker -Raw).Trim() -eq $head)
