@@ -63,14 +63,14 @@ $marker    = Join-Path $out '.deploy-commit'
 # baked into the batch file as an absolute path so it still resolves no matter where
 # run.bat itself is invoked from. Falls back to launching the existing exe (with a
 # warning) if that path is missing or the redeploy fails, rather than refusing to start.
-# Written with CRLF (Set-Content), so its goto labels are safe.
+# Written with CRLF, so its goto labels are safe.
 $runPs1Path = Join-Path $PSScriptRoot 'run.ps1'
 $launchBatPath = Join-Path $out 'run.bat'
 # Older versions wrote these names; the shortcut-era launcher is run.bat (MAT-T68).
 $staleLaunchers = @((Join-Path $out 'launch.bat'), (Join-Path $out 'deploy.bat'))
 function Write-Launcher {
     New-Item -ItemType Directory -Force $out | Out-Null
-    @(
+    $lines = @(
         '@echo off',
         'title Unity.Eve',
         "set `"RUN_PS1=$runPs1Path`"",
@@ -97,7 +97,12 @@ function Write-Launcher {
         ')',
         ':launch',
         "start `"`" `"%~dp0$exeName`""
-    ) | Set-Content $launchBatPath -Encoding ascii
+    )
+    # Rewrite only when the content changed: this may be the very file cmd is executing (the
+    # launcher's Deploy & Run calls this script), and cmd re-reads a running batch file by offset.
+    $text = ($lines -join "`r`n") + "`r`n"
+    $current = if (Test-Path -LiteralPath $launchBatPath) { [IO.File]::ReadAllText($launchBatPath) } else { $null }
+    if ($current -cne $text) { [IO.File]::WriteAllText($launchBatPath, $text, [Text.Encoding]::ASCII) }
     foreach ($stale in $staleLaunchers) {
         if (Test-Path -LiteralPath $stale) { Remove-Item -LiteralPath $stale -Force }
     }

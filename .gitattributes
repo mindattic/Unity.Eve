@@ -23,3 +23,5 @@
 *.wav     binary
 *.ogg     binary
 *.ttf     binary
+# cmd misses goto labels in LF batch files: .bat is checked out CRLF (MAT-T67).
+*.bat text eol=crlf
