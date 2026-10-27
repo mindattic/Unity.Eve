@@ -1,12 +1,16 @@
-using System.Collections;
+﻿using System.Collections;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using Unity.Eve.Core.Session;
+using Unity.Eve.Game;
 
 namespace Unity.Eve.Input
 {
     /// <summary>
     /// Gamepad-first input with keyboard fallback, built on the Input System. Bindings are declared
-    /// here in one table so they are reviewable in code. All reads are per rendered frame and ignore
+    /// here in one table so they are reviewable in code. This is the local seat's input device only: each
+    /// rendered frame it samples the controls into an <see cref="IntentCommand"/> and submits it to the session,
+    /// and the game reads the seat's <see cref="PlayerControls"/> back (U.EVE-LAW-6). Sampling ignores
     /// <see cref="Time.timeScale"/>, so menus work while the world is paused.
     /// </summary>
     /// <remarks>
@@ -21,6 +25,7 @@ namespace Unity.Eve.Input
     /// | Menu        | Start            | Esc / Tab           |
     /// | Navigate    | D-pad / stick    | Arrows / WASD       |
     /// </remarks>
+    [DefaultExecutionOrder(-500)] // the frame's intent is in the session before anything reads it
     public sealed class GameInput : MonoBehaviour
     {
         public const float StickDeadzone = 0.25f;
@@ -33,47 +38,27 @@ namespace Unity.Eve.Input
 
         public static GameInput Instance { get; private set; }
 
-        /// <summary>Movement stick with a radial deadzone rescaled to 0..1.</summary>
-        public Vector2 Move { get; private set; }
-        public bool ConfirmPressed => _confirm.WasPressedThisFrame() || Consume(ref _confirmOverride);
-        public bool ConfirmHeld => _confirm.IsPressed();
-        public bool CancelPressed => _cancel.WasPressedThisFrame() || Consume(ref _dodgeOverride);
-        public bool InteractPressed => _interact.WasPressedThisFrame();
-        public bool InteractHeld => _interact.IsPressed();
-        public bool MenuPressed => _menu.WasPressedThisFrame();
-        /// <summary>Max Payne shootdodge: leap in the chosen direction, firing in bullet time. Unused
-        /// shoulder button, distinct from the everyday Cancel/Dodge roll.</summary>
-        public bool ShootdodgePressed => _shootdodge.WasPressedThisFrame() || Consume(ref _shootdodgeOverride);
-        public bool FocusHealPressed => _focusHeal.WasPressedThisFrame();
-        public bool FocusVitalsPressed => _focusVitals.WasPressedThisFrame();
-        public bool FocusRipostePressed => _focusRiposte.WasPressedThisFrame();
-
-        /// <summary>Menu navigation as discrete steps (-1, 0, +1) on each axis, edge-triggered.</summary>
-        public Vector2Int NavigateStep { get; private set; }
-
         /// <summary>Scripted input for the autopilot / tests. When set, overrides the stick.</summary>
         public Vector2? MoveOverride { get; set; }
 
-        private bool _dodgeOverride;
-        private bool _confirmOverride;
-        private bool _shootdodgeOverride;
+        /// <summary>The seat this device speaks for: the session's local player.</summary>
+        private static ISession Session => GameSession.Instance != null ? GameSession.Instance.Session : null;
 
         /// <summary>Scripted input for the autopilot: presses Cancel/Dodge for exactly one read, through
-        /// the real input path so timing against an enemy strike can land a genuine perfect dodge.</summary>
-        public void TriggerDodge() => _dodgeOverride = true;
+        /// the real command path so timing against an enemy strike can land a genuine perfect dodge.</summary>
+        public void TriggerDodge() => Press(ScriptedButton.Dodge);
 
         /// <summary>Scripted input for the autopilot: presses Confirm for exactly one read, through the
-        /// real input path so timing an active reload's sweet spot works the same way a human's does.</summary>
-        public void TriggerConfirm() => _confirmOverride = true;
+        /// real command path so timing an active reload's sweet spot works the same way a human's does.</summary>
+        public void TriggerConfirm() => Press(ScriptedButton.Confirm);
 
         /// <summary>Scripted input for the autopilot: presses Shootdodge for exactly one read.</summary>
-        public void TriggerShootdodge() => _shootdodgeOverride = true;
+        public void TriggerShootdodge() => Press(ScriptedButton.Shootdodge);
 
-        private static bool Consume(ref bool flag)
+        private static void Press(ScriptedButton button)
         {
-            if (!flag) return false;
-            flag = false;
-            return true;
+            var session = Session;
+            session?.Submit(new PressCommand(session.LocalPlayer, button));
         }
 
         private void Awake()
@@ -132,13 +117,30 @@ namespace Unity.Eve.Input
         {
             var raw = MoveOverride ?? _move.ReadValue<Vector2>();
             var mag = raw.magnitude;
-            Move = mag < StickDeadzone ? Vector2.zero : raw / mag * Mathf.Min(1f, (mag - StickDeadzone) / (1f - StickDeadzone));
-            if (_walk.IsPressed()) Move *= 0.45f;
+            var move = mag < StickDeadzone ? Vector2.zero : raw / mag * Mathf.Min(1f, (mag - StickDeadzone) / (1f - StickDeadzone));
+            if (_walk.IsPressed()) move *= 0.45f;
 
             var nav = _navigate.ReadValue<Vector2>();
-            var step = new Vector2Int(Axis(nav.x, _lastNavigate.x), Axis(nav.y, _lastNavigate.y));
-            NavigateStep = step;
+            var stepX = Axis(nav.x, _lastNavigate.x);
+            var stepY = Axis(nav.y, _lastNavigate.y);
             _lastNavigate = nav;
+
+            var buttons = IntentButtons.None;
+            if (_confirm.WasPressedThisFrame()) buttons |= IntentButtons.Confirm;
+            if (_confirm.IsPressed()) buttons |= IntentButtons.ConfirmHeld;
+            if (_cancel.WasPressedThisFrame()) buttons |= IntentButtons.Cancel;
+            if (_interact.WasPressedThisFrame()) buttons |= IntentButtons.Interact;
+            if (_interact.IsPressed()) buttons |= IntentButtons.InteractHeld;
+            if (_menu.WasPressedThisFrame()) buttons |= IntentButtons.Menu;
+            if (_shootdodge.WasPressedThisFrame()) buttons |= IntentButtons.Shootdodge;
+            if (_focusHeal.WasPressedThisFrame()) buttons |= IntentButtons.FocusHeal;
+            if (_focusVitals.WasPressedThisFrame()) buttons |= IntentButtons.FocusVitals;
+            if (_focusRiposte.WasPressedThisFrame()) buttons |= IntentButtons.FocusRiposte;
+
+            // This device never changes the game itself: it sends the frame's intent for the local seat
+            // through the one command pipeline, and the game reads that seat's controls back.
+            var session = Session;
+            session?.Submit(new IntentCommand(session.LocalPlayer, Time.frameCount, move.x, move.y, stepX, stepY, buttons));
         }
 
         private static int Axis(float now, float before)

@@ -1,6 +1,7 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 using Unity.Eve.Battle;
+using Unity.Eve.Core.Session;
 using Unity.Eve.Input;
 using Unity.Eve.Player;
 using Unity.Eve.UI;
@@ -39,7 +40,7 @@ namespace Unity.Eve.Interaction
         private void Update()
         {
             var hud = GameHud.Instance;
-            var input = GameInput.Instance;
+            var input = _player.Controls;
             var blocked = (BattleDirector.Instance != null && BattleDirector.Instance.InBattle)
                           || Time.timeScale <= 0f || _player.IsDead;
             if (blocked)
@@ -84,7 +85,7 @@ namespace Unity.Eve.Interaction
             return true;
         }
 
-        private void UpdateHold(GameInput input, GameHud hud)
+        private void UpdateHold(PlayerControls input, GameHud hud)
         {
             if (input == null || !input.InteractHeld)
             {

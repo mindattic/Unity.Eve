@@ -2,6 +2,7 @@ using System;
 using UnityEngine;
 using Unity.Eve.Core.Battle;
 using Unity.Eve.Core.Items;
+using Unity.Eve.Core.Session;
 using Unity.Eve.Data;
 
 namespace Unity.Eve.Player
@@ -17,11 +18,19 @@ namespace Unity.Eve.Player
         [SerializeField] private WeaponDefinition[] _weapons = Array.Empty<WeaponDefinition>();
         [SerializeField] private AbilityDefinition[] _abilities = Array.Empty<AbilityDefinition>();
         [SerializeField] private int _bagCapacity = 12;
+        [Tooltip("The seat whose controls drive this character (0 = the first player).")]
+        [SerializeField] private int _seat;
 
         private readonly System.Collections.Generic.Dictionary<WeaponDefinition, int> _clips =
             new System.Collections.Generic.Dictionary<WeaponDefinition, int>();
         private float _hasteUntil;
         private float _barrierUntil;
+
+        /// <summary>The player this character belongs to: its controls, and everything it owns, are keyed by this.</summary>
+        public PlayerId Seat => PlayerId.Of(_seat);
+
+        /// <summary>This character's seat's controls; null when no session is running.</summary>
+        public PlayerControls Controls => Game.GameSession.ControlsOf(Seat);
 
         public Health Health { get; private set; }
         public ParasiteEnergy Pe { get; private set; }

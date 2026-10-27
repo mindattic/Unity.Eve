@@ -118,8 +118,8 @@ namespace Unity.Eve.Player
         {
             var dt = Time.deltaTime;
             if (dt <= 0f) return;
-            var input = GameInput.Instance;
-            var stick = input != null ? input.Move : Vector2.zero;
+            var input = _character != null ? _character.Controls : null;
+            var stick = input != null ? new Vector2(input.MoveX, input.MoveY) : Vector2.zero;
 
             var cameraYaw = CameraDirector.Instance != null ? CameraDirector.Instance.Yaw : 0f;
             _basis.Tick(dt, cameraYaw, stick.sqrMagnitude > 0.0001f);

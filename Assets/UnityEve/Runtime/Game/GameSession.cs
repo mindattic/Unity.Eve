@@ -1,9 +1,10 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Linq;
 using UnityEngine;
 using Unity.Eve.Battle;
 using Unity.Eve.Cameras;
 using Unity.Eve.Core.Battle;
+using Unity.Eve.Core.Session;
 using Unity.Eve.Data;
 using Unity.Eve.Input;
 using Unity.Eve.Player;
@@ -33,7 +34,24 @@ namespace Unity.Eve.Game
         private bool _onTitle;
 
         public static GameSession Instance { get; private set; }
-        public PlayerCharacter Player => _player;
+
+        /// <summary>
+        /// The one command pipeline (U.EVE-LAW-6): input submits each seat's intent here and the game reads
+        /// the seat's controls back. The shipped game seats one local player.
+        /// </summary>
+        public ISession Session { get; private set; }
+
+        /// <summary>The character a seat plays; null for a seat with no character.</summary>
+        public PlayerCharacter PlayerOf(PlayerId seat) => _player != null && _player.Seat == seat ? _player : null;
+
+        /// <summary>The local seat's character (presentation asks this; rules take a seat).</summary>
+        public PlayerCharacter Player => Session != null ? PlayerOf(Session.LocalPlayer) : _player;
+
+        /// <summary>A seat's controls, or null when no session is running (edit mode, tests).</summary>
+        public static PlayerControls ControlsOf(PlayerId seat) => Instance != null ? Instance.Session?.ControlsOf(seat) : null;
+
+        /// <summary>The local seat's controls: the menus and title screen this machine shows.</summary>
+        private PlayerControls LocalControls => Session?.ControlsOf(Session.LocalPlayer);
         public bool OnTitle => _onTitle;
         public bool MenuOpen => _menu != null;
 
@@ -46,7 +64,11 @@ namespace Unity.Eve.Game
             _startingCounts = counts;
         }
 
-        private void Awake() => Instance = this;
+        private void Awake()
+        {
+            Instance = this;
+            Session = new LocalSession(players: 1);
+        }
 
         private void OnDestroy()
         {
@@ -112,12 +134,12 @@ namespace Unity.Eve.Game
 
         private void Update()
         {
-            var input = GameInput.Instance;
+            var input = LocalControls;
             if (_onTitle || _endScreen)
             {
                 if (_menu != null && input != null)
                 {
-                    if (input.NavigateStep.y != 0) _menu.Move(-input.NavigateStep.y);
+                    if (input.NavigateY != 0) _menu.Move(-input.NavigateY);
                     if (input.ConfirmPressed) _menu.Confirm();
                 }
                 return;
@@ -222,7 +244,7 @@ namespace Unity.Eve.Game
             menu.Add(new MenuEntry("Dodge / back: B / Space", null, true,
                 "Dodge just as a glowing enemy strikes for FOCUS: slow motion and a free Quick Heal, Target Vitals or Riposte. Optional, never required."));
             menu.Add(new MenuEntry("Shootdodge: RB / Left Ctrl", null, true,
-                "Leap in the direction you're holding, untouchable in the air. Time slows around you — press Battle Command to fire while you fly. Landing hits hard and roots you a moment: strategic, not free."));
+                "Leap in the direction you're holding, untouchable in the air. Time slows around you â€” press Battle Command to fire while you fly. Landing hits hard and roots you a moment: strategic, not free."));
             menu.Add(new MenuEntry("Menu: Start / Esc", null, true, "Items, equipment, this screen."));
             return menu;
         }
@@ -265,10 +287,10 @@ namespace Unity.Eve.Game
             _player.Controller.SuppressDodgeThisFrame();
         }
 
-        private void HandleMenuInput(GameInput input)
+        private void HandleMenuInput(PlayerControls input)
         {
             if (input == null) return;
-            if (input.NavigateStep.y != 0) _menu.Move(-input.NavigateStep.y);
+            if (input.NavigateY != 0) _menu.Move(-input.NavigateY);
             if (input.ConfirmPressed) _menu.Confirm();
             else if (input.CancelPressed || input.MenuPressed) Back();
         }

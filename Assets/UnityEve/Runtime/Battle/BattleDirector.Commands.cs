@@ -1,8 +1,9 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Linq;
 using UnityEngine;
 using Unity.Eve.Cameras;
 using Unity.Eve.Core.Battle;
+using Unity.Eve.Core.Session;
 using Unity.Eve.Data;
 using Unity.Eve.Enemies;
 using Unity.Eve.Game;
@@ -174,10 +175,10 @@ namespace Unity.Eve.Battle
             Phase = BattlePhase.Active;
         }
 
-        private void HandleMenuInput(GameInput input)
+        private void HandleMenuInput(PlayerControls input)
         {
             if (input == null || _menu == null) return;
-            if (input.NavigateStep.y != 0) _menu.Move(-input.NavigateStep.y);
+            if (input.NavigateY != 0) _menu.Move(-input.NavigateY);
             if (input.ConfirmPressed) _menu.Confirm();
             else if (input.CancelPressed) PopMenu();
         }
@@ -226,10 +227,10 @@ namespace Unity.Eve.Battle
             GameHud.Instance?.ShowTarget($"{t.Stats.DisplayName}  LV{t.Stats.Level}  HP {t.Health.Current}/{t.Health.Max}", t.Health.Fraction);
         }
 
-        private void HandleTargetInput(GameInput input)
+        private void HandleTargetInput(PlayerControls input)
         {
             if (input == null) return;
-            var step = input.NavigateStep.x != 0 ? input.NavigateStep.x : -input.NavigateStep.y;
+            var step = input.NavigateX != 0 ? input.NavigateX : -input.NavigateY;
             if (step != 0 && _targets.Count > 0)
             {
                 _targetIndex = (_targetIndex + step + _targets.Count) % _targets.Count;
@@ -261,7 +262,7 @@ namespace Unity.Eve.Battle
             _aimDirection = _player.transform.forward;
             Phase = BattlePhase.Aiming;
             GameHud.Instance?.ShowMenu(null);
-            GameHud.Instance?.ShowPrompt("Rotate to aim — [A] dash  [B] cancel");
+            GameHud.Instance?.ShowPrompt("Rotate to aim â€” [A] dash  [B] cancel");
             _dome.Show(_player.transform.position, range);
             EnsureAimLine();
             RefreshAimLine();
@@ -295,10 +296,10 @@ namespace Unity.Eve.Battle
             _player.Controller.FaceTowards(end);
         }
 
-        private void HandleAimInput(GameInput input)
+        private void HandleAimInput(PlayerControls input)
         {
             if (input == null) return;
-            var turn = input.Move.x;
+            var turn = input.MoveX;
             if (Mathf.Abs(turn) > 0.05f)
                 _aimDirection = Quaternion.Euler(0f, turn * BattleConfig.RushAimTurnDegreesPerSecond * Time.unscaledDeltaTime, 0f) * _aimDirection;
             RefreshAimLine();
@@ -448,7 +449,7 @@ namespace Unity.Eve.Battle
         }
 
         /// <summary>Burst Fire: a special attack some rapid-fire weapons (SMG) offer instead of a measured
-        /// shot — many rounds at one target, each a coin flip at <see cref="WeaponStats.BurstFireAccuracy"/>,
+        /// shot â€” many rounds at one target, each a coin flip at <see cref="WeaponStats.BurstFireAccuracy"/>,
         /// trading accuracy for volume (Shadowrun Returns-style). Stops early if the target dies.</summary>
         private IEnumerator BurstFireRoutine(EnemyActor chosen)
         {
@@ -703,7 +704,7 @@ namespace Unity.Eve.Battle
             {
                 hud?.ShowReload(reload.Progress01, reload.SweetSpotStart01, reload.SweetSpotEnd01);
                 // One attempt per reload: a press outside the sweet spot is just absorbed, not re-tried.
-                if (!pressed && GameInput.Instance != null && GameInput.Instance.ConfirmPressed)
+                if (!pressed && _player.Controls != null && _player.Controls.ConfirmPressed)
                 {
                     pressed = true;
                     perfect = reload.InSweetSpot;

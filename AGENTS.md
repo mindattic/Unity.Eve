@@ -42,6 +42,7 @@ ATB battle, built from free assets. Read `docs/BIBLE.md` for what it is, what it
 | `Runtime/UI/GameHud.cs` + `UI/Hud.uss` | Whole screen on UI Toolkit; owns the full-resolution world render target |
 | `Shaders/Toon.shader`, `InkOutline.shader`, `HexDome.shader` | Cel shading + hatching, full-screen ink lines, hexagon range dome |
 | `Core/Battle/EnemyMind.cs`, `BladeArts.cs` | Enemy tactics; katana Slash / Rush rules |
+| `Core/Session/*` + `Runtime/Input/GameInput.cs` | Multiplayer-ready seam (BIBLE U.EVE-LAW-6): the device submits each seat's `IntentCommand` to `GameSession.Session` (`LocalSession`); game code reads `PlayerCharacter.Controls`, never the device |
 | `Runtime/Game/Autopilot.cs` | `-autoplay` self-play verification; `-demo` loops the same tour windowed as an attract mode |
 | `Editor/DemoContentBuilder*.cs` | Generates all content and the level |
 | `Editor/DemoContentBuilder.Scene.cs`'s `Model(...)`/`ConvertRenderers(...)` | The universal glTF/FBX import pipeline: any kit's model scales, floor-centers, re-skins to the toon shader, and gets a collider the same way |

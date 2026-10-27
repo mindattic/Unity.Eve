@@ -1,9 +1,10 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using Unity.Eve.Cameras;
 using Unity.Eve.Core.Battle;
+using Unity.Eve.Core.Session;
 using Unity.Eve.Core.Util;
 using Unity.Eve.Data;
 using Unity.Eve.Enemies;
@@ -237,7 +238,7 @@ namespace Unity.Eve.Battle
         private void Update()
         {
             if (!InBattle) return;
-            var input = GameInput.Instance;
+            var input = _player.Controls;
             _focus.Tick(Time.unscaledDeltaTime);
 
             switch (Phase)
@@ -374,7 +375,7 @@ namespace Unity.Eve.Battle
             }
         }
 
-        private void HandleFocusInput(GameInput input)
+        private void HandleFocusInput(PlayerControls input)
         {
             if (input == null) return;
             if (input.FocusHealPressed) UseFocusMove(FocusMove.QuickHeal);
@@ -415,7 +416,7 @@ namespace Unity.Eve.Battle
         }
 
         /// <summary>Free melee (Interact, no ATB cost, no ammo): a short-reach shove that knocks back and
-        /// staggers whatever's in front of her. Control, not damage — real weapons still do the killing.</summary>
+        /// staggers whatever's in front of her. Control, not damage â€” real weapons still do the killing.</summary>
         private void DoShove()
         {
             var origin = _player.transform.position;
@@ -466,7 +467,7 @@ namespace Unity.Eve.Battle
             WorldTime.Instance?.SetScale(ShootdodgeKey, BattleConfig.ShootdodgeTimeScale);
         }
 
-        /// <summary>One aimed round at the nearest target in weapon range, spent from her real clip —
+        /// <summary>One aimed round at the nearest target in weapon range, spent from her real clip â€”
         /// mashed as fast as the player can press Confirm while she's still in the air.</summary>
         private void FireDuringShootdodge()
         {
@@ -494,7 +495,7 @@ namespace Unity.Eve.Battle
             _lastAttackTarget = target;
         }
 
-        /// <summary>Edge-detects landing (IsShootdodging true → false) to end bullet time and apply the
+        /// <summary>Edge-detects landing (IsShootdodging true â†’ false) to end bullet time and apply the
         /// hard-landing cost; PlayerController owns the leap itself and already applied the landing root.</summary>
         private void TrackShootdodgeLanding()
         {

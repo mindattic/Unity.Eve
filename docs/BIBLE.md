@@ -82,6 +82,8 @@ fight with Parasite Eve's real-time/pause Active Time Battle.
   - `Inventory.Add/TryRemove`
   - `LootTable.Roll`
   - `CameraZoneSelector.Enter/Exit`
+- **Input:** `GameInput` (the device) → `IntentCommand`/`PressCommand` → `ISession.Submit` (`LocalSession`)
+  → the seat's `PlayerControls`, which the game reads (U.EVE-LAW-6).
 - **Time:**
   - `WorldTime` is the only writer of `Time.timeScale`.
   - Menus and targeting request a pause; Focus requests 0.15.
@@ -116,6 +118,31 @@ don't, so their CREDITS.md row must say so.)*
 ### {#U.EVE-LAW-5} Generated content is regenerated, not hand-edited
 Edit `DemoContentBuilder`, then re-run it. A hand edit to `Generated/` or `Demo.unity` is lost on the next build.
 
+### {#U.EVE-LAW-6} Multiplayer-ready
+This game is built so co-op or PvP can be added without re-architecting, per Unity.Multiplayer's
+[Multiplayer-ready standard](https://mindattic.github.io/Unity.Multiplayer/articles/multiplayer-ready.html):
+every player intent is a serializable command stamped with a player id and submitted through `ISession`; one
+authority owns game state and presentation only reads state and events; there is no global "the player", only
+player ids and `ISession.LocalPlayer`; rules are deterministic (seeded RNG, fixed tick, no `UnityEngine.Random` or
+frame time); entities have stable ids; state and commands serialize; the game runs on a `LocalSession` behind
+`ISession`; and a test plays commands from two player ids. A change that breaks any of these is a bug.
+
+Where Unity.Eve stands (U.EVE-T26, 2026-10-26):
+- **Commands and the seam: in place.** `Core/Session`: `GameInput` is only the local seat's device. Each frame
+  it submits an `IntentCommand` (stick, navigation step, buttons) to `GameSession.Session`, a `LocalSession`.
+  The autopilot's scripted presses go in as `PressCommand`s. Kat's controller, the battle director, the
+  interactor and the menus read their seat's `PlayerControls` back (`PlayerCharacter.Seat`/`.Controls`); nothing
+  reads the device directly. `CommandCodec` writes and reads commands as text. *(Tests `SessionTests`: two seats,
+  a refused unseated or stale command, codec round trip, log replay.)*
+- **Per player: in place.** `PlayerCharacter.Seat` owns its controls. `GameSession.PlayerOf(seat)` resolves a
+  character, and `GameSession.Player` is just the local seat's.
+- **State serializes: in place.** `SaveGame` (Core) is the plain-data snapshot.
+- **Stable ids: in place.** World objects are keyed by the deterministic scene names `DemoContentBuilder`
+  gives them.
+- **Determinism: partly.** Core rules use the seeded `Rng`. They still tick on Unity's scaled frame delta
+  inside the MonoBehaviours, and the battle state lives in `BattleDirector`/`EnemyActor`. Moving them onto a
+  Core authority stepped at a fixed tick is the remaining work before going online (§7).
+
 ## 6. Verified state {#U.EVE-§6}
 - `dotnet test Tests/Core.Tests`: 66 passing.
 - Unity 6000.4.3f1 batch-mode compile: clean.
@@ -139,6 +166,8 @@ Edit `DemoContentBuilder`, then re-run it. A hand edit to `Generated/` or `Demo.
 - Boss part targeting (ExperimentEve's bone-bound weak points)
 - More interiors (the houses on Willow Lane are exteriors only)
 - A recorded score in place of the synthesized loops
+- Online: lift the battle and field state out of the MonoBehaviours into a Core authority stepped at a fixed
+  tick (U.EVE-LAW-6), then add a `NetGameSession : ISession` on Unity.Multiplayer
 
 ## 8. Quality bar {#U.EVE-§8}
 A change is done when all of these hold:
