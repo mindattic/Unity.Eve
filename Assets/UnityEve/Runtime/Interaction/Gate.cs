@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using UnityEngine;
 using Unity.Eve.Data;
 using Unity.Eve.Player;
@@ -7,7 +7,7 @@ using Unity.Eve.UI;
 namespace Unity.Eve.Interaction
 {
     /// <summary>
-    /// A locked barrier the player opens in place rather than passes through to another scene point —
+    /// A locked barrier the player opens in place rather than passes through to another scene point â€”
     /// a fence gate, a chained door, a padlocked turnstile. Shares <see cref="Door"/>'s key/consume
     /// pattern, but swings a hinge open and disables its own blocking collider instead of teleporting.
     /// </summary>
@@ -90,8 +90,9 @@ namespace Unity.Eve.Interaction
             _busy = false;
         }
 
-        private void OnDisable()
+        protected override void OnDisable()
         {
+            base.OnDisable(); // leave Interactor's registry, or the next scene searches a dead gate
             // Mirrors Door's cleanup: if the gate is disabled/destroyed mid-swing, don't leave
             // _busy stuck true forever (CanInteract would never recover if it's re-enabled).
             _busy = false;

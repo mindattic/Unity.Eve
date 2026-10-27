@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using UnityEngine;
 using Unity.Eve.Cameras;
 using Unity.Eve.Data;
@@ -102,8 +102,9 @@ namespace Unity.Eve.Interaction
             _transitioningPlayer = null;
         }
 
-        private void OnDisable()
+        protected override void OnDisable()
         {
+            base.OnDisable(); // leave Interactor's registry, or the next scene searches a dead door
             // If this door is disabled/destroyed mid-transition, don't leave the player frozen
             // behind a black screen with a permanently incremented lock count.
             if (!_busy) return;
