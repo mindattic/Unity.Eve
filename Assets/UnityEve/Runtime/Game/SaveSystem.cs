@@ -44,9 +44,12 @@ namespace Unity.Eve.Game
         }
 
         /// <returns>The saved state, or null if writing to disk failed.</returns>
-        public static SaveGame Save(SavePoint point)
+        public static SaveGame Save(SavePoint point) => Write(Capture(point));
+
+        /// <summary>The file half of <see cref="Save"/>: counts the save and swaps it onto disk.</summary>
+        /// <returns>The written state, or null if writing to disk failed (the previous save is left intact).</returns>
+        internal static SaveGame Write(SaveGame save)
         {
-            var save = Capture(point);
             try
             {
                 var previous = Read();
