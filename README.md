@@ -130,6 +130,7 @@ Controls:
 ```powershell
 ./tools/test.ps1                 # pure-C# rules under dotnet test (seconds, no Unity)
 ./tools/test.ps1 -Compile        # + batch-mode Unity compile check
+./tools/test.ps1 -EditMode       # + the Unity EditMode suite, headless (add -Filter Name to narrow both)
 
 # Regenerate every generated asset and the Demo scene from code
 ./tools/unity.ps1 -Method Unity.Eve.Editor.DemoContentBuilder.BuildAll -Log content
