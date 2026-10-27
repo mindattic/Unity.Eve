@@ -1,0 +1,25 @@
+{
+    "name": "Unity.Eve.Tests.EditMode",
+    "rootNamespace": "Unity.Eve.Tests",
+    "references": [
+        "Unity.Eve.Runtime",
+        "Unity.Eve.Core",
+        "UnityEngine.TestRunner",
+        "UnityEditor.TestRunner"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "nunit.framework.dll"
+    ],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "UNITY_INCLUDE_TESTS"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
