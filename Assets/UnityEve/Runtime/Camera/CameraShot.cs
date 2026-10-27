@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace Unity.Eve.Cameras
 {
@@ -35,6 +35,20 @@ namespace Unity.Eve.Cameras
 
         public ShotMode Mode => _mode;
         public float FieldOfView => _fieldOfView;
+
+        /// <summary>
+        /// The shot's authored facing (its rest pose's yaw, radians clockwise from +Z): the basis the movement
+        /// stick uses under this shot. It changes only on a cut, never while a CCTV servo pans or a rail slides,
+        /// as ExperimentEve based movement on each zone's authored forward.
+        /// </summary>
+        public float RestYaw
+        {
+            get
+            {
+                var f = transform.forward;
+                return Mathf.Atan2(f.x, f.z);
+            }
+        }
 
         public void Configure(ShotMode mode, float fov, float maxYaw = 50f, float maxPitch = 25f)
         {

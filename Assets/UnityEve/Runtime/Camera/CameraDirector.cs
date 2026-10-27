@@ -33,11 +33,16 @@ namespace Unity.Eve.Cameras
         public CameraShot ActiveShot => _active;
         public int CutCount => _selector.CutCount;
 
-        /// <summary>Camera yaw in radians (clockwise from +Z): the input basis for the movement stick.</summary>
+        /// <summary>
+        /// The input basis for the movement stick, radians clockwise from +Z: the active shot's authored facing
+        /// (<see cref="CameraShot.RestYaw"/>), so it changes only on a cut and MovementBasis's grace and turn run
+        /// to completion under a panning CCTV or a sliding rail. Falls back to the live camera before any shot.
+        /// </summary>
         public float Yaw
         {
             get
             {
+                if (_active != null) return _active.RestYaw;
                 var f = transform.forward;
                 return Mathf.Atan2(f.x, f.z);
             }

@@ -440,8 +440,8 @@ These do not:
 | # | Value | Original (file:line) | Unity (file:line) |
 | --- | --- | --- | --- |
 | C1 | Hysteresis model | Inflate the active polygon by `hysteresisMargin` 0.5; a new zone's core must contain Kat (`three/src/camera/cameraZone.ts:51`, `cameraManager.ts:43-49`) | Overlapping box triggers; highest priority, then most recently entered, wins (`Core/Camera/CameraZoneSelector.cs:42-52`). Overlap 1 m (`Editor/DemoContentBuilder.Scene.cs:450`). Same band width, different rule: Unity cuts on *entering* the overlap. |
-| C2 | Basis source | Hand-authored zone `forward/right` (`cameraZone.ts:41-49`; Babylon `forwardYaw`, `babylon/src/camera/cameraZone.ts:54`) | Live camera `transform.forward` yaw (`Runtime/Camera/CameraDirector.cs:34-41`, `Runtime/Player/PlayerController.cs:124`). Bug B2. |
-| C3 | Retarget trigger | Grace restarts only when the *zone* changes (`movementBasis.ts:50-53`) | Grace restarts on any yaw change > 1e-4 rad (`MovementBasis.cs:32-36`) |
+| C2 | Basis source | Hand-authored zone `forward/right` (`cameraZone.ts:41-49`; Babylon `forwardYaw`, `babylon/src/camera/cameraZone.ts:54`) | The active shot's authored rest yaw (`CameraShot.RestYaw`, `CameraDirector.Yaw`) since U.EVE-T35; was the live camera yaw (bug B2). |
+| C3 | Retarget trigger | Grace restarts only when the *zone* changes (`movementBasis.ts:50-53`) | Grace restarts on any basis change > 1e-4 rad (`MovementBasis.cs:32-36`); the basis now changes only on a cut (U.EVE-T35) |
 | C4 | Default FOV | 55 (`cameraZone.ts:50`) | 50 (`CameraShot.cs:154`); every shot is authored explicitly at 50-70 |
 | C5 | CCTV servo curve | `lerp(min(1, dt×2.2))` on the look-at point (`cameraManager.ts:79-81`) | `1−exp(−2.2·dt)` slerp on rotation, yaw and pitch clamped (`CameraShot.cs:195-196,213-222`) |
 | C6 | Cut | Hard cut (Three, `cameraManager.ts:86-96`); 0.28 s blend, 0.42 pull, 0.55 lead, 0.012 drift (Babylon, `fixedCamera.ts:18-20`, `cameraZone.ts:68-69`) | Hard cut, no pull, lead or drift (`CameraDirector.cs:99-103`), per BIBLE §2 |
@@ -477,7 +477,7 @@ These are defects against what the original or the BIBLE intends. Features the o
   - As written, chip damage spread across a whole fight still staggers a creature once its total reaches
     max(20, 0.35×maxHp), however slowly it arrived.
     The boss (Mito Mother) loses a swing to a 1.8 s stun every 147 damage (0.35×420).
-- **B2: The movement basis never realigns under CCTV and Rail shots.**
+- **B2: The movement basis never realigns under CCTV and Rail shots.** *Fixed by U.EVE-T35: `CameraDirector.Yaw` is now the active shot's authored `CameraShot.RestYaw`, which changes only on a cut.*
   - `PlayerController` feeds `MovementBasis` the camera's live yaw (`PlayerController.cs:124`).
   - CCTV servos and rails change that yaw every frame while Kat moves, so each frame restarts the 0.16 s grace (`MovementBasis.cs:32-36`).
   - Result: while the stick is held, "up" stays latched to the yaw from the moment of the cut, Three's hard
