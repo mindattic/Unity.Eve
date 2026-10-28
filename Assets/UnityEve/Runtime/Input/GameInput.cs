@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using Unity.Eve.Cameras;
 using Unity.Eve.Core.Session;
 using Unity.Eve.Game;
 
@@ -138,9 +139,11 @@ namespace Unity.Eve.Input
             if (_focusRiposte.WasPressedThisFrame()) buttons |= IntentButtons.FocusRiposte;
 
             // This device never changes the game itself: it sends the frame's intent for the local seat
-            // through the one command pipeline, and the game reads that seat's controls back.
+            // through the one command pipeline, and the game reads that seat's controls back. The stick is
+            // camera-relative, so the intent carries the yaw of the camera it was pushed under.
             var session = Session;
-            session?.Submit(new IntentCommand(session.LocalPlayer, Time.frameCount, move.x, move.y, stepX, stepY, buttons));
+            var cameraYaw = CameraDirector.Instance != null ? CameraDirector.Instance.Yaw : 0f;
+            session?.Submit(new IntentCommand(session.LocalPlayer, Time.frameCount, move.x, move.y, stepX, stepY, buttons, cameraYaw));
         }
 
         private static int Axis(float now, float before)

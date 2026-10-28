@@ -43,6 +43,7 @@ ATB battle, built from free assets. Read `docs/BIBLE.md` for what it is, what it
 | `Shaders/Toon.shader`, `InkOutline.shader`, `HexDome.shader` | Cel shading + hatching, full-screen ink lines, hexagon range dome |
 | `Core/Battle/EnemyMind.cs`, `BladeArts.cs` | Enemy tactics; katana Slash / Rush rules |
 | `Core/Session/*` + `Runtime/Input/GameInput.cs` | Multiplayer-ready seam (BIBLE U.EVE-LAW-6): the device submits each seat's `IntentCommand` to `GameSession.Session` (`LocalSession`); game code reads `PlayerCharacter.Controls`, never the device |
+| `Core/Sim/*` | The authority (U.EVE-LAW-6): `GameAuthority` steps each seat's `PlayerBody`/`PlayerState` and the `BattleAuthority` (creatures are `EnemyState`) at a fixed 1/60 s tick from `GameSession.LateUpdate`; `ReplayLog` replays a battle. `PlayerController`, `EnemyActor` and `BattleDirector` only present it |
 | `Runtime/Game/Autopilot.cs` | `-demo [-artifacts DIR]` self-play verification (the family-wide flag): tours every system, screenshots each beat, quits PASS/FAIL |
 | `Editor/DemoContentBuilder*.cs` | Generates all content and the level |
 | `Editor/DemoContentBuilder.Scene.cs`'s `Model(...)`/`ConvertRenderers(...)` | The universal glTF/FBX import pipeline: any kit's model scales, floor-centers, re-skins to the toon shader, and gets a collider the same way |

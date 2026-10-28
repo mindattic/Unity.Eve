@@ -24,6 +24,15 @@ namespace Unity.Eve.Core.Session
     }
 
     /// <summary>
+    /// Applies the commands that change game state rather than a seat's controls (battle orders, scripted
+    /// teleports): the authority. Returns null when the command was applied, or why it was refused.
+    /// </summary>
+    public interface ICommandHandler
+    {
+        string Handle(IGameCommand command);
+    }
+
+    /// <summary>
     /// The seam every player intent goes through (Unity.Multiplayer's Multiplayer-ready standard, rule 7).
     /// Input builds commands and submits them; the game reads each seat's controls back from the session.
     /// Single-player runs on <see cref="LocalSession"/>; an online session would implement this same interface.
@@ -44,9 +53,12 @@ namespace Unity.Eve.Core.Session
 
     /// <summary>
     /// The in-process session: seats one or more players on this machine and applies each command as it is
-    /// submitted, in submission order, so a frame's input reaches the game in the same frame. It refuses a
-    /// command from a seat that is not in the session, a stale intent (an older frame than the seat's last),
-    /// and command types it does not know, raising <see cref="CommandRefused"/> for each.
+    /// submitted, in submission order, so a frame's input reaches the game in the same frame. Controls
+    /// commands update the seat's <see cref="PlayerControls"/>; game commands (<see cref="BattleCommand"/>,
+    /// <see cref="TeleportCommand"/>) go to the <see cref="Handler"/>, the authority. It refuses a command from a
+    /// seat that is not in the session, a stale intent (an older frame than the seat's last), a game command
+    /// with no authority attached or that the authority turns down, and command types it does not know,
+    /// raising <see cref="CommandRefused"/> for each.
     /// </summary>
     public sealed class LocalSession : ISession
     {
@@ -74,6 +86,9 @@ namespace Unity.Eve.Core.Session
         /// <summary>Commands accepted so far.</summary>
         public long Accepted { get; private set; }
 
+        /// <summary>Where game commands go: the authority. Null until one is attached.</summary>
+        public ICommandHandler Handler { get; set; }
+
         public PlayerControls ControlsOf(PlayerId player) => _controls.TryGetValue(player, out var c) ? c : null;
 
         public bool Submit(IGameCommand command)
@@ -90,6 +105,12 @@ namespace Unity.Eve.Core.Session
                     break;
                 case PressCommand press:
                     controls.Press(press.Button);
+                    break;
+                case BattleCommand _:
+                case TeleportCommand _:
+                    if (Handler == null) return Refuse(command, "no authority attached");
+                    var reason = Handler.Handle(command);
+                    if (reason != null) return Refuse(command, reason);
                     break;
                 default:
                     return Refuse(command, $"unknown command {command.GetType().Name}");

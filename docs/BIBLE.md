@@ -144,9 +144,21 @@ Where Unity.Eve stands (U.EVE-T26, 2026-10-26):
 - **State serializes: in place.** `SaveGame` (Core) is the plain-data snapshot.
 - **Stable ids: in place.** World objects are keyed by the deterministic scene names `DemoContentBuilder`
   gives them.
-- **Determinism: partly.** Core rules use the seeded `Rng`. They still tick on Unity's scaled frame delta
-  inside the MonoBehaviours, and the battle state lives in `BattleDirector`/`EnemyActor`. Moving them onto a
-  Core authority stepped at a fixed tick is the remaining work before going online (§7).
+- **One authority, fixed tick: in place** (U.EVE-T41). `Core/Sim/GameAuthority` owns the game state the rules
+  touch: each seat's `PlayerBody` (movement, dodge and i-frames, roots and locks, shootdodge, backpedal, cover
+  lean), its `PlayerState` (HP, PE, level, bag, magazines, haste/barrier) and the `BattleAuthority` (gauge, Focus,
+  attack tokens, boss phases, every creature's `EnemyState`, puddles, and each turn as a plain C# routine).
+  `GameSession.LateUpdate` steps it at a fixed 1/60 s of real time, each tick at the time scale `WorldTime` set
+  (still its only writer), from the seat's `TickInput` (a press is held over to the next tick, so a frame that
+  steps no tick never loses one). The MonoBehaviours only present: `PlayerController` is the body's
+  CharacterController (`IBodyPhysics`) and animator, `EnemyActor` places its model between the last two ticks,
+  `BattleDirector` shows the `BattleEvent`s and runs the paused menus, dome and aim line, which submit one
+  `BattleCommand` through `ISession.Submit`; scripted placements go in as `TeleportCommand`s.
+- **Determinism: in place for a battle.** A battle replays from its setup and seed plus its `ReplayLog` (each
+  tick's input and time scale, each applied command): `BattleDirector.LastBattleLog` keeps the current one.
+  The self-play's direct cheats (its heals) are not commands and are not in the log. *(Tests
+  `AuthorityReplayTests`: a recorded battle replays to the same events and state, twice; a press held over a
+  tickless frame; a fixed tick at any frame rate.)*
 
 ## 6. Verified state {#U.EVE-§6}
 - `dotnet test Tests/Core.Tests` (Core rules, the session seam) and the Unity EditMode suite in `Assets/UnityEve/Tests/EditMode` (PlayerCharacter, WorldTime/MenuModel, SaveSystem, Cover), added 2026-10-26.
@@ -170,8 +182,8 @@ Where Unity.Eve stands (U.EVE-T26, 2026-10-26):
 - Boss part targeting (ExperimentEve's bone-bound weak points)
 - More interiors (the houses on Willow Lane are exteriors only)
 - A recorded score in place of the synthesized loops
-- Online: lift the battle and field state out of the MonoBehaviours into a Core authority stepped at a fixed
-  tick (U.EVE-LAW-6), then add a `NetGameSession : ISession` on Unity.Multiplayer
+- Online: add a `NetGameSession : ISession` on Unity.Multiplayer over the Core authority (U.EVE-LAW-6), and
+  a player snapshot in the replay log so a recording made mid-game replays on its own
 
 ## 8. Quality bar {#U.EVE-§8}
 A change is done when all of these hold:

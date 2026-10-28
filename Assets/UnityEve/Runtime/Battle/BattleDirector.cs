@@ -5,6 +5,7 @@ using UnityEngine;
 using Unity.Eve.Cameras;
 using Unity.Eve.Core.Battle;
 using Unity.Eve.Core.Session;
+using Unity.Eve.Core.Sim;
 using Unity.Eve.Core.Util;
 using Unity.Eve.Data;
 using Unity.Eve.Enemies;
@@ -33,10 +34,11 @@ namespace Unity.Eve.Battle
     }
 
     /// <summary>
-    /// Parasite Eve's Active Time Battle, plus the optional Focus layer.
-    /// The world runs in real time while the ATB gauge fills; opening the command menu stops time;
-    /// choosing Attack raises the range dome to pick a target; the action then plays out in real time.
-    /// A perfectly-timed dodge opens a slow-motion Focus window with free bonus moves.
+    /// Parasite Eve's Active Time Battle, as the scene shows it. The battle itself (gauge, Focus, tokens, the
+    /// creatures, every turn and roll) is the Core <see cref="BattleAuthority"/>, stepped at the fixed tick; this
+    /// starts it when an encounter triggers, shows what it raises (popups, effects, sounds, the camera and
+    /// rumble), and runs the paused command menu, range dome and aim line, submitting the finished choice to the
+    /// session as a <see cref="BattleCommand"/>. Its public methods are the same front the self-play drives.
     /// </summary>
     public sealed partial class BattleDirector : MonoBehaviour
     {
@@ -49,53 +51,58 @@ namespace Unity.Eve.Battle
         [SerializeField] private float _throwRange = 10f;
 
         private readonly List<EnemyActor> _enemies = new List<EnemyActor>();
-        private readonly List<EnemyActor> _targets = new List<EnemyActor>();
-        private readonly AtbGauge _atb = new AtbGauge();
-        private readonly FocusWindow _focus = new FocusWindow();
-        private Rng _rng;
+        private readonly Dictionary<EnemyState, EnemyActor> _views = new Dictionary<EnemyState, EnemyActor>();
+        private readonly Dictionary<EnemyDefinition, EnemyKind> _kinds = new Dictionary<EnemyDefinition, EnemyKind>();
+        private readonly Dictionary<int, GameObject> _puddles = new Dictionary<int, GameObject>();
+        private GameAuthority _authority;
+        private Rng _seeds;
         private EncounterZone _zone;
-        private AttackTokens _tokens;
-        private Core.Story.BossPhases _bossPhases;
-        public bool BossFight => _bossPhases != null;
-        private MenuModel _menu;
-        private readonly Stack<MenuModel> _menuStack = new Stack<MenuModel>();
-        private int _targetIndex;
-        private float _targetRange;
-        private System.Action<EnemyActor> _onTargetChosen;
-        private float _aimRange;
-        private Vector3 _aimDirection;
-        private System.Action<Vector3> _onAimChosen;
-        private LineRenderer _aimLine;
-        private EnemyActor _focusAttacker;
-        private int _expEarned;
-        private bool _menuLocked;
-        private ActiveReload _activeReload;
-        private float _lastAttackAt = -999f;
-        private EnemyActor _lastAttackTarget;
-        private float _shoveReadyAt = -999f;
-        private bool _wasShootdodging;
+        private GameObject _grenade;
+        private bool _reloadShown;
 
         public static BattleDirector Instance { get; private set; }
-        public BattlePhase Phase { get; private set; } = BattlePhase.Inactive;
-        public bool InBattle => Phase != BattlePhase.Inactive;
-        public AtbGauge Atb => _atb;
-        public FocusWindow Focus => _focus;
+        /// <summary>The battle's rules and state.</summary>
+        public BattleAuthority Rules => _authority.Battle;
+        public BattlePhase Phase
+        {
+            get
+            {
+                switch (Rules.Stage)
+                {
+                    case BattleStage.Active: return BattlePhase.Active;
+                    case BattleStage.Command: return _menuPhase;
+                    case BattleStage.Executing: return BattlePhase.Executing;
+                    case BattleStage.Victory: return BattlePhase.Victory;
+                    case BattleStage.Defeat: return BattlePhase.Defeat;
+                    default: return BattlePhase.Inactive;
+                }
+            }
+        }
+        public bool InBattle => Rules.InBattle;
+        public bool BossFight => Rules.BossFight;
+        public AtbGauge Atb => Rules.Atb;
+        public FocusWindow Focus => Rules.Focus;
         public IReadOnlyList<EnemyActor> Enemies => _enemies;
         public EncounterZone Zone => _zone;
         public PlayerCharacter Player => _player;
         public MenuModel Menu => _menu;
-        public int PerfectDodges => _focus.PerfectDodges;
+        public int PerfectDodges => Rules.PerfectDodges;
         /// <summary>The live active-reload minigame while one is running; null the rest of the time.</summary>
-        public ActiveReload CurrentReload => _activeReload;
+        public ActiveReload CurrentReload => Rules.CurrentReload;
         /// <summary>Seconds since Kat's last gun shot, Slash or Rush (for the backpedal window).</summary>
-        public float SecondsSinceLastAttack => Time.time - _lastAttackAt;
+        public float SecondsSinceLastAttack => Rules.SecondsSinceLastAttack;
         /// <summary>Whoever she last attacked, alive or not; null before her first attack this battle.</summary>
-        public EnemyActor LastAttackTarget => _lastAttackTarget;
+        public EnemyActor LastAttackTarget => ViewOf(Rules.LastAttackTarget);
         /// <summary>When true, encounter zones do not trigger (cutscenes, autopilot sightseeing).</summary>
         public bool SuppressEncounters { get; set; }
+        /// <summary>The replay log of the battle in progress, or of the last one: with its setup and seed it plays the
+        /// battle again (a bug report that reproduces).</summary>
+        public ReplayLog LastBattleLog { get; private set; }
 
         public event System.Action<EncounterZone> BattleStarted;
         public event System.Action<EncounterZone, bool> BattleEnded;
+        /// <summary>Raised for every creature killed (kill count for the ending).</summary>
+        public event System.Action<EnemyActor> EnemyKilled;
 
         public void Configure(PlayerCharacter player, RangeDome dome)
         {
@@ -106,23 +113,26 @@ namespace Unity.Eve.Battle
         private void Awake()
         {
             Instance = this;
-            _rng = new Rng((uint)System.Environment.TickCount);
-            _atb.Filled += () =>
-            {
-                AudioService.Play(SoundId.AtbReady);
-                GameInput.Instance?.Rumble(0.1f, 0.2f, 0.06f);
-            };
-            _focus.Opened += () => WorldTime.Instance?.SetScale(FocusKey, FocusWindow.SlowTimeScale);
-            _focus.Closed += () =>
-            {
-                WorldTime.Instance?.SetScale(FocusKey, 1f);
-                GameHud.Instance?.ShowFocus(-1f);
-            };
+            _authority = SimHost.For(gameObject.scene);
+            // Each battle gets its own seed from this; the battle replays from that seed and its command log.
+            _seeds = new Rng((uint)System.Environment.TickCount);
+            Rules.EventRaised += OnBattleEvent;
         }
 
         private void OnDestroy()
         {
+            if (_authority != null) Rules.EventRaised -= OnBattleEvent;
             if (Instance == this) Instance = null;
+        }
+
+        private EnemyActor ViewOf(EnemyState state) => state != null && _views.TryGetValue(state, out var view) ? view : null;
+
+        /// <summary>Hands a finished choice to the session (the one command pipeline).</summary>
+        private bool Submit(BattleOrder order, int target = -1, int index = -1, string item = null, float x = 0f, float z = 0f)
+        {
+            var command = new BattleCommand(_player.Seat, order, target, index, item, x, z);
+            var session = GameSession.Instance != null ? GameSession.Instance.Session : null;
+            return session != null ? session.Submit(command) : _authority.Handle(command) == null;
         }
 
         // ------------------------------------------------------------------ battle lifecycle
@@ -130,27 +140,37 @@ namespace Unity.Eve.Battle
         public void Begin(EncounterZone zone)
         {
             if (InBattle || _player.IsDead) return;
-            _zone = zone;
-            _expEarned = 0;
-            _enemies.Clear();
-            _atb.Spend();
-            _player.Pe.BeginBattle();
-            NudgeInside(zone);
-
-            // Attack tokens: the pack takes turns engaging Kat instead of mobbing her.
-            _tokens = new AttackTokens(AttackTokens.CapacityFor(zone.Spawns.Count(sp => sp.Enemy != null)), new Rng(_rng.NextUInt()), firstDelay: 1.2f);
-            var i = 0;
+            var b = zone.Bounds;
+            var setup = new BattleSetup
+            {
+                Seed = _seeds.NextUInt(),
+                Arena = new Arena(b.min.ToSim(), b.max.ToSim()),
+                PackSize = zone.Spawns.Count(sp => sp.Enemy != null),
+                ThrowRange = _throwRange,
+            };
             foreach (var spawn in zone.Spawns)
             {
                 if (spawn.Enemy == null || spawn.Enemy.Prefab == null) continue;
-                Spawn(spawn.Enemy, zone.SpawnWorldPosition(spawn), 0.6f + _rng.Range(0f, 0.8f) + i * 0.25f);
-                i++;
+                var kind = KindOf(spawn.Enemy, 0);
+                if (kind == null)
+                {
+                    Debug.LogError($"[Unity.Eve] enemy prefab for '{spawn.Enemy.name}' has no EnemyActor component; skipping spawn.");
+                    continue;
+                }
+                setup.Spawns.Add(new EnemySpawn(kind, zone.SpawnWorldPosition(spawn).ToSim()));
             }
-            var boss = _enemies.FirstOrDefault(e => e.Stats.Boss);
-            _bossPhases = boss != null ? new Core.Story.BossPhases(0.66f, 0.33f) : null;
+
+            _zone = zone;
+            LastBattleLog = new ReplayLog();
+            _authority.Recorder = LastBattleLog;
+            if (!_authority.BeginBattle(_player.Seat, setup))
+            {
+                _authority.Recorder = null;
+                _zone = null;
+                return;
+            }
 
             zone.SealWalls(true);
-            Phase = BattlePhase.Active;
             _player.Controller.Animator?.SetBool(AnimParams.InBattle, true);
             var hud = GameHud.Instance;
             hud?.SetBattleMode(true);
@@ -161,76 +181,56 @@ namespace Unity.Eve.Battle
             BattleStarted?.Invoke(zone);
         }
 
-        private EnemyActor Spawn(EnemyDefinition definition, Vector3 at, float initialCooldown)
+        /// <summary>A definition as the authority sees it (its prefab's body measurements; its brood).</summary>
+        private EnemyKind KindOf(EnemyDefinition definition, int depth)
         {
-            var go = Instantiate(definition.Prefab, at, Quaternion.identity);
-            go.transform.LookAt(new Vector3(_player.transform.position.x, go.transform.position.y, _player.transform.position.z));
+            if (definition == null || definition.Prefab == null || depth > 4) return null;
+            if (_kinds.TryGetValue(definition, out var kind)) return kind;
+            var actor = definition.Prefab.GetComponent<EnemyActor>();
+            if (actor == null) return null;
+            kind = new EnemyKind(definition.Stats, actor.BodyRadius, actor.AimHeight, KindOf(definition.Brood, depth + 1), definition);
+            _kinds[definition] = kind;
+            return kind;
+        }
+
+        private void ShowSpawn(EnemyState state)
+        {
+            var definition = (EnemyDefinition)state.Kind.Token;
+            var go = Instantiate(definition.Prefab, state.Position.ToUnity(), SimConvert.YawRotation(state.Yaw));
             var actor = go.GetComponent<EnemyActor>();
-            if (actor == null)
-            {
-                Debug.LogError($"[Unity.Eve] enemy prefab for '{definition.name}' has no EnemyActor component; skipping spawn.");
-                Destroy(go);
-                return null;
-            }
-            actor.Begin(_player.transform, MayCommit, initialCooldown, _rng.NextUInt(), _zone.Bounds,
-                () => _enemies.Count(e => e.IsAlive), _tokens);
-            actor.Struck += OnEnemyStrike;
-            actor.Died += OnEnemyDied;
+            actor.Bind(state, _authority.Clock, _player.transform);
             _enemies.Add(actor);
-            return actor;
+            _views[state] = actor;
         }
 
-        /// <summary>The boss calls its brood as its health falls (Core BossPhases decides when).</summary>
-        private void CheckBossPhases()
-        {
-            if (_bossPhases == null) return;
-            var boss = _enemies.FirstOrDefault(e => e.Stats.Boss);
-            if (boss == null || !boss.IsAlive || boss.Definition.Brood == null) return;
-            var waves = _bossPhases.Check(boss.Health.Fraction);
-            if (waves <= 0) return;
-            var b = _zone.Bounds;
-            for (var w = 0; w < waves; w++)
-            foreach (var corner in new[] { new Vector3(b.min.x + 1.5f, 0f, b.max.z - 1.5f), new Vector3(b.max.x - 1.5f, 0f, b.max.z - 1.5f) })
-                Spawn(boss.Definition.Brood, new Vector3(corner.x, _player.transform.position.y, corner.z), 1.2f);
-            GameHud.Instance?.ShowBanner("THE MOTHER SCREAMS", "Her brood claws up through the floor.", 1.6f);
-            AudioService.Play(SoundId.EnemyBuff);
-            CameraDirector.Instance?.AddTrauma(0.5f);
-            GameInput.Instance?.Rumble(0.8f, 1f, 0.4f);
-        }
-
-        private void NudgeInside(EncounterZone zone)
-        {
-            var b = zone.Bounds;
-            var p = _player.transform.position;
-            var inner = new Vector3(
-                Mathf.Clamp(p.x, b.min.x + 0.8f, b.max.x - 0.8f), p.y,
-                Mathf.Clamp(p.z, b.min.z + 0.8f, b.max.z - 0.8f));
-            if ((inner - p).sqrMagnitude > 0.0001f) _player.Controller.Teleport(inner, _player.transform.rotation);
-        }
-
-        private bool MayCommit() => _enemies.Count(e => e.IsAlive && e.IsCommitted) < BattleConfig.MaxCommittedAttackers;
-
-        private void End(bool won)
+        private void ShowEnd(bool won, bool defeated)
         {
             CloseMenus();
-            _focus.Close();
             WorldTime.Instance?.SetScale(ShootdodgeKey, 1f);
-            _wasShootdodging = false;
+            WorldTime.Instance?.SetScale(FocusKey, 1f);
             _dome.Hide();
-            if (won) _zone.MarkCleared();
-            else _zone.MarkEscaped();
+            if (_zone != null)
+            {
+                if (won) _zone.MarkCleared();
+                else _zone.MarkEscaped();
+            }
             foreach (var e in _enemies)
                 if (e != null && !e.Removed) Destroy(e.gameObject, won ? 3f : 0f);
             _enemies.Clear();
-            _player.ClearBuffs();
+            _views.Clear();
+            _targets.Clear();
+            if (_grenade != null) Destroy(_grenade);
             _player.Controller.Animator?.SetBool(AnimParams.InBattle, false);
             var hud = GameHud.Instance;
             hud?.SetBattleMode(false);
             hud?.ShowTarget(null, 0f);
-            Phase = BattlePhase.Inactive;
+            if (_reloadShown) hud?.ShowReload(-1f, 0f, 0f);
+            _reloadShown = false;
+            if (_authority.Recorder == LastBattleLog) _authority.Recorder = null;
             var zone = _zone;
             _zone = null;
             BattleEnded?.Invoke(zone, won);
+            if (defeated) GameSession.Instance?.OnPlayerDefeated();
         }
 
         // ------------------------------------------------------------------ per frame
@@ -238,129 +238,96 @@ namespace Unity.Eve.Battle
         private void Update()
         {
             if (!InBattle) return;
-            var input = _player.Controls;
-            _focus.Tick(Time.unscaledDeltaTime);
-
-            switch (Phase)
+            if (Rules.Stage == BattleStage.Command)
             {
-                case BattlePhase.Active:
-                    _tokens?.Tick(Time.deltaTime);
-                    TickRealtime(Time.deltaTime);
-                    if (_focus.IsOpen) HandleFocusInput(input);
-                    else if (input != null && input.ConfirmPressed && _atb.IsFull && _player.Controller.CanAct) OpenCommandMenu();
-                    if (!_focus.IsOpen && input != null && input.InteractPressed && Time.time >= _shoveReadyAt && _player.Controller.CanAct) DoShove();
-                    if (!_focus.IsOpen && input != null && input.ShootdodgePressed && CanShootdodge()) DoShootdodge();
-                    if (_player.Controller.IsShootdodging && input != null && input.ConfirmPressed) FireDuringShootdodge();
-                    TrackShootdodgeLanding();
-                    break;
-                case BattlePhase.Executing:
-                    TickRealtime(Time.deltaTime);
-                    break;
-                case BattlePhase.Command:
-                    HandleMenuInput(input);
-                    break;
-                case BattlePhase.Targeting:
-                    HandleTargetInput(input);
-                    break;
-                case BattlePhase.Aiming:
-                    HandleAimInput(input);
-                    break;
+                var input = _player.Controls;
+                switch (_menuPhase)
+                {
+                    case BattlePhase.Command:
+                        HandleMenuInput(input);
+                        break;
+                    case BattlePhase.Targeting:
+                        HandleTargetInput(input);
+                        break;
+                    case BattlePhase.Aiming:
+                        HandleAimInput(input);
+                        break;
+                }
             }
 
-            EnemyActor.Separate(_enemies, _player.transform);
-            if (Phase == BattlePhase.Active || Phase == BattlePhase.Executing) CheckBossPhases();
-            if (_focus.IsOpen) GameHud.Instance?.ShowFocus(_focus.Remaining01);
-            CheckOutcome();
-        }
-
-        private void TickRealtime(float dt)
-        {
-            _atb.Tick(dt, _player.AtbRate, _player.Hasted);
-            _player.Pe.Regenerate(dt);
-        }
-
-        private void CheckOutcome()
-        {
-            if (Phase == BattlePhase.Victory || Phase == BattlePhase.Defeat) return;
-            if (_player.IsDead && Phase != BattlePhase.Executing)
+            var hud = GameHud.Instance;
+            if (Rules.Focus.IsOpen) hud?.ShowFocus(Rules.Focus.Remaining01);
+            var reload = Rules.CurrentReload;
+            if (reload != null)
             {
-                Phase = BattlePhase.Defeat;
-                CloseMenus();
-                _focus.Close();
-                StartCoroutine(DefeatRoutine());
-                return;
+                hud?.ShowReload(reload.Progress01, reload.SweetSpotStart01, reload.SweetSpotEnd01);
+                _reloadShown = true;
             }
-            if (_enemies.Count > 0 && _enemies.TrueForAll(e => !e.IsAlive) && Phase != BattlePhase.Executing)
+            else if (_reloadShown)
             {
-                Phase = BattlePhase.Victory;
-                CloseMenus();
-                _focus.Close();
-                StartCoroutine(VictoryRoutine());
+                hud?.ShowReload(-1f, 0f, 0f);
+                _reloadShown = false;
             }
         }
 
-        private IEnumerator VictoryRoutine()
+        // ------------------------------------------------------------------ what the battle raises
+
+        private void OnBattleEvent(BattleEvent e)
         {
             var hud = GameHud.Instance;
-            AudioService.Play(SoundId.Victory);
-            yield return new WaitForSeconds(0.6f);
-            var levels = _player.GainExp(_expEarned);
-            hud?.ShowBanner("VICTORY", $"EXP +{_expEarned}", 1.8f);
-            if (levels > 0)
+            var fx = BattleFx.Instance;
+            var cam = CameraDirector.Instance;
+            var pad = GameInput.Instance;
+            var me = _player.transform;
+            var enemy = ViewOf(e.Enemy);
+            switch (e.Cue)
             {
-                yield return new WaitForSeconds(0.9f);
-                AudioService.Play(SoundId.LevelUp);
-                hud?.ShowMessage($"Level up! LV {_player.Progression.Level}. Active Time rises; the gauge fills faster.", 3.5f);
-            }
-            yield return new WaitForSeconds(1.2f);
-            End(won: true);
-        }
-
-        private IEnumerator DefeatRoutine()
-        {
-            _player.Controller.Animator?.SetTrigger(AnimParams.Die);
-            yield return new WaitForSeconds(1.5f);
-            End(won: false);
-            GameSession.Instance?.OnPlayerDefeated();
-        }
-
-        // ------------------------------------------------------------------ enemy strikes and Focus
-
-        private void OnEnemyStrike(EnemyActor enemy)
-        {
-            if (!InBattle || !enemy.IsAlive) return;
-            var d = enemy.transform.position - _player.transform.position;
-            d.y = 0f;
-            var outcome = EnemyAttackCycle.Resolve(d.magnitude, enemy.Stats.Reach, _player.Controller.IsInvulnerable);
-            var hud = GameHud.Instance;
-            switch (outcome)
-            {
-                case StrikeOutcome.Evaded:
-                    if (FocusWindow.IsPerfect(_player.Controller.SecondsSinceDodge) && Phase == BattlePhase.Active)
-                    {
-                        _focusAttacker = enemy;
-                        _focus.Open();
-                        AudioService.Play(SoundId.PerfectDodge);
-                        hud?.ShowFocus(1f);
-                        GameInput.Instance?.Rumble(0.2f, 0.5f, 0.12f);
-                    }
-                    else
-                    {
-                        hud?.Popup(_player.transform.position + Vector3.up * 1.8f, "MISS", new Color(0.7f, 0.9f, 1f));
-                    }
+                case BattleCue.EnemySpawned:
+                    ShowSpawn(e.Enemy);
                     break;
-                case StrikeOutcome.Hit:
-                    var exposure = Cover.Exposure(_player.transform.position, enemy.AimPoint);
-                    var inCover = exposure > 0.05f;
-                    var raw = enemy.Stats.AttackDamage * enemy.DamageMultiplier * _rng.Range(0.85f, 1.15f);
-                    raw *= 1f - exposure * BattleConfig.CoverMaxReduction;
-                    var dealt = _player.TakeDamage(Mathf.RoundToInt(raw));
-                    var severity = Mathf.Min(1f, dealt / 14f);
+                case BattleCue.BroodCalled:
+                    hud?.ShowBanner("THE MOTHER SCREAMS", "Her brood claws up through the floor.", 1.6f);
+                    AudioService.Play(SoundId.EnemyBuff);
+                    cam?.AddTrauma(0.5f);
+                    pad?.Rumble(0.8f, 1f, 0.4f);
+                    break;
+                case BattleCue.AtbFilled:
+                    AudioService.Play(SoundId.AtbReady);
+                    pad?.Rumble(0.1f, 0.2f, 0.06f);
+                    break;
+                case BattleCue.MenuOpened:
+                    WorldTime.Instance?.Pause(PauseKey);
+                    _menuPhase = BattlePhase.Command;
+                    _menu = null;
+                    _menuStack.Clear();
+                    PushMenu(BuildCommandMenu());
+                    break;
+                case BattleCue.MenuClosed:
+                    CloseMenus();
+                    break;
+                case BattleCue.FocusOpened:
+                    WorldTime.Instance?.SetScale(FocusKey, FocusWindow.SlowTimeScale);
+                    break;
+                case BattleCue.FocusClosed:
+                    WorldTime.Instance?.SetScale(FocusKey, 1f);
+                    hud?.ShowFocus(-1f);
+                    break;
+                case BattleCue.PerfectDodge:
+                    AudioService.Play(SoundId.PerfectDodge);
+                    hud?.ShowFocus(1f);
+                    if (!e.Flag) pad?.Rumble(0.2f, 0.5f, 0.12f);
+                    break;
+                case BattleCue.StrikeEvaded:
+                    hud?.Popup(me.position + Vector3.up * 1.8f, "MISS", new Color(0.7f, 0.9f, 1f));
+                    break;
+                case BattleCue.PlayerHit:
+                {
+                    var severity = Mathf.Min(1f, e.Amount / 14f);
                     hud?.Hurt(severity);
-                    hud?.Popup(_player.transform.position + Vector3.up * 1.8f, dealt.ToString(), new Color(1f, 0.45f, 0.4f));
-                    if (inCover)
+                    hud?.Popup(me.position + Vector3.up * 1.8f, e.Amount.ToString(), new Color(1f, 0.45f, 0.4f));
+                    if (e.Flag)
                     {
-                        hud?.Popup(_player.transform.position + Vector3.up * 2.3f, "COVER", new Color(0.6f, 0.85f, 1f));
+                        hud?.Popup(me.position + Vector3.up * 2.3f, "COVER", new Color(0.6f, 0.85f, 1f));
                         AudioService.Play(SoundId.CoverBlock);
                     }
                     else
@@ -368,156 +335,240 @@ namespace Unity.Eve.Battle
                         AudioService.Play(SoundId.PlayerHurt);
                     }
                     _player.Controller.Animator?.SetTrigger(AnimParams.Hit);
-                    CameraDirector.Instance?.AddTrauma(0.25f + 0.3f * severity);
-                    GameInput.Instance?.Rumble(0.9f, 1f, 0.18f);
-                    if (enemy.Stats.LeavesPuddle) HazardPuddle.Spawn(_player.transform.position, _player);
+                    cam?.AddTrauma(0.25f + 0.3f * severity);
+                    pad?.Rumble(0.9f, 1f, 0.18f);
                     break;
-            }
-        }
-
-        private void HandleFocusInput(PlayerControls input)
-        {
-            if (input == null) return;
-            if (input.FocusHealPressed) UseFocusMove(FocusMove.QuickHeal);
-            else if (input.FocusVitalsPressed) UseFocusMove(FocusMove.TargetVitals);
-            else if (input.FocusRipostePressed) UseFocusMove(FocusMove.Riposte);
-        }
-
-        /// <summary>Spends the open Focus window on a free move. No ATB cost.</summary>
-        public bool UseFocusMove(FocusMove move)
-        {
-            if (_focusAttacker == null || !_focus.TryUse()) return false;
-            var hud = GameHud.Instance;
-            switch (move)
-            {
-                case FocusMove.QuickHeal:
-                    var healed = _player.Heal(FocusWindow.QuickHealAmount);
-                    hud?.Popup(_player.transform.position + Vector3.up * 1.8f, $"+{healed}", new Color(0.5f, 1f, 0.6f));
-                    BattleFx.Instance?.Aura(_player.transform, new Color(0.4f, 1f, 0.6f));
+                }
+                case BattleCue.PuddleSpawned:
+                    var disc = HazardPuddle.Show(e.At.ToUnity());
+                    if (disc != null) _puddles[e.Index] = disc;
+                    break;
+                case BattleCue.PuddleBurned:
+                    hud?.Hurt(0.15f);
+                    hud?.Popup(me.position + Vector3.up * 1.6f, e.Amount.ToString(), new Color(0.6f, 1f, 0.3f));
+                    AudioService.Play(SoundId.AcidSizzle, 0.5f);
+                    break;
+                case BattleCue.PuddleGone:
+                    if (_puddles.TryGetValue(e.Index, out var gone))
+                    {
+                        if (gone != null) Destroy(gone);
+                        _puddles.Remove(e.Index);
+                    }
+                    break;
+                case BattleCue.FocusHealed:
+                    hud?.Popup(me.position + Vector3.up * 1.8f, $"+{e.Amount}", new Color(0.5f, 1f, 0.6f));
+                    fx?.Aura(me, new Color(0.4f, 1f, 0.6f));
                     AudioService.Play(SoundId.Heal);
                     break;
-                case FocusMove.TargetVitals:
-                    if (!_focusAttacker.IsAlive) break;
-                    _player.Controller.FaceTowards(_focusAttacker.transform.position);
-                    _player.Controller.Animator?.SetTrigger(AnimParams.Shoot);
-                    var hit = DamageCalculator.Roll(WeaponDamage(), FocusWindow.VitalsMultiplier, _focusAttacker.Stats.Defense, _rng, canCrit: false);
-                    ShotVisual(_focusAttacker);
-                    DealDamage(_focusAttacker, hit.Amount, critical: true, label: "VITALS");
+                case BattleCue.Motion:
+                    _player.Controller.Animator?.SetTrigger(MotionTrigger(e.Motion));
                     break;
-                case FocusMove.Riposte:
-                    if (!_focusAttacker.IsAlive) break;
-                    _focusAttacker.Knockback(_player.transform.position, BattleConfig.ShoveKnockbackMetres);
-                    _focusAttacker.ApplyStun(FocusWindow.RiposteStunSeconds);
+                case BattleCue.Shot:
+                    if (enemy != null) ShotVisual(enemy);
+                    break;
+                case BattleCue.EnemyDamaged:
+                    if (enemy != null) ShowDamage(enemy, e.Amount, e.Flag, e.Label);
+                    break;
+                case BattleCue.EnemyKilled:
+                    if (enemy != null) EnemyKilled?.Invoke(enemy);
+                    break;
+                case BattleCue.ShotMissed:
+                    if (enemy != null) hud?.Popup(enemy.AimPoint, "MISS", new Color(0.7f, 0.7f, 0.7f));
+                    break;
+                case BattleCue.Shove:
                     _player.Controller.Animator?.SetTrigger(AnimParams.Shove);
-                    DealDamage(_focusAttacker, WeaponDamage(), critical: true, label: "RIPOSTE");
+                    AudioService.Play(SoundId.Shove);
+                    break;
+                case BattleCue.ShoveMissed:
+                    hud?.Popup(e.At.ToUnity() + Vector3.up * 1.8f, "MISS", new Color(0.7f, 0.9f, 1f));
+                    break;
+                case BattleCue.ShoveLanded:
+                    cam?.AddTrauma(0.15f);
+                    pad?.Rumble(0.3f, 0.5f, 0.1f);
+                    break;
+                case BattleCue.ShootdodgeBegan:
+                    // The world (enemy windups, their strikes) slows to a crawl while she's airborne.
+                    WorldTime.Instance?.SetScale(ShootdodgeKey, BattleConfig.ShootdodgeTimeScale);
+                    break;
+                case BattleCue.ShootdodgeLanded:
+                    WorldTime.Instance?.SetScale(ShootdodgeKey, 1f);
+                    hud?.Hurt(0.12f);
+                    hud?.Popup(me.position + Vector3.up * 1.6f, e.Amount > 0 ? $"-{e.Amount}" : "LANDED", new Color(1f, 0.7f, 0.3f));
+                    cam?.AddTrauma(0.3f);
+                    break;
+                case BattleCue.Denied:
+                    AudioService.Play(SoundId.UiDeny);
+                    break;
+                case BattleCue.KatanaDrawn:
+                    _player.Katana?.Draw();
+                    _player.Katana?.Trail(true);
+                    break;
+                case BattleCue.KatanaSheathed:
+                    _player.Katana?.Sheathe();
+                    break;
+                case BattleCue.BladeHit:
+                    if (enemy != null) fx?.Burst(enemy.AimPoint, BladeColor, e.Flag ? 26 : 14, 5f, 0.05f);
+                    break;
+                case BattleCue.SlashSwing:
+                    _player.Controller.Animator?.SetTrigger(AnimParams.Slash);
+                    AudioService.Play(SoundId.KatanaSlash);
+                    break;
+                case BattleCue.SlashLanded:
+                    cam?.AddTrauma(0.2f);
+                    break;
+                case BattleCue.RushBegan:
+                    _player.Controller.Animator?.SetTrigger(AnimParams.Rush);
+                    AudioService.Play(SoundId.KatanaRush);
+                    fx?.Tracer(e.At.ToUnity() + Vector3.up * 1.0f, e.To.ToUnity() + Vector3.up * 1.0f, BladeColor);
+                    break;
+                case BattleCue.RushEnded:
+                {
+                    var end = e.To.ToUnity();
+                    _player.Controller.Animator?.SetTrigger(AnimParams.Slash);
+                    fx?.Flash(end + Vector3.up, BladeColor, 6f, 5f, 0.25f);
+                    cam?.AddTrauma(0.35f);
+                    pad?.Rumble(0.5f, 0.9f, 0.18f);
+                    if (e.Amount > 1) hud?.Popup(end + Vector3.up * 2.2f, $"{e.Amount} CUT!", new Color(1f, 0.8f, 0.25f), big: true);
+                    break;
+                }
+                case BattleCue.Cast:
+                    _player.Controller.Animator?.SetTrigger(AnimParams.Cast);
+                    AudioService.Play(SoundId.PeCast);
+                    if (e.Index >= 0 && e.Index < _player.Abilities.Length) fx?.Aura(me, _player.Abilities[e.Index].Tint);
+                    break;
+                case BattleCue.AbilityHealed:
+                    hud?.Popup(me.position + Vector3.up * 1.8f, $"+{e.Amount}", new Color(0.5f, 1f, 0.6f));
+                    AudioService.Play(SoundId.Heal);
+                    break;
+                case BattleCue.EnergyShot:
+                    if (enemy != null && e.Index >= 0 && e.Index < _player.Abilities.Length)
+                        fx?.Tracer(me.position + Vector3.up * 1.2f, enemy.AimPoint, _player.Abilities[e.Index].Tint);
+                    break;
+                case BattleCue.Hasted:
+                    hud?.ShowMessage($"Haste: the gauge fills twice as fast for {e.Value:0}s.");
+                    break;
+                case BattleCue.Barriered:
+                    hud?.ShowMessage($"Barrier: damage halved for {e.Value:0}s.");
+                    break;
+                case BattleCue.Slowed:
+                    hud?.ShowMessage($"Slow: the creatures move at half speed for {e.Value:0}s.");
+                    break;
+                case BattleCue.ItemHealed:
+                    hud?.Popup(me.position + Vector3.up * 1.8f, $"+{e.Amount}", new Color(0.5f, 1f, 0.6f));
+                    fx?.Aura(me, new Color(0.4f, 1f, 0.6f));
+                    AudioService.Play(SoundId.Heal);
+                    break;
+                case BattleCue.PeRestored:
+                    fx?.Aura(me, new Color(0.4f, 0.6f, 1f));
+                    AudioService.Play(SoundId.Heal);
+                    break;
+                case BattleCue.ThrowStarted:
+                    _player.Controller.Animator?.SetTrigger(AnimParams.Throw);
+                    AudioService.Play(SoundId.Throw);
+                    break;
+                case BattleCue.Thrown:
+                    StartCoroutine(FlyGrenade(e.At.ToUnity(), e.To.ToUnity(), e.Value));
+                    break;
+                case BattleCue.Burst:
+                {
+                    if (_grenade != null) Destroy(_grenade);
+                    _grenade = null;
+                    var end = e.To.ToUnity();
+                    if (e.Flag)
+                    {
+                        fx?.Explosion(end, e.Value, new Color(1f, 0.55f, 0.15f));
+                        AudioService.Play(SoundId.Explosion);
+                        cam?.AddTrauma(0.6f);
+                        pad?.Rumble(1f, 1f, 0.35f);
+                    }
+                    else
+                    {
+                        fx?.Flash(end + Vector3.up, Color.white, 12f, e.Value * 3f, 0.4f);
+                        fx?.Burst(end, Color.white, 40, 6f);
+                        AudioService.Play(SoundId.Explosion, 0.5f);
+                    }
+                    break;
+                }
+                case BattleCue.Reloaded:
+                    if (e.Flag)
+                    {
+                        AudioService.Play(SoundId.ActiveReload);
+                        hud?.ShowMessage("Active reload!");
+                        hud?.Popup(me.position + Vector3.up * 1.8f, "ACTIVE RELOAD", new Color(1f, 0.87f, 0.33f));
+                    }
+                    else
+                    {
+                        AudioService.Play(SoundId.Reload);
+                        hud?.ShowMessage("Reloaded.");
+                    }
+                    break;
+                case BattleCue.Escaped:
+                    hud?.ShowMessage("Kat slips away.");
+                    AudioService.Play(SoundId.Dodge);
+                    break;
+                case BattleCue.EscapeFailed:
+                    hud?.ShowMessage("Couldn't escape!");
+                    AudioService.Play(SoundId.UiDeny);
+                    break;
+                case BattleCue.VictoryBegan:
+                    AudioService.Play(SoundId.Victory);
+                    break;
+                case BattleCue.Victory:
+                    hud?.ShowBanner("VICTORY", $"EXP +{e.Amount}", 1.8f);
+                    break;
+                case BattleCue.LevelUp:
+                    AudioService.Play(SoundId.LevelUp);
+                    hud?.ShowMessage($"Level up! LV {e.Amount}. Active Time rises; the gauge fills faster.", 3.5f);
+                    break;
+                case BattleCue.Ended:
+                    ShowEnd(e.Flag, e.Index == 1);
                     break;
             }
-            return true;
         }
 
-        /// <summary>Free melee (Interact, no ATB cost, no ammo): a short-reach shove that knocks back and
-        /// staggers whatever's in front of her. Control, not damage â€” real weapons still do the killing.</summary>
-        private void DoShove()
+        private static int MotionTrigger(PlayerMotion motion)
         {
-            var origin = _player.transform.position;
-            var facing = _player.transform.forward;
-            EnemyActor best = null;
-            var bestDot = 0.3f; // roughly in front; nothing closer to her side counts as a target
-            foreach (var e in _enemies.Where(e => e.IsAlive))
+            switch (motion)
             {
-                var d = e.transform.position - origin;
-                d.y = 0f;
-                var dist = d.magnitude;
-                if (dist > BattleConfig.ShoveReach + e.BodyRadius) continue;
-                var dot = dist > 0.0001f ? Vector3.Dot(facing, d.normalized) : 1f;
-                if (dot < bestDot) continue;
-                bestDot = dot;
-                best = e;
+                case PlayerMotion.Shoot: return AnimParams.Shoot;
+                case PlayerMotion.Slash: return AnimParams.Slash;
+                case PlayerMotion.Rush: return AnimParams.Rush;
+                case PlayerMotion.Cast: return AnimParams.Cast;
+                case PlayerMotion.Throw: return AnimParams.Throw;
+                case PlayerMotion.Shove: return AnimParams.Shove;
+                default: return AnimParams.Die;
             }
-            _shoveReadyAt = Time.time + BattleConfig.ShoveCooldownSeconds;
-            _player.Controller.Root(BattleConfig.ShoveRootSeconds);
-            _player.Controller.Animator?.SetTrigger(AnimParams.Shove);
-            AudioService.Play(SoundId.Shove);
-            if (best == null)
-            {
-                GameHud.Instance?.Popup(origin + Vector3.up * 1.8f, "MISS", new Color(0.7f, 0.9f, 1f));
-                return;
-            }
-            best.Knockback(origin, BattleConfig.ShoveKnockbackMetres);
-            best.ApplyStun(BattleConfig.ShoveStunSeconds);
-            var dmg = Mathf.Max(1, Mathf.RoundToInt(WeaponDamage() * BattleConfig.ShoveDamageFraction));
-            DealDamage(best, dmg, critical: false, label: "SHOVE");
-            CameraDirector.Instance?.AddTrauma(0.15f);
-            GameInput.Instance?.Rumble(0.3f, 0.5f, 0.1f);
         }
 
-        // ------------------------------------------------------------------ shootdodge (Max Payne dive)
-
-        private bool CanShootdodge()
+        /// <summary>A visible grenade on a ballistic arc, on scaled time (it freezes if the world pauses); the
+        /// authority decides when it lands.</summary>
+        private IEnumerator FlyGrenade(Vector3 start, Vector3 end, float flight)
         {
-            var w = _player.Weapon;
-            return w != null && !w.Stats.Melee && _player.Controller.CanAct && _player.Controller.ShootdodgeReady;
+            if (_grenade != null) Destroy(_grenade);
+            var grenade = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            Destroy(grenade.GetComponent<Collider>());
+            grenade.transform.localScale = Vector3.one * 0.14f;
+            _grenade = grenade;
+            for (var t = 0f; grenade != null && t < flight; t += Time.deltaTime)
+            {
+                var k = t / flight;
+                grenade.transform.position = Vector3.Lerp(start, end, k) + Vector3.up * (Mathf.Sin(k * Mathf.PI) * 2f);
+                yield return null;
+            }
         }
 
-        private void DoShootdodge()
-        {
-            if (!_player.Controller.TryStartShootdodge(_player.Controller.CurrentWish)) return;
-            // The world (enemy windups, their strikes) slows to a crawl for as long as she's airborne;
-            // her own leap runs on real time regardless (see PlayerController.TryStartShootdodge).
-            WorldTime.Instance?.SetScale(ShootdodgeKey, BattleConfig.ShootdodgeTimeScale);
-        }
+        // ------------------------------------------------------------------ Focus (the same front the self-play drives)
 
-        /// <summary>One aimed round at the nearest target in weapon range, spent from her real clip â€”
-        /// mashed as fast as the player can press Confirm while she's still in the air.</summary>
-        private void FireDuringShootdodge()
-        {
-            var w = _player.Weapon;
-            if (w == null || w.Stats.Melee || _player.RoundsInClip <= 0)
-            {
-                AudioService.Play(SoundId.UiDeny);
-                return;
-            }
-            var origin = _player.transform.position;
-            var target = _enemies.Where(e => e.IsAlive && Flat(e.transform.position - origin) <= w.Stats.Range + e.BodyRadius)
-                .OrderBy(e => Flat(e.transform.position - origin)).FirstOrDefault();
-            if (target == null)
-            {
-                AudioService.Play(SoundId.UiDeny);
-                return;
-            }
-            _player.Controller.FaceTowards(target.transform.position);
-            ShotVisual(target);
-            var hit = DamageCalculator.Roll(WeaponDamage(), 1f, target.Stats.Defense, _rng);
-            DealDamage(target, hit.Amount, hit.Critical);
-            if (hit.Critical) target.Knockback(origin, 0.3f);
-            _player.SpendRounds(1);
-            _lastAttackAt = Time.time;
-            _lastAttackTarget = target;
-        }
+        /// <summary>Spends the open Focus window on a free move. No ATB cost.</summary>
+        public bool UseFocusMove(FocusMove move) => Submit(BattleOrder.FocusMove, index: (int)move);
 
-        /// <summary>Edge-detects landing (IsShootdodging true â†’ false) to end bullet time and apply the
-        /// hard-landing cost; PlayerController owns the leap itself and already applied the landing root.</summary>
-        private void TrackShootdodgeLanding()
-        {
-            var now = _player.Controller.IsShootdodging;
-            if (_wasShootdodging && !now)
-            {
-                WorldTime.Instance?.SetScale(ShootdodgeKey, 1f);
-                var dealt = _player.TakeDamage(BattleConfig.ShootdodgeLandDamage);
-                GameHud.Instance?.Hurt(0.12f);
-                GameHud.Instance?.Popup(_player.transform.position + Vector3.up * 1.6f, dealt > 0 ? $"-{dealt}" : "LANDED", new Color(1f, 0.7f, 0.3f));
-                CameraDirector.Instance?.AddTrauma(0.3f);
-            }
-            _wasShootdodging = now;
-        }
+        /// <summary>Opens a Focus window against the nearest enemy, as if a perfect dodge had happened.</summary>
+        public bool DebugOpenFocus() => Phase == BattlePhase.Active && Submit(BattleOrder.DebugFocus);
 
         // ------------------------------------------------------------------ damage
 
-        private int WeaponDamage() => _player.Weapon != null ? _player.Weapon.Stats.Damage + _player.Progression.Level : 8;
-
-        private void DealDamage(EnemyActor enemy, int amount, bool critical, string label = null)
+        private void ShowDamage(EnemyActor enemy, int dealt, bool critical, string label)
         {
-            var dealt = enemy.TakeHit(amount);
             var text = label != null ? $"{label} {dealt}" : critical ? $"{dealt}!" : dealt.ToString();
             GameHud.Instance?.Popup(enemy.AimPoint, text, critical ? new Color(1f, 0.87f, 0.33f) : Color.white, critical);
             AudioService.Play(critical ? SoundId.HitCritical : SoundId.HitFlesh);
@@ -526,15 +577,6 @@ namespace Unity.Eve.Battle
             GameInput.Instance?.Rumble(critical ? 0.6f : 0.35f, critical ? 1f : 0.75f, critical ? 0.16f : 0.07f);
             if (_targets.Count > 0 && Phase == BattlePhase.Targeting) RefreshTargetPanel();
             else GameHud.Instance?.ShowTarget($"{enemy.Stats.DisplayName}  LV{enemy.Stats.Level}", enemy.Health.Fraction);
-        }
-
-        /// <summary>Raised for every creature killed (kill count for the ending).</summary>
-        public event System.Action<EnemyActor> EnemyKilled;
-
-        private void OnEnemyDied(EnemyActor enemy)
-        {
-            _expEarned += enemy.Stats.Exp;
-            EnemyKilled?.Invoke(enemy);
         }
 
         private void ShotVisual(EnemyActor target)

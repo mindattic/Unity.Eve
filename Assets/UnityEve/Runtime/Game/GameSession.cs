@@ -5,6 +5,7 @@ using Unity.Eve.Battle;
 using Unity.Eve.Cameras;
 using Unity.Eve.Core.Battle;
 using Unity.Eve.Core.Session;
+using Unity.Eve.Core.Sim;
 using Unity.Eve.Data;
 using Unity.Eve.Input;
 using Unity.Eve.Player;
@@ -41,6 +42,13 @@ namespace Unity.Eve.Game
         /// </summary>
         public ISession Session { get; private set; }
 
+        /// <summary>
+        /// The one authority over game state (U.EVE-LAW-6): the seats' bodies and the battle, stepped at the fixed
+        /// tick in <see cref="LateUpdate"/>, after every view and script has had its frame. Game commands
+        /// submitted to <see cref="Session"/> reach it there.
+        /// </summary>
+        public GameAuthority Authority { get; private set; }
+
         /// <summary>The character a seat plays; null for a seat with no character.</summary>
         public PlayerCharacter PlayerOf(PlayerId seat) => _player != null && _player.Seat == seat ? _player : null;
 
@@ -67,11 +75,19 @@ namespace Unity.Eve.Game
         private void Awake()
         {
             Instance = this;
-            Session = new LocalSession(players: 1);
+            Authority = SimHost.For(gameObject.scene);
+            var local = new LocalSession(players: 1) { Handler = Authority };
+            Authority.Input = seat => local.ControlsOf(seat);
+            Session = local;
         }
+
+        /// <summary>Steps the authority's fixed ticks for the real time that passed, each at the world's time
+        /// scale as it stands when that tick starts (WorldTime remains its only writer).</summary>
+        private void LateUpdate() => Authority.Advance(Time.unscaledDeltaTime, () => Time.timeScale);
 
         private void OnDestroy()
         {
+            SimHost.Release(Authority);
             if (Instance == this) Instance = null;
         }
 

@@ -1,15 +1,20 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using Unity.Eve.Core.Battle;
 using Unity.Eve.Core.Items;
 using Unity.Eve.Core.Session;
+using Unity.Eve.Core.Sim;
 using Unity.Eve.Data;
 
 namespace Unity.Eve.Player
 {
     /// <summary>
-    /// The heroine's state: HP, Parasite Energy, level, bag and weapon. Thin MonoBehaviour shell
-    /// over the pure Core types so the rules stay testable outside Unity.
+    /// The heroine as the scene knows her: her seat, and the definition assets (weapons, abilities, the item
+    /// database) her rules are made from. Her state itself (HP, Parasite Energy, level, bag, magazines, buffs)
+    /// is the Core <see cref="PlayerState"/> the authority owns; this only forwards to it and maps weapon
+    /// indices back to their definitions.
     /// </summary>
     public sealed class PlayerCharacter : MonoBehaviour
     {
@@ -21,10 +26,8 @@ namespace Unity.Eve.Player
         [Tooltip("The seat whose controls drive this character (0 = the first player).")]
         [SerializeField] private int _seat;
 
-        private readonly System.Collections.Generic.Dictionary<WeaponDefinition, int> _clips =
-            new System.Collections.Generic.Dictionary<WeaponDefinition, int>();
-        private float _hasteUntil;
-        private float _barrierUntil;
+        private readonly List<WeaponDefinition> _weaponDefs = new List<WeaponDefinition>();
+        private PlayerState _state;
 
         /// <summary>The player this character belongs to: its controls, and everything it owns, are keyed by this.</summary>
         public PlayerId Seat => PlayerId.Of(_seat);
@@ -32,27 +35,56 @@ namespace Unity.Eve.Player
         /// <summary>This character's seat's controls; null when no session is running.</summary>
         public PlayerControls Controls => Game.GameSession.ControlsOf(Seat);
 
-        public Health Health { get; private set; }
-        public ParasiteEnergy Pe { get; private set; }
-        public Progression Progression { get; } = new Progression();
-        public Inventory Bag { get; private set; }
+        /// <summary>Her rules and state, owned by the authority (made on first use, so a sibling component's
+        /// Awake can reach it whichever Awake runs first).</summary>
+        public PlayerState State => _state ??= CreateState();
+
+        public Health Health => State.Health;
+        public ParasiteEnergy Pe => State.Pe;
+        public Progression Progression => State.Progression;
+        public Inventory Bag => State.Bag;
         public ItemDatabase Items => _items;
-        public WeaponDefinition Weapon => _weapon;
-        public WeaponDefinition[] Weapons => _weapons;
+        /// <summary>The weapon in hand (its definition: name, sound, ammo item).</summary>
+        public WeaponDefinition Weapon => State.WeaponIndex >= 0 && State.WeaponIndex < _weaponDefs.Count ? _weaponDefs[State.WeaponIndex] : null;
+
+        /// <summary>The weapon definitions, index for index with <see cref="PlayerState.Weapons"/>.</summary>
+        private List<WeaponDefinition> Defs
+        {
+            get
+            {
+                _ = State;
+                return _weaponDefs;
+            }
+        }
+        public WeaponDefinition[] Weapons => Defs.ToArray();
         public AbilityDefinition[] Abilities => _abilities;
-        public int RoundsInClip { get; private set; }
+        public int RoundsInClip => State.RoundsInClip;
         public PlayerController Controller { get; private set; }
         /// <summary>The katana she carries alongside whichever gun is equipped.</summary>
         public Katana Katana { get; private set; }
 
-        public bool Hasted => Time.time < _hasteUntil;
-        public bool Barrier => Time.time < _barrierUntil;
-        public bool IsDead => Health.IsDead;
+        public bool Hasted => State.Hasted;
+        public bool Barrier => State.Barrier;
+        public bool IsDead => State.IsDead;
 
         /// <summary>Raised with the HP actually lost.</summary>
-        public event Action<int> Damaged;
-        public event Action<int> Healed;
-        public event Action Died;
+        public event Action<int> Damaged
+        {
+            add => State.Damaged += value;
+            remove => State.Damaged -= value;
+        }
+
+        public event Action<int> Healed
+        {
+            add => State.Healed += value;
+            remove => State.Healed -= value;
+        }
+
+        public event Action Died
+        {
+            add => State.Died += value;
+            remove => State.Died -= value;
+        }
 
         public void Configure(ItemDatabase items, WeaponDefinition[] weapons, AbilityDefinition[] abilities)
         {
@@ -66,96 +98,60 @@ namespace Unity.Eve.Player
         {
             Controller = GetComponent<PlayerController>();
             Katana = GetComponent<Katana>();
-            Health = new Health(Progression.MaxHpForLevel);
-            Pe = new ParasiteEnergy(Progression.MaxPeForLevel);
-            Bag = new Inventory(_bagCapacity, id => _items != null ? _items.MaxStack(id) : 9);
-            RoundsInClip = _weapon != null ? _weapon.Stats.ClipSize : 0;
+            _ = State;
         }
 
-        public float AtbRate =>
-            AtbGauge.Rate(Progression.ActiveTime, 0, _weapon != null ? _weapon.Stats.AtbMultiplier : 1f);
-
-        public int TakeDamage(int amount)
+        private PlayerState CreateState()
         {
-            if (Barrier) amount = Mathf.Max(1, amount / 2);
-            var dealt = Health.Damage(amount);
-            if (dealt > 0) Damaged?.Invoke(dealt);
-            if (Health.IsDead) Died?.Invoke();
-            return dealt;
+            _weaponDefs.Clear();
+            foreach (var w in _weapons ?? Array.Empty<WeaponDefinition>())
+                if (w != null && !_weaponDefs.Contains(w)) _weaponDefs.Add(w);
+            if (_weapon != null && !_weaponDefs.Contains(_weapon)) _weaponDefs.Insert(0, _weapon);
+            return new PlayerState(Seat, _weaponDefs.Select(Slot), _weaponDefs.IndexOf(_weapon),
+                (_abilities ?? Array.Empty<AbilityDefinition>()).Select(a => a.Stats).ToArray(),
+                _bagCapacity, id => _items != null ? _items.MaxStack(id) : 9, id => _items != null ? _items.Find(id)?.Stats : null);
         }
 
-        public int Heal(int amount)
-        {
-            var healed = Health.Heal(amount);
-            if (healed > 0) Healed?.Invoke(healed);
-            return healed;
-        }
+        private static WeaponSlot Slot(WeaponDefinition w) => new WeaponSlot(w.Stats, w.Ammo != null ? w.Ammo.Id : null);
 
-        public void Revive()
-        {
-            Health.Revive();
-            Pe.SetMax(Pe.Max, refill: true);
-        }
+        public float AtbRate => State.AtbRate;
 
-        public void ApplyHaste(float seconds) => _hasteUntil = Time.time + seconds;
-        public void ApplyBarrier(float seconds) => _barrierUntil = Time.time + seconds;
-
-        public void ClearBuffs()
-        {
-            _hasteUntil = 0f;
-            _barrierUntil = 0f;
-        }
+        public int TakeDamage(int amount) => State.TakeDamage(amount);
+        public int Heal(int amount) => State.Heal(amount);
+        public void Revive() => State.Revive();
+        public void ApplyHaste(float seconds) => State.ApplyHaste(seconds);
+        public void ApplyBarrier(float seconds) => State.ApplyBarrier(seconds);
+        public void ClearBuffs() => State.ClearBuffs();
 
         /// <summary>Spends rounds from the clip; melee weapons never run dry.</summary>
-        public void SpendRounds(int rounds)
-        {
-            if (_weapon == null || _weapon.Stats.Melee) return;
-            RoundsInClip = Mathf.Max(0, RoundsInClip - rounds);
-        }
+        public void SpendRounds(int rounds) => State.SpendRounds(rounds);
 
         /// <summary>Loading a save: the magazine as it was.</summary>
-        public void SetRounds(int rounds) => RoundsInClip = _weapon == null || _weapon.Stats.Melee ? 0 : Mathf.Clamp(rounds, 0, _weapon.Stats.ClipSize);
+        public void SetRounds(int rounds) => State.SetRounds(rounds);
 
-        public bool NeedsReload => _weapon != null && !_weapon.Stats.Melee && RoundsInClip <= 0;
-        public bool CanReload => _weapon != null && _weapon.Ammo != null && RoundsInClip < _weapon.Stats.ClipSize && Bag.CountOf(_weapon.Ammo.Id) > 0;
+        public bool NeedsReload => State.NeedsReload;
+        public bool CanReload => State.CanReload;
 
-        /// <summary>Loads rounds from ammo items in the bag (each ammo item = one clip's worth up to Power rounds).</summary>
-        public bool Reload()
-        {
-            if (!CanReload) return false;
-            Bag.TryRemove(_weapon.Ammo.Id);
-            RoundsInClip = _weapon.Stats.ClipSize;
-            return true;
-        }
+        /// <summary>Loads a full magazine from one ammo item in the bag.</summary>
+        public bool Reload() => State.Reload();
 
         public void AddWeapon(WeaponDefinition weapon)
         {
-            if (weapon == null || System.Array.IndexOf(_weapons, weapon) >= 0) return;
-            var list = new System.Collections.Generic.List<WeaponDefinition>(_weapons) { weapon };
-            _weapons = list.ToArray();
+            if (weapon == null || Defs.Contains(weapon)) return;
+            _weaponDefs.Add(weapon);
+            State.AddWeapon(Slot(weapon));
         }
+
+        /// <summary>The index of <paramref name="weapon"/> in what she carries, or -1.</summary>
+        public int IndexOf(WeaponDefinition weapon) => Defs.IndexOf(weapon);
 
         public void Equip(WeaponDefinition weapon)
         {
-            if (weapon == null || weapon == _weapon) return;
-            // Each gun keeps its own magazine, so swapping is never a free reload.
-            if (_weapon != null) _clips[_weapon] = RoundsInClip;
-            _weapon = weapon;
-            RoundsInClip = weapon.Stats.Melee ? 0 : _clips.TryGetValue(weapon, out var left) ? left : weapon.Stats.ClipSize;
+            if (weapon == null || weapon == Weapon) return;
+            State.Equip(Defs.IndexOf(weapon));
         }
 
         /// <returns>Levels gained.</returns>
-        public int GainExp(int exp)
-        {
-            var levels = Progression.AddExp(exp);
-            if (levels > 0)
-            {
-                // Demo: Bonus Points go straight into Active Time (faster ATB), as PE1 players usually did.
-                Progression.TrySpendOnActiveTime(Progression.BonusPoints);
-                Health.SetMax(Progression.MaxHpForLevel, refill: true);
-                Pe.SetMax(Progression.MaxPeForLevel, refill: true);
-            }
-            return levels;
-        }
+        public int GainExp(int exp) => State.GainExp(exp);
     }
 }
