@@ -260,7 +260,7 @@ namespace Unity.Eve.Game
             menu.Add(new MenuEntry("Dodge / back: B / Space", null, true,
                 "Dodge just as a glowing enemy strikes for FOCUS: slow motion and a free Quick Heal, Target Vitals or Riposte. Optional, never required."));
             menu.Add(new MenuEntry("Shootdodge: RB / Left Ctrl", null, true,
-                "Leap in the direction you're holding, untouchable in the air. Time slows around you â€” press Battle Command to fire while you fly. Landing hits hard and roots you a moment: strategic, not free."));
+                "Leap in the direction you're holding, untouchable in the air. Time slows around you — press Battle Command to fire while you fly. Landing hits hard and roots you a moment: strategic, not free."));
             menu.Add(new MenuEntry("Menu: Start / Esc", null, true, "Items, equipment, this screen."));
             return menu;
         }

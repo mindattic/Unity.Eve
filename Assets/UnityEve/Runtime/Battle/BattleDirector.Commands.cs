@@ -123,7 +123,10 @@ namespace Unity.Eve.Battle
                 {
                     if (!Submit(BattleOrder.Equip, index: _player.IndexOf(w))) return;
                     GameHud.Instance?.ShowMessage($"{w.Stats.DisplayName} ready.");
+                    // A fresh root: without dropping the equip menu first, PushMenu would stack it under the
+                    // new root and the next Cancel would step back into it instead of resuming.
                     _menuStack.Clear();
+                    _menu = null;
                     PushMenu(BuildCommandMenu());
                 }, true, $"Dmg {w.Stats.Damage}  Range {w.Stats.Range:0}m  AT x{w.Stats.AtbMultiplier:0.0}"
                     + (w.Stats.Burst ? "  Burst" : "") + (w.Stats.BurstFireRounds > 0 ? "  Burst Fire" : "")));

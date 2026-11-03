@@ -283,19 +283,26 @@ namespace Unity.Eve.Core.Sim
             switch (Stage)
             {
                 case BattleStage.Active:
+                {
                     _tokens?.Tick(dt);
                     TickRealtime(dt);
-                    if (_focus.IsOpen) HandleFocusInput(input);
+                    // A press that spent the Focus window is used up: the gamepad's Quick Heal button is also
+                    // Interact, and must not shove in the same tick the window closes.
+                    var focusWasOpen = _focus.IsOpen;
+                    if (focusWasOpen) HandleFocusInput(input);
                     else if (input.ConfirmPressed && _atb.IsFull && Player.CanAct) OpenCommandMenu();
-                    if (!_focus.IsOpen && input.InteractPressed && Now >= _shoveReadyAt && Player.CanAct) DoShove();
+                    if (!focusWasOpen && !_focus.IsOpen && input.InteractPressed && Now >= _shoveReadyAt && Player.CanAct) DoShove();
                     if (!_focus.IsOpen && input.ShootdodgePressed && CanShootdodge()) DoShootdodge();
                     if (Player.IsShootdodging && input.ConfirmPressed) FireDuringShootdodge();
-                    TrackShootdodgeLanding();
                     break;
+                }
                 case BattleStage.Executing:
                     TickRealtime(dt);
                     break;
             }
+            // Every stage: the leap can outlast the fight (the last creature shot mid-air), and bullet time
+            // must still end when she lands instead of slowing the whole victory beat.
+            TrackShootdodgeLanding();
 
             // Creatures (a brood called up below joins from the next tick).
             for (int i = 0, n = _enemies.Count; i < n && i < _enemies.Count; i++) _enemies[i].Tick(dt);
@@ -385,7 +392,10 @@ namespace Unity.Eve.Core.Sim
                     Raise(new BattleEvent(BattleCue.PuddleGone) { Index = p.Id });
                     continue;
                 }
-                if (State.IsDead || Now < p.NextTickAt) continue;
+                // Burns only while the fight is on: a tick during the victory beat could kill her after she won,
+                // ending the battle "won" with her dead in the field and no game over.
+                var fighting = Stage == BattleStage.Active || Stage == BattleStage.Executing;
+                if (!fighting || State.IsDead || Now < p.NextTickAt) continue;
                 if ((p.At - Player.Position).Flat.Magnitude > BattleConfig.PuddleRadius) continue;
                 p.NextTickAt = Now + BattleConfig.PuddleTickSeconds;
                 var dealt = State.TakeDamage(BattleConfig.PuddleDamagePerTick);
@@ -397,7 +407,8 @@ namespace Unity.Eve.Core.Sim
 
         private void OnEnemyStrike(EnemyState enemy)
         {
-            if (!InBattle || !enemy.IsAlive) return;
+            // A strike on her body during the defeat beat lands nothing (no "0" popup, no hit flinch over the death).
+            if (!InBattle || !enemy.IsAlive || State.IsDead) return;
             var d = (enemy.Position - Player.Position).Flat;
             var outcome = EnemyAttackCycle.Resolve(d.Magnitude, enemy.Stats.Reach, Player.IsInvulnerable);
             switch (outcome)
@@ -557,7 +568,10 @@ namespace Unity.Eve.Core.Sim
             if (_wasShootdodging && !now)
             {
                 _bulletTime = false;
-                var dealt = State.TakeDamage(BattleConfig.ShootdodgeLandDamage);
+                // The hard landing costs HP only while the fight is still on: after the last creature fell (or she
+                // did) it must not kill her in the victory beat.
+                var fighting = Stage == BattleStage.Active || Stage == BattleStage.Executing;
+                var dealt = fighting ? State.TakeDamage(BattleConfig.ShootdodgeLandDamage) : 0;
                 Raise(BattleCue.ShootdodgeLanded, amount: dealt);
             }
             _wasShootdodging = now;

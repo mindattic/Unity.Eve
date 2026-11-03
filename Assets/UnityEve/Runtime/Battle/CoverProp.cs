@@ -48,11 +48,20 @@ namespace Unity.Eve.Battle
                 var toPoint = point - attackerEye;
                 var dist = toPoint.magnitude;
                 if (dist < 0.05f) continue;
-                if (Physics.Raycast(attackerEye, toPoint / dist, out var hit, dist - 0.05f, ~0, QueryTriggerInteraction.Collide)
-                    && hit.collider.GetComponentInParent<CoverProp>() != null)
+                // Every hit along the ray, not just the nearest: triggers are included (cover volumes are triggers),
+                // so the nearest hit is often Kat's own 0.8 m obstacle-warning capsule or a camera zone, which would
+                // hide a cover prop she is crouched right behind.
+                var hits = Physics.RaycastNonAlloc(attackerEye, toPoint / dist, Hits, dist - 0.05f, ~0, QueryTriggerInteraction.Collide);
+                for (var h = 0; h < hits; h++)
+                {
+                    if (Hits[h].collider == null || Hits[h].collider.GetComponentInParent<CoverProp>() == null) continue;
                     blocked++;
+                    break;
+                }
             }
             return blocked / (float)Silhouette.Length;
         }
+
+        private static readonly RaycastHit[] Hits = new RaycastHit[32];
     }
 }

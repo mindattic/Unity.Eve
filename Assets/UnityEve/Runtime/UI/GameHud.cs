@@ -82,6 +82,14 @@ namespace Unity.Eve.UI
         private void OnDestroy()
         {
             if (Instance == this) Instance = null;
+            // The window-sized render target is ours: every scene reload (Continue, retry) would otherwise orphan one.
+            if (_target != null)
+            {
+                if (WorldCamera != null && WorldCamera.targetTexture == _target) WorldCamera.targetTexture = null;
+                _target.Release();
+                Destroy(_target);
+                _target = null;
+            }
         }
 
         private void OnEnable()
