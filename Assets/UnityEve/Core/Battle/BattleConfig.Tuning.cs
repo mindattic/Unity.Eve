@@ -128,6 +128,9 @@ namespace Unity.Eve.Core.Battle
             Ordered(nameof(EscapeMinChance), nameof(EscapeMaxChance));
             if (V(nameof(MaxCommittedAttackers)) < 1) errors.Add($"'{nameof(MaxCommittedAttackers)}' must be at least 1");
             if (V(nameof(BaseAtbSeconds)) <= 0) errors.Add($"'{nameof(BaseAtbSeconds)}' must be above 0");
+            // AtbGauge divides by AtbBaseRate, and a 0 exp curve never reaches the next level (U.EVE-T48).
+            if (V(nameof(AtbBaseRate)) <= 0) errors.Add($"'{nameof(AtbBaseRate)}' must be above 0");
+            if (V(nameof(ExpPerLevelBase)) <= 0) errors.Add($"'{nameof(ExpPerLevelBase)}' must be above 0");
             if (V(nameof(ExpCurveGrowth)) < 1) errors.Add($"'{nameof(ExpCurveGrowth)}' must be at least 1");
         }
 

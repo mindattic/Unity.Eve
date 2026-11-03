@@ -10,6 +10,14 @@ namespace Unity.Eve.Core.Story
         public int Count;
     }
 
+    /// <summary>A pickup she took only part of (the bag was full): how many are still lying there.</summary>
+    [Serializable]
+    public sealed class SavedPickup
+    {
+        public string Name;
+        public int Remaining;
+    }
+
     /// <summary>
     /// Everything a save point writes. Plain public fields so any serializer (the game uses Unity's
     /// JsonUtility) round-trips it. World objects are named by their stable scene names.
@@ -45,6 +53,10 @@ namespace Unity.Eve.Core.Story
         public List<string> TakenPickups = new List<string>();
         public List<string> UnlockedDoors = new List<string>();
         public List<string> UnlockedGates = new List<string>();
+        /// <summary>Pickups left partly taken (U.EVE-T48). Added after version 1 shipped without bumping it:
+        /// a save written before it has no such field and reads back null or empty, which means "none", so
+        /// it is deliberately not part of <see cref="IsValid"/>.</summary>
+        public List<SavedPickup> PartialPickups = new List<SavedPickup>();
 
         /// <summary>A save is usable when it is the current version, names where to resume, and every
         /// list field a corrupted/hand-edited file could have nulled out is still present.</summary>

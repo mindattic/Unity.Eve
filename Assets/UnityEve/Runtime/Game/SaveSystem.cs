@@ -98,6 +98,8 @@ namespace Unity.Eve.Game
             s.SearchedContainers.AddRange(All<Container>().Where(c => c.Searched).Select(c => c.name));
             s.TakenPickups.AddRange(All<Pickup>().Where(p => !p.gameObject.activeSelf).Select(p => p.name));
             s.TakenPickups.AddRange(All<WeaponPickup>().Where(p => !p.gameObject.activeSelf).Select(p => p.name));
+            s.PartialPickups.AddRange(All<Pickup>().Where(p => p.gameObject.activeSelf && p.PartlyTaken)
+                .Select(p => new SavedPickup { Name = p.name, Remaining = p.Remaining }));
             s.UnlockedDoors.AddRange(All<Door>().Where(d => d.Unlocked).Select(d => d.name));
             s.UnlockedGates.AddRange(All<Gate>().Where(g => g.Unlocked).Select(g => g.name));
             return s;
@@ -142,6 +144,14 @@ namespace Unity.Eve.Game
             foreach (var c in All<Container>()) if (save.SearchedContainers.Contains(c.name)) c.MarkSearched();
             foreach (var p in All<Pickup>()) if (save.TakenPickups.Contains(p.name)) p.gameObject.SetActive(false);
             foreach (var p in All<WeaponPickup>()) if (save.TakenPickups.Contains(p.name)) p.gameObject.SetActive(false);
+            // Older saves have no PartialPickups (null or empty): every pickup keeps its full count.
+            if (save.PartialPickups != null)
+                foreach (var partial in save.PartialPickups)
+                {
+                    if (partial == null) continue;
+                    var pickup = All<Pickup>().FirstOrDefault(p => p.name == partial.Name && p.gameObject.activeSelf);
+                    if (pickup != null) pickup.RestoreRemaining(partial.Remaining);
+                }
             foreach (var d in All<Door>()) if (save.UnlockedDoors.Contains(d.name)) d.Unlock();
             foreach (var g in All<Gate>()) if (save.UnlockedGates.Contains(g.name)) g.Unlock();
             StoryDirector.Instance?.Restore(save.Facts, save.Kills, save.PlaySeconds);
