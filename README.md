@@ -159,6 +159,13 @@ Builds/Capture/Unity.Eve.exe -demo -artifacts artifacts/demo
 ./tools/launch.ps1 -Sound   # opt into audio; every other launch.ps1 choice is muted by default
 ```
 
+### Headless launches
+
+For scripted testing (off by default), `./tools/run.ps1 -Headless` deploys as usual (add `-Force` to rebuild), then runs the
+published player with no window through the shared launcher (`..\Unity.Shared\tools\Start-Headless.ps1`: `--headless -batchmode
+-nographics`) and waits for the `MINDATTIC_HEADLESS_READY` log line. Eve has no main menu (it loads straight into the demo scene),
+so there is nothing further to skip. Without `--headless` nothing changes.
+
 ### Muted launches
 
 `tools/launch.ps1` launches muted by default: it sets `MINDATTIC_CLI_MUTED=1` and passes `-muted`

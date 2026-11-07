@@ -32,6 +32,11 @@
     Rebuild and republish even when the deployed commit is up to date. It skips only that
     check. The launchers' "Deploy & Run" passes it.
 
+.PARAMETER Headless
+    After publishing (or skipping the rebuild), run the deployed Unity.Eve.exe with no window for scripted testing
+    (U.EVE-T49): through ..\Unity.Shared\tools\Start-Headless.ps1 (--headless -batchmode -nographics), waiting for its
+    MINDATTIC_HEADLESS_READY log line. Implies -Launch. Off by default.
+
 .PARAMETER LauncherOnly
     Only (re)write C:\Apps\Unity.Eve\run.bat (removing a stale launch.bat/deploy.bat) and exit: no pull, no stop, no build.
 
@@ -44,7 +49,8 @@
 param(
     [switch]$Launch,
     [switch]$Force,
-    [switch]$LauncherOnly
+    [switch]$LauncherOnly,
+    [switch]$Headless
 )
 
 $ErrorActionPreference = 'Stop'
@@ -56,6 +62,12 @@ $exeName  = 'Unity.Eve.exe'
 $buildDir = Join-Path $repoDir 'Build\WindowsRelease'
 $runBat = Join-Path $repoDir 'run.bat'
 $marker    = Join-Path $out '.deploy-commit'
+
+# U.EVE-T49: -Headless starts the deployed player through the shared launcher instead of Start-Process, then exits.
+function Start-HeadlessGame {
+    & (Join-Path $repoDir '..\Unity.Shared\tools\Start-Headless.ps1') -Exe (Join-Path $out $exeName) -Wait
+    exit $LASTEXITCODE
+}
 
 # ── Generated launcher ──────────────────────────────────────────────────────
 # A menu first (MAT-T67): 1) Deploy & Run redeploys from source (-Force) before launching;
@@ -134,6 +146,7 @@ $upToDate = (-not $Force) -and (Test-Path (Join-Path $out $exeName)) -and (Test-
             ((Get-Content -LiteralPath $marker -Raw).Trim() -eq $head)
 if ($upToDate) {
     Write-Host "  Already deployed at $head - skipping rebuild." -ForegroundColor Green
+    if ($Headless) { Start-HeadlessGame }
     if ($Launch) { Start-Process -FilePath (Join-Path $out $exeName) -WorkingDirectory $out }
     exit 0
 }
@@ -211,6 +224,8 @@ Write-Host '  Published successfully.' -ForegroundColor Green
 Write-Host "    Exe    : $exe ($([math]::Round(((Get-Item $exe).Length / 1MB), 1)) MB)" -ForegroundColor Gray
 Write-Host "    Launch : $launchBatPath" -ForegroundColor Gray
 Write-Host ''
+
+if ($Headless) { Start-HeadlessGame }
 
 if ($Launch) {
     Write-Host '  Launching...' -ForegroundColor Cyan
