@@ -166,4 +166,5 @@ updated: 2026-10-11
 | U.EVE-T49 | 2026-11-06 | feature | closed | Adopt the shared off-by-default --headless launch mode (Unity.Shared) | 1317cd1 |
 | U.EVE-T50 | 2026-11-08 | fix | open | Tests/Core.Tests/AuthorityReplayTests.cs:184 A_battle_replays_from_its_seed_and_command_log_to_the_same_events_and_state fails: no PlayerHit/StrikeEvaded in the seeded run (the harness backs Kat off inside 3 m and wins by ~tick 1700). Unreal.Eve fixed its port by asserting windups instead (UE-T48). (found by Unreal.Eve /tests) | — |
 | U.EVE-T51 | 2026-11-10 | chore | closed | Crash recovery: commit the command-catalog sync (.agent/commands/*.md) and regenerated docs/USER_STORIES.md left uncommitted by the session crash | — |
-| U.EVE-T52 | 2026-11-10 | chore | open | Crash recovery: commit the command-catalog sync (.agent/commands/*.md) and regenerated docs/USER_STORIES.md left uncommitted by the session crash | — |
+| U.EVE-T52 | 2026-11-10 | chore | closed | Crash recovery: commit the command-catalog sync (.agent/commands/*.md) and regenerated docs/USER_STORIES.md left uncommitted by the session crash | — |
+| U.EVE-T53 | 2026-11-10 | chore | open | Crash recovery / fleet sync: commit the regenerated docs/USER_STORIES.md left uncommitted after other tickets closed elsewhere | — |
