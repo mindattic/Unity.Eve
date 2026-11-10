@@ -161,3 +161,9 @@ updated: 2026-10-11
 | U.EVE-T44 | 2026-10-27 | docs | closed | Update USER_STORIES.md | — |
 | U.EVE-T45 | 2026-10-28 | chore | open | Verify U.EVE-T41 (e9de510) in play: run the -demo self-play and a manual battle after the Core authority refactor; check Kat does not visibly step at 60 Hz on high-refresh screens (only enemies are interpolated), active reload, Line Rush aim/cancel facing, refused orders, and that Autopilot heals still work | — |
 | U.EVE-T46 | 2026-10-28 | docs | closed | Update USER_STORIES.md | — |
+| U.EVE-T47 | 2026-11-02 | fix | closed | Bughunt sweep, two passes: find and fix real bugs across tracked source (user request 2026-11-02) | — |
+| U.EVE-T48 | 2026-11-02 | fix | closed | Fix the open items the 2026-11-02 bughunt left for decision (validate ExpPerLevelBase/AtbBaseRate > 0, save bag-full leftover) | — |
+| U.EVE-T49 | 2026-11-06 | feature | closed | Adopt the shared off-by-default --headless launch mode (Unity.Shared) | 1317cd1 |
+| U.EVE-T50 | 2026-11-08 | fix | open | Tests/Core.Tests/AuthorityReplayTests.cs:184 A_battle_replays_from_its_seed_and_command_log_to_the_same_events_and_state fails: no PlayerHit/StrikeEvaded in the seeded run (the harness backs Kat off inside 3 m and wins by ~tick 1700). Unreal.Eve fixed its port by asserting windups instead (UE-T48). (found by Unreal.Eve /tests) | — |
+| U.EVE-T51 | 2026-11-10 | chore | closed | Crash recovery: commit the command-catalog sync (.agent/commands/*.md) and regenerated docs/USER_STORIES.md left uncommitted by the session crash | — |
+| U.EVE-T52 | 2026-11-10 | chore | open | Crash recovery: commit the command-catalog sync (.agent/commands/*.md) and regenerated docs/USER_STORIES.md left uncommitted by the session crash | — |
