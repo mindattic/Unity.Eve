@@ -15,7 +15,7 @@ namespace Unity.Eve.Game
     /// it in every MindAttic Unity project â€” and it tours the demo through the real systems â€”
     /// cameras, rummaging, doors, an ATB battle with the range dome, a grenade, a Focus window â€”
     /// writing a screenshot at each beat, then quits with PASS/FAIL. "Done is verified by play": look
-    /// at the PNGs. Pair with <c>-capture</c> (parsed separately by MindAttic.Capture) to record it.
+    /// at the PNGs. Pair with <c>-capture</c> (parsed separately by MindAttic.Media.Capture) to record it.
     /// </summary>
     public sealed class Autopilot : MonoBehaviour
     {

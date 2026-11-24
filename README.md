@@ -145,9 +145,9 @@ Build/Windows/Unity.Eve.exe -batchmode -demo -artifacts artifacts/demo -logFile 
 # The same tour in a window, to watch it play (it still screenshots, then quits PASS/FAIL).
 Build/Windows/Unity.Eve.exe -demo
 
-# A video from launch to quit, at native resolution (MindAttic.Capture, Assets/StreamingAssets/capture.json
+# A video from launch to quit, at native resolution (MindAttic.Media.Capture, Assets/StreamingAssets/capture.json
 # turns it on). Production builds are capture-free by design; this build has it compiled in.
-./tools/unity.ps1 -Method MindAttic.Capture.Unity.Editor.CaptureBuild.BuildWindows -Log capture-build
+./tools/unity.ps1 -Method MindAttic.Media.Capture.Unity.Editor.CaptureBuild.BuildWindows -Log capture-build
 Builds/Capture/Unity.Eve.exe -demo -artifacts artifacts/demo
 
 # Rebuild the Windows player from scratch and publish a standalone copy to C:\Apps\Unity.Eve
@@ -185,7 +185,7 @@ that run only, silencing `AudioService` and `MusicDirector` alike. The player's 
 `settings.json` (once Eve has one) is never written. `-batchmode` runs (`-demo`, `CompileCheck`)
 play nothing audible and don't need it.
 
-MindAttic.Capture also auto-starts in plain Editor Play sessions and dev builds (not gated by
+MindAttic.Media.Capture also auto-starts in plain Editor Play sessions and dev builds (not gated by
 `-capture`). Currently disabled project-wide: `"enabled": false` in `capture.json`. Flip it to
 `true` (or remove the key) to re-enable.
 
