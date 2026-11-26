@@ -1,7 +1,7 @@
 <#
 .SYNOPSIS
-  Deploys the current Release build to C:\Apps\Unity.Eve, then offers Normal Play, Demo +
-  Capture, or Quit.
+  Deploys the current build to R:\MindAttic\Apps\Unity.Eve, then offers Normal Play, Demo +
+  Capture, or Quit, run from the Release copy.
 .DESCRIPTION
   Every menu choice launches muted by default (-muted and MINDATTIC_CLI_MUTED=1), Unity.Shared's
   session mute, so a CLI or agent launching the game for development never plays sound. Pass
@@ -10,20 +10,21 @@
 .PARAMETER Sound
   Launch with audio (no -muted, no MINDATTIC_CLI_MUTED).
 .NOTES
-  Always redeploys from source first (tools\run.ps1), so this never runs a stale build.
+  Always redeploys from source first (the repo-root run.ps1 -Redeploy), so this never runs a stale build.
   Requires the Unity Editor closed for this project.
 #>
 param([switch]$Sound)
 
 $ErrorActionPreference = "Stop"
 
-& (Join-Path $PSScriptRoot "run.ps1")
-if ($LASTEXITCODE -ne 0) {
-    Write-Host "Deploy failed (exit $LASTEXITCODE); not launching." -ForegroundColor Red
-    exit $LASTEXITCODE
+try {
+    & (Join-Path $PSScriptRoot "..\run.ps1") -Redeploy
+} catch {
+    Write-Host "Deploy failed ($_); not launching." -ForegroundColor Red
+    exit 1
 }
 
-$exe = "C:\Apps\Unity.Eve\Unity.Eve.exe"
+$exe = "R:\MindAttic\Apps\Unity.Eve\Release\Unity.Eve.exe"
 if (-not (Test-Path $exe)) {
     Write-Host "Deploy reported success but $exe is missing." -ForegroundColor Red
     exit 1

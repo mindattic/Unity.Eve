@@ -161,8 +161,8 @@ Builds/Capture/Unity.Eve.exe -demo -artifacts artifacts/demo
 
 ### Headless launches
 
-For scripted testing (off by default), `./tools/run.ps1 -Headless` deploys as usual (add `-Force` to rebuild), then runs the
-published player with no window through the shared launcher (`..\Unity.Shared\tools\Start-Headless.ps1`: `--headless -batchmode
+For scripted testing (off by default), `./run.ps1 -Headless` runs the installed Release copy (`R:\MindAttic\Apps\Unity.Eve\Release`;
+add `-Redeploy` to build and deploy first) with no window through the shared launcher (`..\Unity.Shared\tools\Start-Headless.ps1`: `--headless -batchmode
 -nographics`) and waits for the `MINDATTIC_HEADLESS_READY` log line. Eve has no main menu (it loads straight into the demo scene),
 so there is nothing further to skip. Without `--headless` nothing changes.
 
@@ -189,7 +189,7 @@ MindAttic.Media.Capture also auto-starts in plain Editor Play sessions and dev b
 `-capture`). Currently disabled project-wide: `"enabled": false` in `capture.json`. Flip it to
 `true` (or remove the key) to re-enable.
 
-Unity batch mode needs the Editor closed on this project; `tools/unity.ps1` and `tools/run.ps1` refuse to run if it's open.
+Unity batch mode needs the Editor closed on this project; `tools/unity.ps1` refuses to run if it's open, and `run.ps1 -Redeploy` builds in batch mode too.
 
 ## How it's built
 
@@ -206,7 +206,7 @@ Assets/UnityEve/
   Generated/   output of DemoContentBuilder: ScriptableObjects, materials, clips, prefabs, audio
   Scenes/      Demo.unity (generated)
 Tests/         Core.Tests: NUnit against Assets/UnityEve/Core compiled as netstandard2.1
-tools/         unity.ps1 (batch mode), test.ps1 (the gate), run.ps1 / launch.ps1 (standalone build)
+tools/         unity.ps1 (batch mode), test.ps1 (the gate), launch.ps1 (deploy via ../run.ps1, then play)
 docs/          BIBLE.md (design canon), USER_STORIES.md (status + evidence)
 ```
 
