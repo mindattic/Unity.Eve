@@ -150,9 +150,9 @@ Build/Windows/Unity.Eve.exe -demo
 ./tools/unity.ps1 -Method MindAttic.Media.Capture.Unity.Editor.CaptureBuild.BuildWindows -Log capture-build
 Builds/Capture/Unity.Eve.exe -demo -artifacts artifacts/demo
 
-# Rebuild the Windows player from scratch and publish a standalone copy to C:\Apps\Unity.Eve
-./tools/run.ps1          # add -Launch to run it immediately after, -Force to rebuild even when up to date
-# run.bat (the Desktop shortcut) asks first: 1) Deploy & Run, 2) Run the published build
+# The standard launcher: build Debug and Release into R:\MindAttic\Apps\Unity.Eve\{Debug,Release}
+./run.ps1                # menu: 1 Redeploy, 2 Run Debug, 3 Run Release (13 = Deploy & Run); run.bat opens the same
+./run.ps1 -Redeploy -RunRelease
 
 # Deploy, then offer Normal Play / Demo + Capture / Quit from a menu (double-clickable as launch.bat)
 ./tools/launch.ps1
